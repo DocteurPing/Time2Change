@@ -22,6 +22,14 @@ impl Currency {
     }
 }
 
+impl TryFrom<&str> for Currency {
+    type Error = CurrencyError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Currency::new(value)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
