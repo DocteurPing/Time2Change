@@ -1,0 +1,10 @@
+[package]
+name = "application"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+tokio.workspace = true
+domain = { path = "../domain" }
+shared = { path = "../shared" }
+async-trait = "0.1"

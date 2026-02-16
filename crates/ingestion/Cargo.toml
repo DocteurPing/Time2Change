@@ -1,0 +1,9 @@
+[package]
+name = "ingestion"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+tokio.workspace = true
+application = { path = "../application" }
+infrastructure = { path = "../infrastructure" }
