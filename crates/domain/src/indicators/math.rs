@@ -193,7 +193,6 @@ fn volatility_works() {
     ];
     let window_size = 2;
     let result = volatility(&values, window_size);
-    dbg!(&result);
     assert_eq!(
         result,
         vec![
