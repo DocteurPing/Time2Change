@@ -63,7 +63,7 @@ pub fn volatility(values: &[Decimal], window: usize) -> Vec<Option<Decimal>> {
     }
 
     let mean = sum / Decimal::from(window);
-    let variance = (sum_sq / Decimal::from(window)) - (mean * mean);
+    let variance = ((sum_sq / Decimal::from(window)) - (mean * mean)).max(Decimal::ZERO);
     result.push(variance.sqrt());
 
     // Slide window
@@ -75,7 +75,7 @@ pub fn volatility(values: &[Decimal], window: usize) -> Vec<Option<Decimal>> {
         sum_sq += incoming * incoming - outgoing * outgoing;
 
         let mean = sum / Decimal::from(window);
-        let variance = (sum_sq / Decimal::from(window)) - (mean * mean);
+        let variance = ((sum_sq / Decimal::from(window)) - (mean * mean)).max(Decimal::ZERO);
 
         result.push(variance.sqrt());
     }
