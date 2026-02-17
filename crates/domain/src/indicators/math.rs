@@ -232,7 +232,7 @@ fn range_position_works() {
     let high = Decimal::from(10);
     let low = Decimal::ZERO;
     let result = range_position(current, high, low);
-    assert_eq!(result, Decimal::from_f32_retain(0.5));
+    assert_eq!(result, Some(rust_decimal::dec!(0.5)));
 }
 
 #[test]
