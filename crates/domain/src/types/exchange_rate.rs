@@ -30,7 +30,7 @@ impl std::fmt::Display for ExchangeRate {
 #[test]
 fn test_exchange_rate_display() {
     let timestamp = Utc::now();
-    let rate = rust_decimal::prelude::FromPrimitive::from_f32(1.2345).unwrap();
+    let rate: Decimal = "1.2345".parse().unwrap();
     let exchange_rate = ExchangeRate::new(timestamp, rate);
     assert_eq!(exchange_rate.timestamp(), &timestamp);
     assert_eq!(exchange_rate.rate(), &rate);
