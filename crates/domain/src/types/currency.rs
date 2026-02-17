@@ -1,13 +1,14 @@
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CurrencyError {
-    InvalidLength,
     InvalidFormat,
+    InvalidLength,
 }
 
-pub(crate) struct Currency([u8; 3]);
+#[derive(PartialEq, Eq, Clone)]
+pub struct Currency([u8; 3]);
 
 impl Currency {
-    pub(crate) fn new(value: &str) -> Result<Currency, CurrencyError> {
+    pub fn new(value: &str) -> Result<Self, CurrencyError> {
         if value.len() != 3 {
             return Err(CurrencyError::InvalidLength);
         }
@@ -18,7 +19,7 @@ impl Currency {
             .as_bytes()
             .try_into()
             .map_err(|_| CurrencyError::InvalidLength)?;
-        Ok(Currency(bytes))
+        Ok(Self(bytes))
     }
 }
 
@@ -33,16 +34,16 @@ impl TryFrom<&str> for Currency {
 impl std::fmt::Display for CurrencyError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            CurrencyError::InvalidLength => write!(f, "Currency must be 3 letters"),
-            CurrencyError::InvalidFormat => write!(f, "Currency must be uppercase ASCII letters"),
+            Self::InvalidLength => write!(f, "Currency must be 3 letters"),
+            Self::InvalidFormat => write!(f, "Currency must be uppercase ASCII letters"),
         }
     }
 }
 
 impl std::fmt::Display for Currency {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = std::str::from_utf8(&self.0).expect("Currency invariant violated");
-        write!(f, "{}", s)
+        let currency = std::str::from_utf8(&self.0).expect("Currency invariant violated");
+        write!(f, "{currency}")
     }
 }
 
