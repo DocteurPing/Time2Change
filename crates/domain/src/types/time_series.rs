@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use chrono::Utc;
 
 use crate::types::{currency_pair::CurrencyPair, exchange_rate::ExchangeRate};
