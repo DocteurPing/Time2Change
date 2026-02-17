@@ -1,5 +1,3 @@
-use chrono::Utc;
-
 use crate::types::{currency_pair::CurrencyPair, exchange_rate::ExchangeRate};
 
 pub struct TimeSeries {
@@ -42,7 +40,7 @@ impl std::fmt::Display for TimeSeries {
 fn test_time_series_display() {
     let pair = CurrencyPair::new("USD".try_into().unwrap(), "EUR".try_into().unwrap()).unwrap();
     let pair_string = pair.to_string();
-    let time = Utc::now();
+    let time = chrono::Utc::now();
     let rates = vec![
         ExchangeRate::new(time, 1.2345),
         ExchangeRate::new(time, 1.2346),
@@ -59,7 +57,7 @@ fn test_time_series_display() {
 #[test]
 fn test_time_series_add_rate() {
     let pair = CurrencyPair::new("USD".try_into().unwrap(), "EUR".try_into().unwrap()).unwrap();
-    let time = Utc::now();
+    let time = chrono::Utc::now();
     let rate = ExchangeRate::new(time, 1.2345);
     let mut time_series = TimeSeries::new(pair, vec![]);
     time_series.add_rate(rate.clone());
