@@ -120,7 +120,7 @@ fn test_average_empty() {
 }
 
 #[test]
-fn rolling_average_works() {
+fn test_rolling_average_works() {
     let values = vec![
         Decimal::from(1),
         Decimal::from(2),
