@@ -1,10 +1,11 @@
 use crate::types::currency::Currency;
 
 #[derive(Debug, PartialEq, Eq)]
-enum CurrencyPairError {
+pub enum CurrencyPairError {
     CurrencySame,
 }
 
+#[derive(Debug, PartialEq)]
 pub struct CurrencyPair {
     base: Currency,
     quote: Currency,

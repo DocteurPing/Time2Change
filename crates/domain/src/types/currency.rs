@@ -4,7 +4,7 @@ pub enum CurrencyError {
     InvalidLength,
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Currency([u8; 3]);
 
 impl Currency {
