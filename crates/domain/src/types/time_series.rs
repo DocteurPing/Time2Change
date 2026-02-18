@@ -42,8 +42,8 @@ fn test_time_series_display() {
     let pair_string = pair.to_string();
     let time = chrono::Utc::now();
     let rates = vec![
-        ExchangeRate::new(time, 1.2345),
-        ExchangeRate::new(time, 1.2346),
+        ExchangeRate::new(time, rust_decimal::dec!(1.2345)),
+        ExchangeRate::new(time, rust_decimal::dec!(1.2346)),
     ];
     let time_series = TimeSeries::new(pair, rates.clone());
     assert_eq!(time_series.pair().to_string(), pair_string);
@@ -58,7 +58,7 @@ fn test_time_series_display() {
 fn test_time_series_add_rate() {
     let pair = CurrencyPair::new("USD".try_into().unwrap(), "EUR".try_into().unwrap()).unwrap();
     let time = chrono::Utc::now();
-    let rate = ExchangeRate::new(time, 1.2345);
+    let rate = ExchangeRate::new(time, rust_decimal::dec!(1.2345));
     let mut time_series = TimeSeries::new(pair, vec![]);
     time_series.add_rate(rate.clone());
     assert_eq!(time_series.rates().len(), 1);
