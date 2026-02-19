@@ -1,9 +1,24 @@
 use rust_decimal::{Decimal, dec};
+use thiserror::Error;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Error)]
 pub enum RateQualityError {
-    InvalidWeights,
-    InvalidThresholds,
+    #[error(
+        "Invalid weights: completeness={completeness}, gap_consistency={gap_consistency}, outlier={outlier}, volatility={volatility}"
+    )]
+    InvalidWeights {
+        completeness: Decimal,
+        gap_consistency: Decimal,
+        outlier: Decimal,
+        volatility: Decimal,
+    },
+    #[error(
+        "Invalid thresholds: outlier_z_threshold={outlier_z_threshold}, max_allowed_volatility={max_allowed_volatility}"
+    )]
+    InvalidThresholds {
+        outlier_z_threshold: Decimal,
+        max_allowed_volatility: Decimal,
+    },
 }
 
 pub struct RateQualityConfig {
@@ -38,10 +53,18 @@ impl RateQualityConfig {
         max_allowed_volatility: Decimal,
     ) -> Result<Self, RateQualityError> {
         if w_completeness + w_gap_consistency + w_outlier + w_volatility != Decimal::ONE {
-            return Err(RateQualityError::InvalidWeights);
+            return Err(RateQualityError::InvalidWeights {
+                completeness: w_completeness,
+                gap_consistency: w_gap_consistency,
+                outlier: w_outlier,
+                volatility: w_volatility,
+            });
         }
         if outlier_z_threshold <= Decimal::ZERO || max_allowed_volatility <= Decimal::ZERO {
-            return Err(RateQualityError::InvalidThresholds);
+            return Err(RateQualityError::InvalidThresholds {
+                outlier_z_threshold,
+                max_allowed_volatility,
+            });
         }
         Ok(Self {
             w_completeness,
@@ -95,7 +118,19 @@ fn test_rate_quality_config_new_invalid_weights() {
     )
     .err()
     .unwrap();
-    assert!(matches!(err, RateQualityError::InvalidWeights));
+    assert_eq!(
+        err,
+        RateQualityError::InvalidWeights {
+            completeness: dec!(0.5),
+            gap_consistency: dec!(0.5),
+            outlier: dec!(0.1),
+            volatility: dec!(0.1),
+        }
+    );
+    assert_eq!(
+        err.to_string(),
+        "Invalid weights: completeness=0.5, gap_consistency=0.5, outlier=0.1, volatility=0.1"
+    )
 }
 
 #[test]
@@ -110,5 +145,15 @@ fn test_rate_quality_config_new_invalid_thresholds() {
     )
     .err()
     .unwrap();
-    assert_eq!(err, RateQualityError::InvalidThresholds);
+    assert_eq!(
+        err,
+        RateQualityError::InvalidThresholds {
+            outlier_z_threshold: dec!(-1.0),
+            max_allowed_volatility: dec!(0.1)
+        }
+    );
+    assert_eq!(
+        err.to_string(),
+        "Invalid thresholds: outlier_z_threshold=-1.0, max_allowed_volatility=0.1"
+    )
 }
