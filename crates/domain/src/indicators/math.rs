@@ -1,4 +1,4 @@
-use rust_decimal::{Decimal, MathematicalOps};
+use rust_decimal::{Decimal, MathematicalOps, dec};
 
 pub fn average(values: &[Decimal]) -> Option<Decimal> {
     if values.is_empty() {
@@ -63,10 +63,8 @@ pub fn z_score(current: Decimal, mean: Decimal, std_dev: Decimal) -> Option<Deci
 pub fn clamp_0_100(value: Decimal) -> Decimal {
     if value < Decimal::ZERO {
         Decimal::ZERO
-    } else if value > Decimal::from(100) {
-        Decimal::from(100)
     } else {
-        value
+        value.min(dec!(100))
     }
 }
 

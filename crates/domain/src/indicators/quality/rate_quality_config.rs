@@ -22,12 +22,12 @@ pub enum RateQualityError {
 }
 
 pub struct RateQualityConfig {
-    pub w_completeness: Decimal,
-    pub w_gap_consistency: Decimal,
-    pub w_outlier: Decimal,
-    pub w_volatility: Decimal,
-    pub outlier_z_threshold: Decimal,
-    pub max_allowed_volatility: Decimal,
+    w_completeness: Decimal,
+    w_gap_consistency: Decimal,
+    w_outlier: Decimal,
+    w_volatility: Decimal,
+    outlier_z_threshold: Decimal,
+    max_allowed_volatility: Decimal,
 }
 
 impl Default for RateQualityConfig {
@@ -74,6 +74,30 @@ impl RateQualityConfig {
             outlier_z_threshold,
             max_allowed_volatility,
         })
+    }
+
+    pub const fn w_completeness(&self) -> &Decimal {
+        &self.w_completeness
+    }
+
+    pub const fn w_gap_consistency(&self) -> &Decimal {
+        &self.w_gap_consistency
+    }
+
+    pub const fn w_outlier(&self) -> &Decimal {
+        &self.w_outlier
+    }
+
+    pub const fn w_volatility(&self) -> &Decimal {
+        &self.w_volatility
+    }
+
+    pub const fn outlier_z_threshold(&self) -> &Decimal {
+        &self.outlier_z_threshold
+    }
+
+    pub const fn max_allowed_volatility(&self) -> &Decimal {
+        &self.max_allowed_volatility
     }
 }
 
