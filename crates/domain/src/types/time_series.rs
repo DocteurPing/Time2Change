@@ -6,19 +6,19 @@ pub struct TimeSeries {
 }
 
 impl TimeSeries {
-    fn new(pair: CurrencyPair, rates: Vec<ExchangeRate>) -> Self {
+    pub fn new(pair: CurrencyPair, rates: Vec<ExchangeRate>) -> Self {
         Self { pair, rates }
     }
 
-    fn pair(&self) -> &CurrencyPair {
+    pub fn pair(&self) -> &CurrencyPair {
         &self.pair
     }
 
-    fn rates(&self) -> &Vec<ExchangeRate> {
+    pub fn rates(&self) -> &[ExchangeRate] {
         &self.rates
     }
 
-    fn add_rate(&mut self, rate: ExchangeRate) {
+    pub fn add_rate(&mut self, rate: ExchangeRate) {
         self.rates.push(rate);
     }
 }
