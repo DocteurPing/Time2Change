@@ -44,45 +44,6 @@ pub fn standard_deviation(values: &[Decimal]) -> Option<Decimal> {
     }
 }
 
-pub fn volatility(values: &[Decimal], window: usize) -> Vec<Option<Decimal>> {
-    let len = values.len();
-
-    if window == 0 || window > len {
-        return vec![None; len];
-    }
-
-    let mut result = vec![None; window - 1];
-
-    let mut sum = Decimal::ZERO;
-    let mut sum_sq = Decimal::ZERO;
-
-    // Initialize first window
-    for &value in &values[..window] {
-        sum += value;
-        sum_sq += value * value;
-    }
-
-    let mean = sum / Decimal::from(window);
-    let variance = ((sum_sq / Decimal::from(window)) - (mean * mean)).max(Decimal::ZERO);
-    result.push(variance.sqrt());
-
-    // Slide window
-    for i in window..len {
-        let incoming = values[i];
-        let outgoing = values[i - window];
-
-        sum += incoming - outgoing;
-        sum_sq += incoming * incoming - outgoing * outgoing;
-
-        let mean = sum / Decimal::from(window);
-        let variance = ((sum_sq / Decimal::from(window)) - (mean * mean)).max(Decimal::ZERO);
-
-        result.push(variance.sqrt());
-    }
-
-    result
-}
-
 pub fn range_position(current: Decimal, high: Decimal, low: Decimal) -> Option<Decimal> {
     if high == low {
         None
@@ -96,6 +57,29 @@ pub fn z_score(current: Decimal, mean: Decimal, std_dev: Decimal) -> Option<Deci
         None
     } else {
         Some((current - mean) / std_dev)
+    }
+}
+
+pub fn clamp_0_100(value: Decimal) -> Decimal {
+    if value < Decimal::ZERO {
+        Decimal::ZERO
+    } else if value > Decimal::from(100) {
+        Decimal::from(100)
+    } else {
+        value
+    }
+}
+
+pub fn median_i64(mut values: Vec<i64>) -> Option<i64> {
+    if values.is_empty() {
+        return None;
+    }
+    values.sort_unstable();
+    let mid = values.len() / 2;
+    if values.len() % 2 == 1 {
+        Some(values[mid])
+    } else {
+        Some((values[mid - 1] + values[mid]) / 2)
     }
 }
 
@@ -184,49 +168,6 @@ fn standard_deviation_empty() {
 }
 
 #[test]
-fn volatility_works() {
-    let values = vec![
-        Decimal::from(2),
-        Decimal::from(0),
-        Decimal::from(4),
-        Decimal::from(2),
-    ];
-    let window_size = 2;
-    let result = volatility(&values, window_size);
-    assert_eq!(
-        result,
-        vec![
-            None,
-            Some(Decimal::from(1)),
-            Some(Decimal::from(2)),
-            Some(Decimal::from(1))
-        ]
-    );
-}
-
-#[test]
-fn volatility_empty() {
-    let values = vec![];
-    let window_size = 2;
-    let result = volatility(&values, window_size);
-    assert_eq!(result, vec![None; values.len()]);
-}
-
-#[test]
-fn volatility_invalid_window() {
-    let values = vec![
-        Decimal::from(1),
-        Decimal::from(2),
-        Decimal::from(3),
-        Decimal::from(4),
-        Decimal::from(5),
-    ];
-    let window_size = 0;
-    let result = volatility(&values, window_size);
-    assert_eq!(result, vec![None; values.len()]);
-}
-
-#[test]
 fn range_position_works() {
     let current = Decimal::from(5);
     let high = Decimal::from(10);
@@ -260,4 +201,19 @@ fn z_score_std_dev_zero() {
     let std_dev = Decimal::from(0);
     let result = z_score(current, mean, std_dev);
     assert_eq!(result, None);
+}
+
+#[test]
+fn clamp_0_100_works() {
+    assert_eq!(clamp_0_100(Decimal::from(-10)), Decimal::ZERO);
+    assert_eq!(clamp_0_100(Decimal::from(50)), Decimal::from(50));
+    assert_eq!(clamp_0_100(Decimal::from(150)), Decimal::from(100));
+}
+
+#[test]
+fn median_i64_works() {
+    let values = vec![3, 1, 4, 1, 5];
+    let result = median_i64(values);
+    assert_eq!(result, Some(3));
+    assert_eq!(median_i64(vec![]), None);
 }
