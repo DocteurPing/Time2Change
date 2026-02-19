@@ -8,7 +8,7 @@ pub enum CurrencyPairError {
     CurrencySame,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct CurrencyPair {
     base: Currency,
     quote: Currency,
@@ -23,11 +23,11 @@ impl CurrencyPair {
         }
     }
 
-    pub fn base(&self) -> &Currency {
+    pub const fn base(&self) -> &Currency {
         &self.base
     }
 
-    pub fn quote(&self) -> &Currency {
+    pub const fn quote(&self) -> &Currency {
         &self.quote
     }
 }

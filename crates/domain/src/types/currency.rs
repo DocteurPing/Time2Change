@@ -9,7 +9,9 @@ pub enum CurrencyError {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Currency([u8; 3]);
+pub struct Currency {
+    currency: [u8; 3],
+}
 
 impl Currency {
     pub fn new(value: &str) -> Result<Self, CurrencyError> {
@@ -25,7 +27,7 @@ impl Currency {
             .as_bytes()
             .try_into()
             .map_err(|_| CurrencyError::InvalidLength)?;
-        Ok(Self(bytes))
+        Ok(Self { currency: bytes })
     }
 }
 
@@ -39,7 +41,7 @@ impl TryFrom<&str> for Currency {
 
 impl std::fmt::Display for Currency {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let currency = std::str::from_utf8(&self.0).expect("Currency invariant violated");
+        let currency = std::str::from_utf8(&self.currency).expect("Currency invariant violated");
         write!(f, "{currency}")
     }
 }

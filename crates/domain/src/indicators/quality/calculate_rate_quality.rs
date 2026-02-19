@@ -15,15 +15,10 @@ pub fn calculate_rate_quality(values: &TimeSeries, config: &RateQualityConfig) -
     let rates = values.rates();
 
     if rates.is_empty() {
-        return RateQuality {
-            overall: Decimal::ZERO,
-            breakdown: RateQualityBreakdown {
-                completeness: Decimal::ZERO,
-                gap_consistency: Decimal::ZERO,
-                outlier: Decimal::ZERO,
-                volatility: Decimal::ZERO,
-            },
-        };
+        return RateQuality::new(
+            Decimal::ZERO,
+            RateQualityBreakdown::new(Decimal::ZERO, Decimal::ZERO, Decimal::ZERO, Decimal::ZERO),
+        );
     }
 
     let series_values: Vec<Decimal> = rates.iter().map(|r| *r.rate()).collect();
@@ -78,7 +73,7 @@ pub fn calculate_rate_quality(values: &TimeSeries, config: &RateQualityConfig) -
                     .iter()
                     .filter(|v| {
                         z_score(**v, mean, std_dev)
-                            .map(|z| z.abs() > config.outlier_z_threshold)
+                            .map(|z| z.abs() > *config.outlier_z_threshold())
                             .unwrap_or(false)
                     })
                     .count();
@@ -104,25 +99,20 @@ pub fn calculate_rate_quality(values: &TimeSeries, config: &RateQualityConfig) -
         dec!(100) // No returns to measure → consider perfectly stable
     } else {
         let std_returns = standard_deviation(&returns).unwrap_or(Decimal::ZERO);
-        clamp_0_100(dec!(100) / (Decimal::ONE + config.max_allowed_volatility * std_returns))
+        clamp_0_100(dec!(100) / (Decimal::ONE + config.max_allowed_volatility() * std_returns))
     };
 
     let overall = clamp_0_100(
-        config.w_completeness * completeness
-            + config.w_gap_consistency * gap_consistency
-            + config.w_outlier * outlier
-            + config.w_volatility * volatility,
+        config.w_completeness() * completeness
+            + config.w_gap_consistency() * gap_consistency
+            + config.w_outlier() * outlier
+            + config.w_volatility() * volatility,
     );
 
-    RateQuality {
+    RateQuality::new(
         overall,
-        breakdown: RateQualityBreakdown {
-            completeness,
-            gap_consistency,
-            outlier,
-            volatility,
-        },
-    }
+        RateQualityBreakdown::new(completeness, gap_consistency, outlier, volatility),
+    )
 }
 
 #[test]
@@ -137,11 +127,11 @@ fn test_calculate_rate_quality_empty() {
     );
     let config = RateQualityConfig::default();
     let quality = calculate_rate_quality(&time_series, &config);
-    assert_eq!(quality.overall, Decimal::ZERO);
-    assert_eq!(quality.breakdown.completeness, Decimal::ZERO);
-    assert_eq!(quality.breakdown.gap_consistency, Decimal::ZERO);
-    assert_eq!(quality.breakdown.outlier, Decimal::ZERO);
-    assert_eq!(quality.breakdown.volatility, Decimal::ZERO);
+    assert_eq!(*quality.overall(), Decimal::ZERO);
+    assert_eq!(*quality.breakdown().completeness(), Decimal::ZERO);
+    assert_eq!(*quality.breakdown().gap_consistency(), Decimal::ZERO);
+    assert_eq!(*quality.breakdown().outlier(), Decimal::ZERO);
+    assert_eq!(*quality.breakdown().volatility(), Decimal::ZERO);
 }
 
 #[test]
@@ -167,23 +157,24 @@ fn test_calculate_rate_quality_perfect() {
     );
     let config = RateQualityConfig::default();
     let quality = calculate_rate_quality(&time_series, &config);
-    assert_eq!(quality.overall, dec!(100));
-    assert_eq!(quality.breakdown.completeness, dec!(100));
-    assert_eq!(quality.breakdown.gap_consistency, dec!(100));
-    assert_eq!(quality.breakdown.outlier, dec!(100));
-    assert_eq!(quality.breakdown.volatility, dec!(100));
+    assert_eq!(*quality.overall(), dec!(100));
+    assert_eq!(*quality.breakdown().completeness(), dec!(100));
+    assert_eq!(*quality.breakdown().gap_consistency(), dec!(100));
+    assert_eq!(*quality.breakdown().outlier(), dec!(100));
+    assert_eq!(*quality.breakdown().volatility(), dec!(100));
 }
 
 #[test]
 fn test_rate_quality_with_gap_and_outlier() {
-    let config = RateQualityConfig {
-        w_completeness: dec!(0.25),
-        w_gap_consistency: dec!(0.25),
-        w_outlier: dec!(0.25),
-        w_volatility: dec!(0.25),
-        outlier_z_threshold: dec!(1.0),
-        max_allowed_volatility: dec!(1.0),
-    };
+    let config = RateQualityConfig::new(
+        dec!(0.25),
+        dec!(0.25),
+        dec!(0.25),
+        dec!(0.25),
+        dec!(1.0),
+        dec!(1.0),
+    )
+    .unwrap();
 
     let time = chrono::Utc::now();
 
@@ -219,11 +210,11 @@ fn test_rate_quality_with_gap_and_outlier() {
     );
     let result = calculate_rate_quality(&series, &config);
 
-    assert!(result.breakdown.completeness > dec!(85));
-    assert!(result.breakdown.gap_consistency > dec!(74));
-    assert!(result.breakdown.outlier > dec!(83));
-    assert!(result.breakdown.volatility > dec!(80));
-    assert!(result.overall > dec!(60));
+    assert!(*result.breakdown().completeness() > dec!(85));
+    assert!(*result.breakdown().gap_consistency() > dec!(74));
+    assert!(*result.breakdown().outlier() > dec!(83));
+    assert!(*result.breakdown().volatility() > dec!(80));
+    assert!(*result.overall() > dec!(60));
 
     series.add_rate(crate::types::exchange_rate::ExchangeRate::new(
         time + chrono::Duration::seconds(420),
@@ -232,9 +223,9 @@ fn test_rate_quality_with_gap_and_outlier() {
 
     let result2 = calculate_rate_quality(&series, &config);
 
-    assert!(result.breakdown.completeness < result2.breakdown.completeness);
-    assert!(result.breakdown.gap_consistency < result2.breakdown.gap_consistency);
-    assert!(result.breakdown.outlier < result2.breakdown.outlier);
-    assert!(result.breakdown.volatility < result2.breakdown.volatility);
-    assert!(result.overall < result2.overall);
+    assert!(result.breakdown().completeness() < result2.breakdown().completeness());
+    assert!(result.breakdown().gap_consistency() < result2.breakdown().gap_consistency());
+    assert!(result.breakdown().outlier() < result2.breakdown().outlier());
+    assert!(result.breakdown().volatility() < result2.breakdown().volatility());
+    assert!(result.overall() < result2.overall());
 }

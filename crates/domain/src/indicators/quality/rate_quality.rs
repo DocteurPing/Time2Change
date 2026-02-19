@@ -1,10 +1,10 @@
 use rust_decimal::Decimal;
 
 pub struct RateQualityBreakdown {
-    pub completeness: Decimal,    // 0..100
-    pub gap_consistency: Decimal, // 0..100
-    pub outlier: Decimal,         // 0..100
-    pub volatility: Decimal,      // 0..100
+    completeness: Decimal,    // 0..100
+    gap_consistency: Decimal, // 0..100
+    outlier: Decimal,         // 0..100
+    volatility: Decimal,      // 0..100
 }
 
 impl Default for RateQualityBreakdown {
@@ -18,9 +18,41 @@ impl Default for RateQualityBreakdown {
     }
 }
 
+impl RateQualityBreakdown {
+    pub const fn new(
+        completeness: Decimal,
+        gap_consistency: Decimal,
+        outlier: Decimal,
+        volatility: Decimal,
+    ) -> Self {
+        Self {
+            completeness,
+            gap_consistency,
+            outlier,
+            volatility,
+        }
+    }
+
+    pub const fn completeness(&self) -> &Decimal {
+        &self.completeness
+    }
+
+    pub const fn gap_consistency(&self) -> &Decimal {
+        &self.gap_consistency
+    }
+
+    pub const fn outlier(&self) -> &Decimal {
+        &self.outlier
+    }
+
+    pub const fn volatility(&self) -> &Decimal {
+        &self.volatility
+    }
+}
+
 pub struct RateQuality {
-    pub overall: Decimal, // 0..100
-    pub breakdown: RateQualityBreakdown,
+    overall: Decimal, // 0..100
+    breakdown: RateQualityBreakdown,
 }
 
 impl Default for RateQuality {
@@ -29,6 +61,20 @@ impl Default for RateQuality {
             overall: Decimal::ZERO,
             breakdown: RateQualityBreakdown::default(),
         }
+    }
+}
+
+impl RateQuality {
+    pub const fn new(overall: Decimal, breakdown: RateQualityBreakdown) -> Self {
+        Self { overall, breakdown }
+    }
+
+    pub const fn overall(&self) -> &Decimal {
+        &self.overall
+    }
+
+    pub const fn breakdown(&self) -> &RateQualityBreakdown {
+        &self.breakdown
     }
 }
 
