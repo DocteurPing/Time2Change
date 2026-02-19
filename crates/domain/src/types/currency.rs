@@ -1,6 +1,10 @@
-#[derive(Debug, Clone, PartialEq, Eq)]
+use thiserror::Error;
+
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum CurrencyError {
-    InvalidFormat,
+    #[error("Currency must be uppercase ASCII letters: {value}")]
+    InvalidFormat { value: String },
+    #[error("Currency must be 3 letters")]
     InvalidLength,
 }
 
@@ -13,7 +17,9 @@ impl Currency {
             return Err(CurrencyError::InvalidLength);
         }
         if !value.chars().all(|c| c.is_ascii_uppercase()) {
-            return Err(CurrencyError::InvalidFormat);
+            return Err(CurrencyError::InvalidFormat {
+                value: value.to_owned(),
+            });
         }
         let bytes = value
             .as_bytes()
@@ -28,15 +34,6 @@ impl TryFrom<&str> for Currency {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Currency::new(value)
-    }
-}
-
-impl std::fmt::Display for CurrencyError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::InvalidLength => write!(f, "Currency must be 3 letters"),
-            Self::InvalidFormat => write!(f, "Currency must be uppercase ASCII letters"),
-        }
     }
 }
 
@@ -78,10 +75,15 @@ mod tests {
     fn lowercase_fails() {
         let currency = Currency::new("usd");
         let error = currency.err().unwrap();
-        assert_eq!(error, CurrencyError::InvalidFormat);
+        assert_eq!(
+            error,
+            CurrencyError::InvalidFormat {
+                value: "usd".to_owned()
+            }
+        );
         assert_eq!(
             error.to_string(),
-            "Currency must be uppercase ASCII letters"
+            "Currency must be uppercase ASCII letters: usd"
         )
     }
 
@@ -89,10 +91,15 @@ mod tests {
     fn non_letter_fails() {
         let currency = Currency::new("0UR");
         let error = currency.err().unwrap();
-        assert_eq!(error, CurrencyError::InvalidFormat);
+        assert_eq!(
+            error,
+            CurrencyError::InvalidFormat {
+                value: "0UR".to_owned()
+            }
+        );
         assert_eq!(
             error.to_string(),
-            "Currency must be uppercase ASCII letters"
+            "Currency must be uppercase ASCII letters: 0UR"
         )
     }
 }
