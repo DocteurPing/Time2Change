@@ -8,7 +8,7 @@ pub enum CurrencyPairError {
     CurrencySame,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct CurrencyPair {
     base: Currency,
     quote: Currency,

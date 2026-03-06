@@ -6,5 +6,5 @@ edition.workspace = true
 [dependencies]
 tokio.workspace = true
 thiserror.workspace = true
-chrono = "0.4.43"
-rust_decimal = { version = "1.40.0", default-features = false, features = ["maths", "macros"] }
+chrono.workspace = true
+rust_decimal.workspace = true

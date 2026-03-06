@@ -5,6 +5,9 @@ edition.workspace = true
 
 [dependencies]
 tokio.workspace = true
+thiserror.workspace = true
+chrono.workspace = true
+rust_decimal.workspace = true
+async-trait.workspace = true
 domain = { path = "../domain" }
 shared = { path = "../shared" }
-async-trait = "0.1"

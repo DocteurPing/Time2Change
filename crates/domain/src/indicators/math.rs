@@ -1,5 +1,7 @@
 use rust_decimal::{Decimal, MathematicalOps, dec};
 
+use crate::types::exchange_rate::ExchangeRate;
+
 pub fn average(values: &[Decimal]) -> Option<Decimal> {
     if values.is_empty() {
         None
@@ -79,6 +81,14 @@ pub fn median_i64(mut values: Vec<i64>) -> Option<i64> {
     } else {
         Some((values[mid - 1] + values[mid]) / 2)
     }
+}
+
+pub fn lowest_value(values: &[ExchangeRate]) -> Option<&Decimal> {
+    values.iter().map(|r| r.rate()).min()
+}
+
+pub fn highest_value(values: &[ExchangeRate]) -> Option<&Decimal> {
+    values.iter().map(|r| r.rate()).max()
 }
 
 #[test]
