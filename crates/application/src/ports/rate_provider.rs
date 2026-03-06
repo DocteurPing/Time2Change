@@ -24,3 +24,63 @@ pub enum RateProviderError {
     #[error("parse error: {0}")]
     ParseError(String),
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pair_not_supported_display() {
+        let err = RateProviderError::PairNotSupported("EUR-USD".into());
+        assert_eq!(err.to_string(), "pair not supported: EUR-USD");
+    }
+
+    #[test]
+    fn timeout_display() {
+        let err = RateProviderError::Timeout;
+        assert_eq!(err.to_string(), "network timeout");
+    }
+
+    #[test]
+    fn api_error_display() {
+        let err = RateProviderError::ApiError("503 Service Unavailable".into());
+        assert_eq!(err.to_string(), "api error: 503 Service Unavailable");
+    }
+
+    #[test]
+    fn parse_error_display() {
+        let err = RateProviderError::ParseError("invalid JSON".into());
+        assert_eq!(err.to_string(), "parse error: invalid JSON");
+    }
+
+    #[test]
+    fn error_is_debug() {
+        let err = RateProviderError::Timeout;
+        let debug = format!("{:?}", err);
+        assert!(debug.contains("Timeout"));
+    }
+
+    #[test]
+    fn pair_not_supported_debug_contains_value() {
+        let err = RateProviderError::PairNotSupported("GBP-JPY".into());
+        let debug = format!("{:?}", err);
+        assert!(debug.contains("PairNotSupported"));
+        assert!(debug.contains("GBP-JPY"));
+    }
+
+    #[test]
+    fn api_error_debug_contains_value() {
+        let err = RateProviderError::ApiError("rate limit exceeded".into());
+        let debug = format!("{:?}", err);
+        assert!(debug.contains("ApiError"));
+        assert!(debug.contains("rate limit exceeded"));
+    }
+
+    #[test]
+    fn parse_error_debug_contains_value() {
+        let err = RateProviderError::ParseError("unexpected EOF".into());
+        let debug = format!("{:?}", err);
+        assert!(debug.contains("ParseError"));
+        assert!(debug.contains("unexpected EOF"));
+    }
+}

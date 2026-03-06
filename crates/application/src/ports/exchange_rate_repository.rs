@@ -39,3 +39,43 @@ pub enum RepositoryError {
     #[error("invalid input: {0}")]
     Invalid(String),
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn not_found_display() {
+        let err = RepositoryError::NotFound("EUR-USD".into());
+        assert_eq!(err.to_string(), "pair EUR-USD not found");
+    }
+
+    #[test]
+    fn conflict_display() {
+        let err = RepositoryError::Conflict("2024-01-01".into());
+        assert_eq!(
+            err.to_string(),
+            "conflict: rates already stored: 2024-01-01"
+        );
+    }
+
+    #[test]
+    fn storage_display() {
+        let err = RepositoryError::Storage("connection refused".into());
+        assert_eq!(err.to_string(), "storage failure: connection refused");
+    }
+
+    #[test]
+    fn invalid_display() {
+        let err = RepositoryError::Invalid("empty range".into());
+        assert_eq!(err.to_string(), "invalid input: empty range");
+    }
+
+    #[test]
+    fn error_is_debug() {
+        let err = RepositoryError::NotFound("XYZ".into());
+        let debug = format!("{:?}", err);
+        assert!(debug.contains("NotFound"));
+        assert!(debug.contains("XYZ"));
+    }
+}
