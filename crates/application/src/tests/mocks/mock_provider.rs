@@ -26,7 +26,7 @@ impl RateProvider for MockProvider {
     ) -> Result<ExchangeRate, RateProviderError> {
         match &self.result {
             Ok(r) => Ok(r.clone()),
-            Err(_) => Err(RateProviderError::Timeout),
+            Err(e) => Err(e.clone()),
         }
     }
 

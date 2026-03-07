@@ -44,15 +44,6 @@ impl MockRepository {
         }
     }
 
-    pub(crate) fn ok() -> Self {
-        Self {
-            rates: Vec::new(),
-            load_error: None,
-            save_result: Ok(()),
-            saved: Arc::new(Mutex::new(Vec::new())),
-        }
-    }
-
     pub(crate) fn err(e: RepositoryError) -> Self {
         Self {
             rates: Vec::new(),
@@ -100,6 +91,6 @@ impl ExchangeRateRepository for MockRepository {
         _pair: &CurrencyPair,
         _range: RangeInclusive<DateTime<Utc>>,
     ) -> Result<bool, RepositoryError> {
-        unimplemented!("not needed for analyze tests")
+        unimplemented!("not needed for current tests")
     }
 }

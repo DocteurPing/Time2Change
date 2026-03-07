@@ -17,7 +17,7 @@ mod tests {
         let rate = make_rate(now, dec!(1.0850));
 
         let provider = MockProvider::ok(rate);
-        let repo = MockRepository::ok();
+        let repo = MockRepository::empty();
         let uc = IngestRatesUseCase::new(repo, provider);
 
         let result = uc.execute(pair.clone()).await.unwrap();
@@ -34,7 +34,7 @@ mod tests {
         let rate = make_rate(now, dec!(1.12));
 
         let provider = MockProvider::ok(rate);
-        let repo = MockRepository::ok();
+        let repo = MockRepository::empty();
         let uc = IngestRatesUseCase::new(repo, provider);
 
         uc.execute(pair.clone()).await.unwrap();
@@ -51,7 +51,7 @@ mod tests {
     async fn execute_provider_timeout_returns_provider_error() {
         let pair = make_pair();
         let provider = MockProvider::err(RateProviderError::Timeout);
-        let repo = MockRepository::ok();
+        let repo = MockRepository::empty();
         let uc = IngestRatesUseCase::new(repo, provider);
 
         let err = uc.execute(pair).await.unwrap_err();
@@ -63,7 +63,7 @@ mod tests {
     async fn execute_provider_pair_not_supported_returns_provider_error() {
         let pair = make_pair();
         let provider = MockProvider::err(RateProviderError::PairNotSupported("EUR/USD".into()));
-        let repo = MockRepository::ok();
+        let repo = MockRepository::empty();
         let uc = IngestRatesUseCase::new(repo, provider);
 
         let err = uc.execute(pair).await.unwrap_err();
@@ -75,7 +75,7 @@ mod tests {
     async fn execute_provider_api_error_returns_provider_error() {
         let pair = make_pair();
         let provider = MockProvider::err(RateProviderError::ApiError("503".into()));
-        let repo = MockRepository::ok();
+        let repo = MockRepository::empty();
         let uc = IngestRatesUseCase::new(repo, provider);
 
         let err = uc.execute(pair).await.unwrap_err();
@@ -87,7 +87,7 @@ mod tests {
     async fn execute_provider_parse_error_returns_provider_error() {
         let pair = make_pair();
         let provider = MockProvider::err(RateProviderError::ParseError("bad json".into()));
-        let repo = MockRepository::ok();
+        let repo = MockRepository::empty();
         let uc = IngestRatesUseCase::new(repo, provider);
 
         let err = uc.execute(pair).await.unwrap_err();
@@ -129,7 +129,7 @@ mod tests {
     async fn execute_does_not_call_repo_when_provider_fails() {
         let pair = make_pair();
         let provider = MockProvider::err(RateProviderError::Timeout);
-        let repo = MockRepository::ok();
+        let repo = MockRepository::empty();
         let uc = IngestRatesUseCase::new(repo, provider);
 
         let _ = uc.execute(pair).await;
@@ -146,7 +146,7 @@ mod tests {
         let rate = make_rate(now, precise_rate);
 
         let provider = MockProvider::ok(rate);
-        let repo = MockRepository::ok();
+        let repo = MockRepository::empty();
         let uc = IngestRatesUseCase::new(repo, provider);
 
         let result = uc.execute(pair).await.unwrap();
@@ -176,7 +176,7 @@ mod tests {
         let rate = make_rate(now, dec!(1.05));
 
         let provider = MockProvider::ok(rate);
-        let repo = MockRepository::ok();
+        let repo = MockRepository::empty();
         let uc = IngestRatesUseCase::new(repo, provider);
 
         let result = uc.execute(pair).await.unwrap();
