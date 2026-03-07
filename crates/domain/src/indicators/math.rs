@@ -1,5 +1,7 @@
 use rust_decimal::{Decimal, MathematicalOps, dec};
 
+use crate::types::exchange_rate::ExchangeRate;
+
 pub fn average(values: &[Decimal]) -> Option<Decimal> {
     if values.is_empty() {
         None
@@ -79,6 +81,14 @@ pub fn median_i64(mut values: Vec<i64>) -> Option<i64> {
     } else {
         Some((values[mid - 1] + values[mid]) / 2)
     }
+}
+
+pub fn lowest_value(values: &[ExchangeRate]) -> Option<&Decimal> {
+    values.iter().map(|r| r.rate()).min()
+}
+
+pub fn highest_value(values: &[ExchangeRate]) -> Option<&Decimal> {
+    values.iter().map(|r| r.rate()).max()
 }
 
 #[test]
@@ -185,4 +195,61 @@ fn median_i64_works() {
     let result = median_i64(values);
     assert_eq!(result, Some(3));
     assert_eq!(median_i64(vec![]), None);
+}
+
+#[test]
+fn test_lowest_value_non_empty() {
+    let time = chrono::Utc::now();
+    let values = vec![
+        ExchangeRate::new(time, dec!(5)),
+        ExchangeRate::new(time, dec!(2)),
+        ExchangeRate::new(time, dec!(8)),
+    ];
+    let result = lowest_value(&values);
+    assert_eq!(result, Some(&dec!(2)));
+}
+#[test]
+fn test_lowest_value_empty() {
+    let values: Vec<ExchangeRate> = vec![];
+    let result = lowest_value(&values);
+    assert_eq!(result, None);
+}
+#[test]
+fn test_lowest_value_all_equal() {
+    let time = chrono::Utc::now();
+    let values = vec![
+        ExchangeRate::new(time, dec!(3)),
+        ExchangeRate::new(time, dec!(3)),
+        ExchangeRate::new(time, dec!(3)),
+    ];
+    let result = lowest_value(&values);
+    assert_eq!(result, Some(&dec!(3)));
+}
+#[test]
+fn test_highest_value_non_empty() {
+    let time = chrono::Utc::now();
+    let values = vec![
+        ExchangeRate::new(time, dec!(5)),
+        ExchangeRate::new(time, dec!(2)),
+        ExchangeRate::new(time, dec!(8)),
+    ];
+    let result = highest_value(&values);
+    assert_eq!(result, Some(&dec!(8)));
+}
+#[test]
+fn test_highest_value_empty() {
+    let values: Vec<ExchangeRate> = vec![];
+    let result = highest_value(&values);
+    assert_eq!(result, None);
+}
+#[test]
+fn test_highest_value_all_equal() {
+    let time = chrono::Utc::now();
+    let values = vec![
+        ExchangeRate::new(time, dec!(3)),
+        ExchangeRate::new(time, dec!(3)),
+        ExchangeRate::new(time, dec!(3)),
+    ];
+    let result = highest_value(&values);
+    assert_eq!(result, Some(&dec!(3)));
 }
