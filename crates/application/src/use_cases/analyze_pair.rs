@@ -2,9 +2,8 @@ use crate::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryE
 use crate::responses::analyze_pair_responses::{ChangeRecommendation, PairAnalysis};
 use domain::indicators::math::range_position;
 use domain::indicators::math::{highest_value, lowest_value};
-use domain::indicators::quality::calculate_rate_quality::calculate_rate_quality;
-use domain::indicators::quality::rate_quality_config::RateQualityConfig;
 use domain::types::currency_pair::CurrencyPair;
+use domain::types::rate_quality_config::RateQualityConfig;
 use rust_decimal::dec;
 use thiserror::Error;
 
@@ -34,7 +33,7 @@ impl<R: ExchangeRateRepository> AnalyzePairUseCase<R> {
         }
 
         let current_rate = *rates.last().ok_or(AnalyzeError::InsufficientData)?.rate();
-        let quality = calculate_rate_quality(&time_series, &self.config);
+        let quality = time_series.calculate_rate_quality(&self.config);
         let min_rate = lowest_value(rates).ok_or(AnalyzeError::InsufficientData)?;
         let max_rate = highest_value(rates).ok_or(AnalyzeError::InsufficientData)?;
 

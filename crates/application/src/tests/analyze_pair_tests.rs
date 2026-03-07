@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use chrono::{Duration, Utc};
-    use domain::indicators::quality::rate_quality_config::RateQualityConfig;
+    use domain::types::rate_quality_config::RateQualityConfig;
     use rust_decimal::dec;
 
     use crate::{
