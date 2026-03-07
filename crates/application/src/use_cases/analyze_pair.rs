@@ -1,5 +1,5 @@
-use crate::dtos::structs::{ChangeRecommendation, PairAnalysis};
 use crate::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError};
+use crate::responses::analyze_pair_responses::{ChangeRecommendation, PairAnalysis};
 use domain::indicators::math::range_position;
 use domain::indicators::math::{highest_value, lowest_value};
 use domain::indicators::quality::calculate_rate_quality::calculate_rate_quality;
