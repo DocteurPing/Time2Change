@@ -128,14 +128,7 @@ mod tests {
         ) -> Result<ExchangeRate, RateProviderError> {
             match &self.result {
                 Ok(r) => Ok(r.clone()),
-                Err(RateProviderError::Timeout) => Err(RateProviderError::Timeout),
-                Err(RateProviderError::PairNotSupported(s)) => {
-                    Err(RateProviderError::PairNotSupported(s.clone()))
-                }
-                Err(RateProviderError::ApiError(s)) => Err(RateProviderError::ApiError(s.clone())),
-                Err(RateProviderError::ParseError(s)) => {
-                    Err(RateProviderError::ParseError(s.clone()))
-                }
+                Err(e) => Err(e.clone()),
             }
         }
     }
@@ -180,10 +173,7 @@ mod tests {
                 .push((pair.clone(), rates.to_vec()));
             match &self.save_result {
                 Ok(()) => Ok(()),
-                Err(RepositoryError::Storage(s)) => Err(RepositoryError::Storage(s.clone())),
-                Err(RepositoryError::Conflict(s)) => Err(RepositoryError::Conflict(s.clone())),
-                Err(RepositoryError::NotFound(s)) => Err(RepositoryError::NotFound(s.clone())),
-                Err(RepositoryError::Invalid(s)) => Err(RepositoryError::Invalid(s.clone())),
+                Err(e) => Err(e.clone()),
             }
         }
 

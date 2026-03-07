@@ -176,12 +176,7 @@ mod tests {
             _range: RangeInclusive<DateTime<Utc>>,
         ) -> Result<TimeSeries, RepositoryError> {
             if let Some(ref e) = self.load_error {
-                return Err(match e {
-                    RepositoryError::NotFound(s) => RepositoryError::NotFound(s.clone()),
-                    RepositoryError::Conflict(s) => RepositoryError::Conflict(s.clone()),
-                    RepositoryError::Storage(s) => RepositoryError::Storage(s.clone()),
-                    RepositoryError::Invalid(s) => RepositoryError::Invalid(s.clone()),
-                });
+                return Err(e.clone());
             }
             Ok(TimeSeries::new(pair.clone(), self.rates.clone()))
         }

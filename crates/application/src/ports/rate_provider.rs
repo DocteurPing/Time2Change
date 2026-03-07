@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
+use thiserror::Error;
 
 #[async_trait::async_trait]
 pub trait RateProvider: Send + Sync {
@@ -13,7 +14,7 @@ pub trait RateProvider: Send + Sync {
     async fn fetch_latest(&self, pair: &CurrencyPair) -> Result<ExchangeRate, RateProviderError>;
 }
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum RateProviderError {
     #[error("pair not supported: {0}")]
     PairNotSupported(String),

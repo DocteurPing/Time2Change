@@ -28,7 +28,7 @@ pub trait ExchangeRateRepository: Send + Sync {
     ) -> Result<bool, RepositoryError>;
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum RepositoryError {
     #[error("pair {0} not found")]
     NotFound(String),
