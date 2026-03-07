@@ -44,7 +44,7 @@ pub fn calculate_rate_quality(values: &TimeSeries, config: &RateQualityConfig) -
         } else {
             let expected_count = total_duration / typical_gap + 1;
             let expected_count_dec = Decimal::from(expected_count);
-            let observed_count_dec = Decimal::from(rates.len() as i64);
+            let observed_count_dec = Decimal::from(rates.len());
             clamp_0_100(observed_count_dec / expected_count_dec * dec!(100))
         }
     };
@@ -77,8 +77,7 @@ pub fn calculate_rate_quality(values: &TimeSeries, config: &RateQualityConfig) -
                             .unwrap_or(false)
                     })
                     .count();
-                let outlier_ratio =
-                    Decimal::from(outliers as i64) / Decimal::from(series_values.len() as i64);
+                let outlier_ratio = Decimal::from(outliers) / Decimal::from(series_values.len());
                 clamp_0_100((Decimal::ONE - outlier_ratio) * dec!(100))
             }
             _ => dec!(100),
