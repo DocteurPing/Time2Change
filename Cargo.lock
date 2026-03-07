@@ -116,7 +116,6 @@ dependencies = [
  "chrono",
  "rust_decimal",
  "thiserror",
- "tokio",
 ]
 
 [[package]]
