@@ -22,10 +22,10 @@ impl<R: ExchangeRateRepository> AnalyzePairUseCase<R> {
     pub async fn execute(
         &self,
         pair: CurrencyPair,
-        lookback_days: i64,
+        lookback_days: u32,
     ) -> Result<PairAnalysis, AnalyzeError> {
         let now = chrono::Utc::now();
-        let start = now - chrono::Duration::days(lookback_days);
+        let start = now - chrono::Duration::days(i64::from(lookback_days));
         let time_series = self.repository.load_rates(&pair, start..=now).await?;
         let rates = time_series.rates();
 

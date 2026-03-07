@@ -1,119 +1,23 @@
 #[cfg(test)]
 mod tests {
-    use chrono::{DateTime, Duration, Utc};
-    use domain::{
-        indicators::quality::rate_quality_config::RateQualityConfig,
-        types::{
-            currency::Currency, currency_pair::CurrencyPair, exchange_rate::ExchangeRate,
-            time_series::TimeSeries,
-        },
-    };
+    use chrono::{Duration, Utc};
+    use domain::indicators::quality::rate_quality_config::RateQualityConfig;
     use rust_decimal::dec;
-    use std::ops::RangeInclusive;
 
     use crate::{
-        ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError},
+        ports::exchange_rate_repository::RepositoryError,
+        tests::{
+            helpers::{build_rates, make_pair, make_rate},
+            mocks::mock_repository::MockRepository,
+        },
         use_cases::analyze_pair::{AnalyzeError, AnalyzePairUseCase},
     };
-
-    // ── Helpers ─────────────────────────────────────────────────────
-
-    fn make_pair() -> CurrencyPair {
-        CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap()
-    }
-
-    fn make_rate(ts: DateTime<Utc>, rate: rust_decimal::Decimal) -> ExchangeRate {
-        ExchangeRate::new(ts, rate)
-    }
-
-    fn default_config() -> RateQualityConfig {
-        RateQualityConfig::default()
-    }
-
-    /// Build a series of evenly-spaced rates starting `days_ago` days before now.
-    fn build_rates(values: &[rust_decimal::Decimal], days_ago: i64) -> Vec<ExchangeRate> {
-        let now = Utc::now();
-        let start = now - Duration::days(days_ago);
-        let step = if values.len() <= 1 {
-            Duration::hours(1)
-        } else {
-            Duration::days(days_ago) / (values.len() as i32 - 1)
-        };
-
-        values
-            .iter()
-            .enumerate()
-            .map(|(i, v)| make_rate(start + step * i as i32, *v))
-            .collect()
-    }
-
-    // ── Mock Repository ─────────────────────────────────────────────
-
-    struct MockRepository {
-        rates: Vec<ExchangeRate>,
-        load_error: Option<RepositoryError>,
-    }
-
-    impl MockRepository {
-        fn with_rates(rates: Vec<ExchangeRate>) -> Self {
-            Self {
-                rates,
-                load_error: None,
-            }
-        }
-
-        fn with_error(e: RepositoryError) -> Self {
-            Self {
-                rates: Vec::new(),
-                load_error: Some(e),
-            }
-        }
-
-        fn empty() -> Self {
-            Self {
-                rates: Vec::new(),
-                load_error: None,
-            }
-        }
-    }
-
-    #[async_trait::async_trait]
-    impl ExchangeRateRepository for MockRepository {
-        async fn save_rates(
-            &self,
-            _pair: &CurrencyPair,
-            _rates: &[ExchangeRate],
-        ) -> Result<(), RepositoryError> {
-            unimplemented!("not needed for analyze tests")
-        }
-
-        async fn load_rates(
-            &self,
-            pair: &CurrencyPair,
-            _range: RangeInclusive<DateTime<Utc>>,
-        ) -> Result<TimeSeries, RepositoryError> {
-            if let Some(ref e) = self.load_error {
-                return Err(e.clone());
-            }
-            Ok(TimeSeries::new(pair.clone(), self.rates.clone()))
-        }
-
-        async fn exists(
-            &self,
-            _pair: &CurrencyPair,
-            _range: RangeInclusive<DateTime<Utc>>,
-        ) -> Result<bool, RepositoryError> {
-            unimplemented!("not needed for analyze tests")
-        }
-    }
-
-    // ── Tests: happy paths ──────────────────────────────────────────
 
     #[tokio::test]
     async fn execute_returns_analysis_with_correct_pair() {
         let rates = build_rates(&[dec!(1.05), dec!(1.06), dec!(1.07)], 30);
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
         let pair = make_pair();
 
         let result = uc.execute(pair.clone(), 30).await.unwrap();
@@ -125,7 +29,7 @@ mod tests {
     async fn execute_returns_correct_rate_count() {
         let rates = build_rates(&[dec!(1.05), dec!(1.06), dec!(1.07), dec!(1.08)], 30);
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let result = uc.execute(make_pair(), 30).await.unwrap();
 
@@ -139,7 +43,7 @@ mod tests {
             30,
         );
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let result = uc.execute(make_pair(), 30).await.unwrap();
 
@@ -167,7 +71,7 @@ mod tests {
             30,
         );
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let result = uc.execute(make_pair(), 30).await.unwrap();
 
@@ -193,7 +97,7 @@ mod tests {
             30,
         );
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let result = uc.execute(make_pair(), 30).await.unwrap();
 
@@ -219,7 +123,7 @@ mod tests {
             30,
         );
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let result = uc.execute(make_pair(), 30).await.unwrap();
 
@@ -246,7 +150,7 @@ mod tests {
             30,
         );
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let result = uc.execute(make_pair(), 30).await.unwrap();
 
@@ -271,7 +175,7 @@ mod tests {
             30,
         );
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let result = uc.execute(make_pair(), 30).await.unwrap();
 
@@ -282,7 +186,7 @@ mod tests {
     async fn execute_reasoning_contains_lookback_days() {
         let rates = build_rates(&[dec!(1.05), dec!(1.06), dec!(1.07)], 14);
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let result = uc.execute(make_pair(), 14).await.unwrap();
 
@@ -295,7 +199,7 @@ mod tests {
     async fn execute_confidence_is_non_negative() {
         let rates = build_rates(&[dec!(1.05), dec!(1.06), dec!(1.07), dec!(1.08)], 30);
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let result = uc.execute(make_pair(), 30).await.unwrap();
 
@@ -321,7 +225,7 @@ mod tests {
             30,
         );
         let repo_strong = MockRepository::with_rates(strong_rates);
-        let uc_strong = AnalyzePairUseCase::new(repo_strong, default_config());
+        let uc_strong = AnalyzePairUseCase::new(repo_strong, RateQualityConfig::default());
         let result_strong = uc_strong.execute(make_pair(), 30).await.unwrap();
 
         // Weak signal: rate exactly in the middle
@@ -341,7 +245,7 @@ mod tests {
             30,
         );
         let repo_weak = MockRepository::with_rates(weak_rates);
-        let uc_weak = AnalyzePairUseCase::new(repo_weak, default_config());
+        let uc_weak = AnalyzePairUseCase::new(repo_weak, RateQualityConfig::default());
         let result_weak = uc_weak.execute(make_pair(), 30).await.unwrap();
 
         assert!(
@@ -354,7 +258,7 @@ mod tests {
     #[tokio::test]
     async fn execute_empty_rates_returns_insufficient_data() {
         let repo = MockRepository::empty();
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let err = uc.execute(make_pair(), 30).await.unwrap_err();
 
@@ -365,7 +269,7 @@ mod tests {
     #[tokio::test]
     async fn execute_repository_not_found_returns_repository_error() {
         let repo = MockRepository::with_error(RepositoryError::NotFound("EUR-USD".into()));
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let err = uc.execute(make_pair(), 30).await.unwrap_err();
 
@@ -377,7 +281,7 @@ mod tests {
     async fn execute_repository_storage_error_returns_repository_error() {
         let repo =
             MockRepository::with_error(RepositoryError::Storage("connection refused".into()));
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let err = uc.execute(make_pair(), 30).await.unwrap_err();
 
@@ -388,7 +292,7 @@ mod tests {
     #[tokio::test]
     async fn execute_repository_invalid_error_returns_repository_error() {
         let repo = MockRepository::with_error(RepositoryError::Invalid("bad range".into()));
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let err = uc.execute(make_pair(), 30).await.unwrap_err();
 
@@ -404,7 +308,7 @@ mod tests {
         let now = Utc::now();
         let rates = vec![make_rate(now, dec!(1.05))];
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let err = uc.execute(make_pair(), 30).await.unwrap_err();
 
@@ -419,7 +323,7 @@ mod tests {
             make_rate(now, dec!(1.05)),
         ];
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         // When high == low, range_position returns None → InsufficientData
         let err = uc.execute(make_pair(), 30).await.unwrap_err();
@@ -430,7 +334,7 @@ mod tests {
     async fn execute_different_lookback_days() {
         let rates = build_rates(&[dec!(1.05), dec!(1.06), dec!(1.07), dec!(1.08)], 7);
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let result = uc.execute(make_pair(), 7).await.unwrap();
 
@@ -444,7 +348,7 @@ mod tests {
             365,
         );
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let result = uc.execute(make_pair(), 365).await.unwrap();
 
@@ -480,7 +384,7 @@ mod tests {
         let before = Utc::now();
         let rates = build_rates(&[dec!(1.05), dec!(1.06), dec!(1.07)], 30);
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let result = uc.execute(make_pair(), 30).await.unwrap();
         let after = Utc::now();
@@ -510,7 +414,7 @@ mod tests {
             make_rate(now, dec!(1.85)), // position = 0.85
         ];
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let result = uc.execute(make_pair(), 30).await.unwrap();
 
@@ -535,7 +439,7 @@ mod tests {
             make_rate(now, dec!(1.84)), // position = 0.84
         ];
         let repo = MockRepository::with_rates(rates);
-        let uc = AnalyzePairUseCase::new(repo, default_config());
+        let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
         let result = uc.execute(make_pair(), 30).await.unwrap();
 
