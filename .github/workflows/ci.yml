@@ -137,49 +137,6 @@ jobs:
         with:
           command: check advisories bans licenses sources
 
-  build:
-    name: Build (${{ matrix.target }})
-    runs-on: ${{ matrix.os }}
-    needs: [fmt, clippy, test]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-          - os: macos-latest
-            target: aarch64-apple-darwin
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-          key: ${{ matrix.target }}
-
-      - name: Build release binaries
-        run: cargo build --workspace --release --target ${{ matrix.target }}
-
-      - name: Upload api binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: api-${{ matrix.target }}
-          path: target/${{ matrix.target }}/release/api
-          if-no-files-found: error
-          retention-days: 7
-
-      - name: Upload ingestion binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: ingestion-${{ matrix.target }}
-          path: target/${{ matrix.target }}/release/ingestion
-          if-no-files-found: error
-          retention-days: 7
-
   # Gate for branch protection — require this single job to pass
   ci-success:
     name: CI Success
