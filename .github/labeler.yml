@@ -1,0 +1,74 @@
+# =============================================================================
+# Pull Request Labeler Configuration
+# Used by: .github/workflows/labeler.yml (actions/labeler@v5)
+# Docs: https://github.com/actions/labeler#common-examples
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Area labels — based on which crate(s) were changed
+# ---------------------------------------------------------------------------
+"area: domain":
+  - changed-files:
+      - any-glob-to-any-file: "crates/domain/**"
+
+"area: application":
+  - changed-files:
+      - any-glob-to-any-file: "crates/application/**"
+
+"area: infrastructure":
+  - changed-files:
+      - any-glob-to-any-file: "crates/infrastructure/**"
+
+"area: api":
+  - changed-files:
+      - any-glob-to-any-file: "crates/api/**"
+
+"area: ingestion":
+  - changed-files:
+      - any-glob-to-any-file: "crates/ingestion/**"
+
+"area: shared":
+  - changed-files:
+      - any-glob-to-any-file: "crates/shared/**"
+
+"area: ci-cd":
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**"
+          - ".config/**"
+          - "deny.toml"
+
+# ---------------------------------------------------------------------------
+# Type labels — based on the kind of files changed
+# ---------------------------------------------------------------------------
+"documentation":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - "docs/**"
+          - "LICENSE*"
+
+"test":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "crates/**/tests/**"
+          - "crates/**/test_*"
+          - "crates/**/*_test.rs"
+          - "crates/**/*_tests.rs"
+          - "tests/**"
+
+"dependencies":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "Cargo.toml"
+          - "Cargo.lock"
+          - "crates/**/Cargo.toml"
+          - "deny.toml"
+
+"rust":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.rs"
+          - "Cargo.toml"
+          - "Cargo.lock"
+          - "crates/**/Cargo.toml"

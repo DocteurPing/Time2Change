@@ -2,6 +2,7 @@
 name = "ingestion"
 version.workspace = true
 edition.workspace = true
+publish = false
 
 [dependencies]
 tokio.workspace = true

@@ -1,0 +1,6 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Questions & Discussions
+    url: https://github.com/DocteurPing/Time2Change/discussions
+    about: Ask questions, share ideas, or discuss Time2Change in GitHub Discussions instead of opening an issue.
