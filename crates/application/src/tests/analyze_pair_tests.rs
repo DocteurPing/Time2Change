@@ -1,4 +1,3 @@
-
 use chrono::{Duration, Utc};
 use domain::types::rate_quality_config::RateQualityConfig;
 use rust_decimal::dec;

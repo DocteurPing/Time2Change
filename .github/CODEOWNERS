@@ -1,0 +1,53 @@
+# ============================================================================ #
+# CODEOWNERS — Automatically request reviews from the right people
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# ============================================================================ #
+
+# --------------------------------------------------------------------------- #
+# Default owner for everything in the repo
+# --------------------------------------------------------------------------- #
+*                                   @DocteurPing
+
+# --------------------------------------------------------------------------- #
+# Domain layer — core business logic (requires careful review)
+# --------------------------------------------------------------------------- #
+/crates/domain/                     @DocteurPing
+
+# --------------------------------------------------------------------------- #
+# Application layer — use cases and ports
+# --------------------------------------------------------------------------- #
+/crates/application/                @DocteurPing
+
+# --------------------------------------------------------------------------- #
+# Infrastructure layer — external adapters and implementations
+# --------------------------------------------------------------------------- #
+/crates/infrastructure/             @DocteurPing
+
+# --------------------------------------------------------------------------- #
+# API — public-facing HTTP layer
+# --------------------------------------------------------------------------- #
+/crates/api/                        @DocteurPing
+
+# --------------------------------------------------------------------------- #
+# Ingestion — data pipeline / ingestion service
+# --------------------------------------------------------------------------- #
+/crates/ingestion/                  @DocteurPing
+
+# --------------------------------------------------------------------------- #
+# Shared utilities
+# --------------------------------------------------------------------------- #
+/crates/shared/                     @DocteurPing
+
+# --------------------------------------------------------------------------- #
+# CI/CD, GitHub config, and infrastructure-as-code
+# --------------------------------------------------------------------------- #
+/.github/                           @DocteurPing
+/deny.toml                          @DocteurPing
+/.config/                           @DocteurPing
+
+# --------------------------------------------------------------------------- #
+# Dependency changes — always require owner review
+# --------------------------------------------------------------------------- #
+Cargo.toml                          @DocteurPing
+Cargo.lock                          @DocteurPing
+**/Cargo.toml                       @DocteurPing

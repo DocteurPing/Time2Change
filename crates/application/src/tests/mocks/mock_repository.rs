@@ -9,11 +9,13 @@ use domain::types::{
     currency_pair::CurrencyPair, exchange_rate::ExchangeRate, time_series::TimeSeries,
 };
 
+type SavedCall = (CurrencyPair, Vec<ExchangeRate>);
+
 pub(crate) struct MockRepository {
     rates: Vec<ExchangeRate>,
     load_error: Option<RepositoryError>,
     save_result: Result<(), RepositoryError>,
-    saved: Arc<Mutex<Vec<(CurrencyPair, Vec<ExchangeRate>)>>>,
+    saved: Arc<Mutex<Vec<SavedCall>>>,
 }
 
 impl MockRepository {
