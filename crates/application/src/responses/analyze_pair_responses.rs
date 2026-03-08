@@ -92,11 +92,12 @@ impl PairAnalysis {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Utc;
     use domain::types::currency::Currency;
     use domain::types::currency_pair::CurrencyPair;
     use rust_decimal::dec;
+
+    use super::*;
 
     fn make_pair() -> CurrencyPair {
         let base = Currency::new("EUR").unwrap();

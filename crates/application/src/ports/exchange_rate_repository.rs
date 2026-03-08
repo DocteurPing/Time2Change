@@ -1,8 +1,9 @@
-use chrono::{DateTime, Utc};
-use domain::types::{
-    currency_pair::CurrencyPair, exchange_rate::ExchangeRate, time_series::TimeSeries,
-};
 use std::ops::RangeInclusive;
+
+use chrono::{DateTime, Utc};
+use domain::types::currency_pair::CurrencyPair;
+use domain::types::exchange_rate::ExchangeRate;
+use domain::types::time_series::TimeSeries;
 use thiserror::Error;
 
 /// Repository port for persisting and retrieving exchange rates.
