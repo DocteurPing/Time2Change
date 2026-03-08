@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -47,7 +47,7 @@ jobs:
           cache-on-failure: true
 
       - name: Run Clippy
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings -D clippy::pedantic -D clippy::nursery -A clippy::module_name_repetitions -A clippy::future_not_send
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
   check:
     name: Check

@@ -56,7 +56,7 @@ fn test_currency_same() {
 
     assert_eq!(pair, CurrencyPairError::CurrencySame);
     assert_eq!(
-        format!("{}", pair.to_string()),
+        format!("{pair}"),
         "Base and quote currencies cannot be the same"
     );
 }
