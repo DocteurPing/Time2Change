@@ -12,3 +12,6 @@ rust_decimal.workspace = true
 async-trait.workspace = true
 domain = { path = "../domain" }
 shared = { path = "../shared" }
+
+[lints]
+workspace = true

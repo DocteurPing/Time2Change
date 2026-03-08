@@ -1,0 +1,8 @@
+# Threshold for functions considered "too complex" (cognitive complexity)
+cognitive-complexity-threshold = 20
+
+# Max lines in a single function body before triggering too_many_lines
+too-many-lines-threshold = 60
+
+# Max number of function arguments
+too-many-arguments-threshold = 5

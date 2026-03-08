@@ -8,3 +8,6 @@ publish = false
 tokio.workspace = true
 application = { path = "../application" }
 infrastructure = { path = "../infrastructure" }
+
+[lints]
+workspace = true
