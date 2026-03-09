@@ -54,14 +54,17 @@ pub struct IngestResult {
 }
 
 impl IngestResult {
+    #[must_use]
     pub fn pair(&self) -> &CurrencyPair {
         &self.pair
     }
 
+    #[must_use]
     pub fn timestamp(&self) -> &chrono::DateTime<chrono::Utc> {
         &self.timestamp
     }
 
+    #[must_use]
     pub fn rate(&self) -> &rust_decimal::Decimal {
         &self.rate
     }

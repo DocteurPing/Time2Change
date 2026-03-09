@@ -13,14 +13,17 @@ pub struct TimeSeries {
 }
 
 impl TimeSeries {
+    #[must_use]
     pub const fn new(pair: CurrencyPair, rates: Vec<ExchangeRate>) -> Self {
         Self { pair, rates }
     }
 
+    #[must_use]
     pub const fn pair(&self) -> &CurrencyPair {
         &self.pair
     }
 
+    #[must_use]
     pub fn rates(&self) -> &[ExchangeRate] {
         &self.rates
     }
@@ -29,6 +32,7 @@ impl TimeSeries {
         self.rates.push(rate);
     }
 
+    #[must_use]
     pub fn calculate_rate_quality(&self, config: &RateQualityConfig) -> RateQuality {
         if self.rates().is_empty() {
             return RateQuality::new(

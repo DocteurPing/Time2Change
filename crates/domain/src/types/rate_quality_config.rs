@@ -64,10 +64,12 @@ impl RateQualityThresholds {
         })
     }
 
+    #[must_use]
     pub const fn outlier_z_threshold(&self) -> Decimal {
         self.outlier_z
     }
 
+    #[must_use]
     pub const fn max_allowed_volatility(&self) -> Decimal {
         self.max_volatility
     }
@@ -107,24 +109,29 @@ impl RateQualityWeights {
         })
     }
 
+    #[must_use]
     pub const fn completeness(&self) -> Decimal {
         self.completeness
     }
 
+    #[must_use]
     pub const fn gap_consistency(&self) -> Decimal {
         self.gap_consistency
     }
 
+    #[must_use]
     pub const fn outlier(&self) -> Decimal {
         self.outlier
     }
 
+    #[must_use]
     pub const fn volatility(&self) -> Decimal {
         self.volatility
     }
 }
 
 impl RateQualityConfig {
+    #[must_use]
     pub fn new(weights: RateQualityWeights, thresholds: RateQualityThresholds) -> Self {
         Self {
             weights,
@@ -132,10 +139,12 @@ impl RateQualityConfig {
         }
     }
 
+    #[must_use]
     pub const fn weights(&self) -> &RateQualityWeights {
         &self.weights
     }
 
+    #[must_use]
     pub const fn threshold(&self) -> &RateQualityThresholds {
         &self.thresholds
     }

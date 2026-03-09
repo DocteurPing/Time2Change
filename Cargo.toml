@@ -43,7 +43,7 @@ nursery = { level = "allow", priority = -1 } # temporarily relaxed; CI uses -Dwa
 
 # Pedantic overrides — too noisy for this project
 module_name_repetitions = "allow"
-must_use_candidate = "allow"
+must_use_candidate = "warn"
 
 # Nursery overrides
 future_not_send = "warn"

@@ -23,10 +23,12 @@ impl CurrencyPair {
         }
     }
 
+    #[must_use]
     pub const fn base(&self) -> &Currency {
         &self.base
     }
 
+    #[must_use]
     pub const fn quote(&self) -> &Currency {
         &self.quote
     }
