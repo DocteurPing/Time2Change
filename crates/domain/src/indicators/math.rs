@@ -2,6 +2,7 @@ use rust_decimal::{Decimal, MathematicalOps, dec};
 
 use crate::types::exchange_rate::ExchangeRate;
 
+#[must_use]
 pub fn average(values: &[Decimal]) -> Option<Decimal> {
     if values.is_empty() {
         None
@@ -10,6 +11,7 @@ pub fn average(values: &[Decimal]) -> Option<Decimal> {
     }
 }
 
+#[must_use]
 pub fn rolling_average(values: &[Decimal], window: usize) -> Vec<Option<Decimal>> {
     if window == 0 || window > values.len() {
         return vec![None; values.len()];
@@ -29,6 +31,7 @@ pub fn rolling_average(values: &[Decimal], window: usize) -> Vec<Option<Decimal>
     result
 }
 
+#[must_use]
 pub fn standard_deviation(values: &[Decimal]) -> Option<Decimal> {
     if values.is_empty() {
         None
@@ -46,6 +49,7 @@ pub fn standard_deviation(values: &[Decimal]) -> Option<Decimal> {
     }
 }
 
+#[must_use]
 pub fn range_position(current: Decimal, high: Decimal, low: Decimal) -> Option<Decimal> {
     if high == low {
         None
@@ -54,6 +58,7 @@ pub fn range_position(current: Decimal, high: Decimal, low: Decimal) -> Option<D
     }
 }
 
+#[must_use]
 pub fn z_score(current: Decimal, mean: Decimal, std_dev: Decimal) -> Option<Decimal> {
     if std_dev == Decimal::ZERO {
         None
@@ -62,6 +67,7 @@ pub fn z_score(current: Decimal, mean: Decimal, std_dev: Decimal) -> Option<Deci
     }
 }
 
+#[must_use]
 pub fn clamp_0_100(value: Decimal) -> Decimal {
     if value < Decimal::ZERO {
         Decimal::ZERO
@@ -70,6 +76,7 @@ pub fn clamp_0_100(value: Decimal) -> Decimal {
     }
 }
 
+#[must_use]
 pub fn median_i64(mut values: Vec<i64>) -> Option<i64> {
     if values.is_empty() {
         return None;
@@ -83,10 +90,12 @@ pub fn median_i64(mut values: Vec<i64>) -> Option<i64> {
     }
 }
 
+#[must_use]
 pub fn lowest_value(values: &[ExchangeRate]) -> Option<&Decimal> {
     values.iter().map(|r| r.rate()).min()
 }
 
+#[must_use]
 pub fn highest_value(values: &[ExchangeRate]) -> Option<&Decimal> {
     values.iter().map(|r| r.rate()).max()
 }

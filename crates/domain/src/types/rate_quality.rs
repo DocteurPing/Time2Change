@@ -20,6 +20,7 @@ impl Default for RateQualityBreakdown {
 }
 
 impl RateQualityBreakdown {
+    #[must_use]
     pub const fn new(
         completeness: Decimal,
         gap_consistency: Decimal,
@@ -34,18 +35,22 @@ impl RateQualityBreakdown {
         }
     }
 
+    #[must_use]
     pub const fn completeness(&self) -> &Decimal {
         &self.completeness
     }
 
+    #[must_use]
     pub const fn gap_consistency(&self) -> &Decimal {
         &self.gap_consistency
     }
 
+    #[must_use]
     pub const fn outlier(&self) -> &Decimal {
         &self.outlier
     }
 
+    #[must_use]
     pub const fn volatility(&self) -> &Decimal {
         &self.volatility
     }
@@ -67,14 +72,17 @@ impl Default for RateQuality {
 }
 
 impl RateQuality {
+    #[must_use]
     pub const fn new(overall: Decimal, breakdown: RateQualityBreakdown) -> Self {
         Self { overall, breakdown }
     }
 
+    #[must_use]
     pub const fn overall(&self) -> &Decimal {
         &self.overall
     }
 
+    #[must_use]
     pub const fn breakdown(&self) -> &RateQualityBreakdown {
         &self.breakdown
     }

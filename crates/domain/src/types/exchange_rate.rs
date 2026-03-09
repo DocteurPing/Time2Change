@@ -8,14 +8,17 @@ pub struct ExchangeRate {
 }
 
 impl ExchangeRate {
+    #[must_use]
     pub const fn new(timestamp: DateTime<Utc>, rate: Decimal) -> Self {
         Self { timestamp, rate }
     }
 
+    #[must_use]
     pub const fn timestamp(&self) -> &DateTime<Utc> {
         &self.timestamp
     }
 
+    #[must_use]
     pub const fn rate(&self) -> &Decimal {
         &self.rate
     }

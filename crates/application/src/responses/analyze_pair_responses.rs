@@ -21,6 +21,7 @@ pub struct PairAnalysis {
 }
 
 impl ChangeRecommendation {
+    #[must_use]
     pub fn new(
         pair: CurrencyPair,
         should_change_now: bool,
@@ -37,28 +38,34 @@ impl ChangeRecommendation {
         }
     }
 
+    #[must_use]
     pub fn pair(&self) -> &CurrencyPair {
         &self.pair
     }
 
+    #[must_use]
     pub fn should_change_now(&self) -> bool {
         self.should_change_now
     }
 
+    #[must_use]
     pub fn confidence(&self) -> &Decimal {
         &self.confidence
     }
 
+    #[must_use]
     pub fn reasoning(&self) -> &str {
         &self.reasoning
     }
 
+    #[must_use]
     pub fn timestamp(&self) -> &chrono::DateTime<chrono::Utc> {
         &self.timestamp
     }
 }
 
 impl PairAnalysis {
+    #[must_use]
     pub fn new(
         pair: CurrencyPair,
         rate_count: usize,
@@ -73,18 +80,22 @@ impl PairAnalysis {
         }
     }
 
+    #[must_use]
     pub fn pair(&self) -> &CurrencyPair {
         &self.pair
     }
 
+    #[must_use]
     pub fn rate_count(&self) -> usize {
         self.rate_count
     }
 
+    #[must_use]
     pub fn quality_score(&self) -> &Decimal {
         &self.quality_score
     }
 
+    #[must_use]
     pub fn recommendation(&self) -> &ChangeRecommendation {
         &self.recommendation
     }
