@@ -46,15 +46,15 @@ module_name_repetitions = "allow"
 must_use_candidate = "allow"
 
 # Nursery overrides
-future_not_send = "allow"
+future_not_send = "warn"
 redundant_pub_crate = "allow"
 
 # Correctness & safety
-unwrap_used = "allow" # temporarily relaxed; CI uses -Dwarnings
-expect_used = "allow" # temporarily relaxed; CI uses -Dwarnings
+unwrap_used = "warn"
+expect_used = "warn"
 panic = "warn"
 todo = "warn"
-unimplemented = "allow" # temporarily relaxed; CI uses -Dwarnings
+unimplemented = "warn"
 dbg_macro = "warn"
 
 # Style & clarity

@@ -54,10 +54,15 @@ impl TimeSeries {
         let completeness = if gaps_seconds.is_empty() {
             dec!(100)
         } else {
-            let total_duration = (*self.rates().last().unwrap().timestamp()
-                - *self.rates().first().unwrap().timestamp())
-            .num_seconds()
-            .abs();
+            let total_duration = match (self.rates().first(), self.rates().last()) {
+                (Some(first), Some(last)) => last
+                    .timestamp()
+                    .signed_duration_since(*first.timestamp())
+                    .num_seconds()
+                    .abs(),
+                _ => 0,
+            };
+
             let typical_gap = median_i64(gaps_seconds.clone()).unwrap_or(0);
             if total_duration == 0 || typical_gap <= 0 {
                 dec!(100)

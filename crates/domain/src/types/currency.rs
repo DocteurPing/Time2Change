@@ -41,7 +41,7 @@ impl TryFrom<&str> for Currency {
 
 impl std::fmt::Display for Currency {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let currency = std::str::from_utf8(&self.currency).expect("Currency invariant violated");
+        let currency = std::str::from_utf8(&self.currency).map_err(|_| std::fmt::Error)?;
         write!(f, "{currency}")
     }
 }
