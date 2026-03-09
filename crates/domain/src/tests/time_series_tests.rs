@@ -2,7 +2,9 @@ use rust_decimal::{Decimal, dec};
 
 use crate::types::currency_pair::CurrencyPair;
 use crate::types::exchange_rate::ExchangeRate;
-use crate::types::rate_quality_config::RateQualityConfig;
+use crate::types::rate_quality_config::{
+    RateQualityConfig, RateQualityThresholds, RateQualityWeights,
+};
 use crate::types::time_series::TimeSeries;
 
 #[test]
@@ -86,14 +88,9 @@ fn test_calculate_rate_quality_perfect() {
 #[test]
 fn test_rate_quality_with_gap_and_outlier() {
     let config = RateQualityConfig::new(
-        dec!(0.25),
-        dec!(0.25),
-        dec!(0.25),
-        dec!(0.25),
-        dec!(1.0),
-        dec!(1.0),
-    )
-    .unwrap();
+        RateQualityWeights::default(),
+        RateQualityThresholds::new(dec!(1.0), dec!(1.0)).unwrap(),
+    );
 
     let time = chrono::Utc::now();
 
