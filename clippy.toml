@@ -6,3 +6,5 @@ too-many-lines-threshold = 60
 
 # Max number of function arguments
 too-many-arguments-threshold = 5
+
+allow-unwrap-in-tests = true

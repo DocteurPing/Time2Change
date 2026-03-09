@@ -89,9 +89,17 @@ impl ExchangeRateRepository for MockRepository {
 
     async fn exists(
         &self,
-        _pair: &CurrencyPair,
-        _range: RangeInclusive<DateTime<Utc>>,
+        pair: &CurrencyPair,
+        range: RangeInclusive<DateTime<Utc>>,
     ) -> Result<bool, RepositoryError> {
-        unimplemented!("not needed for current tests")
+        if let Some(ref e) = self.load_error {
+            return Err(e.clone());
+        }
+        Ok(self
+            .saved
+            .lock()
+            .unwrap()
+            .iter()
+            .any(|(p, rates)| p == pair && rates.iter().any(|r| range.contains(r.timestamp()))))
     }
 }
