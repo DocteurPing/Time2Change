@@ -93,7 +93,7 @@ impl TimeSeries {
                         .iter()
                         .filter(|v| {
                             z_score(**v, mean, std_dev)
-                                .map(|z| z.abs() > *config.outlier_z_threshold())
+                                .map(|z| z.abs() > config.threshold().outlier_z_threshold())
                                 .unwrap_or(false)
                         })
                         .count();
@@ -119,14 +119,17 @@ impl TimeSeries {
             dec!(100) // No returns to measure → consider perfectly stable
         } else {
             let std_returns = standard_deviation(&returns).unwrap_or(Decimal::ZERO);
-            clamp_0_100(dec!(100) / (Decimal::ONE + config.max_allowed_volatility() * std_returns))
+            clamp_0_100(
+                dec!(100)
+                    / (Decimal::ONE + config.threshold().max_allowed_volatility() * std_returns),
+            )
         };
 
         let overall = clamp_0_100(
-            config.w_completeness() * completeness
-                + config.w_gap_consistency() * gap_consistency
-                + config.w_outlier() * outlier
-                + config.w_volatility() * volatility,
+            config.weights().completeness() * completeness
+                + config.weights().gap_consistency() * gap_consistency
+                + config.weights().outlier() * outlier
+                + config.weights().volatility() * volatility,
         );
 
         RateQuality::new(

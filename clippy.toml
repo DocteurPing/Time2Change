@@ -5,4 +5,4 @@ cognitive-complexity-threshold = 20
 too-many-lines-threshold = 60
 
 # Max number of function arguments
-too-many-arguments-threshold = 7 # temp: increase to 7 for now, as some functions have 6 arguments and we want to avoid too many warnings
+too-many-arguments-threshold = 5
