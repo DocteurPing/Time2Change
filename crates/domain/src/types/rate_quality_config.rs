@@ -181,7 +181,7 @@ fn test_rate_quality_config_new_invalid_weights() {
     assert_eq!(
         err.to_string(),
         "Invalid weights: completeness=0.5, gap_consistency=0.5, outlier=0.1, volatility=0.1"
-    )
+    );
 }
 
 #[test]
@@ -199,5 +199,5 @@ fn test_rate_quality_config_new_invalid_thresholds() {
     assert_eq!(
         err.to_string(),
         "Invalid thresholds: outlier_z_threshold=-1.0, max_allowed_volatility=0.1"
-    )
+    );
 }

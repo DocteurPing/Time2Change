@@ -62,7 +62,7 @@ mod tests {
         let currency = Currency::new("");
         let error = currency.err().unwrap();
         assert_eq!(error, CurrencyError::InvalidLength);
-        assert_eq!(error.to_string(), "Currency must be 3 letters")
+        assert_eq!(error.to_string(), "Currency must be 3 letters");
     }
 
     #[test]
@@ -70,7 +70,7 @@ mod tests {
         let currency = Currency::new("US");
         let error = currency.err().unwrap();
         assert_eq!(error, CurrencyError::InvalidLength);
-        assert_eq!(error.to_string(), "Currency must be 3 letters")
+        assert_eq!(error.to_string(), "Currency must be 3 letters");
     }
 
     #[test]
@@ -86,7 +86,7 @@ mod tests {
         assert_eq!(
             error.to_string(),
             "Currency must be uppercase ASCII letters: usd"
-        )
+        );
     }
 
     #[test]
@@ -102,6 +102,6 @@ mod tests {
         assert_eq!(
             error.to_string(),
             "Currency must be uppercase ASCII letters: 0UR"
-        )
+        );
     }
 }
