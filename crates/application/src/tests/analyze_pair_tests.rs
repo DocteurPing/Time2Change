@@ -2,14 +2,10 @@ use chrono::{Duration, Utc};
 use domain::types::rate_quality_config::RateQualityConfig;
 use rust_decimal::dec;
 
-use crate::{
-    ports::exchange_rate_repository::RepositoryError,
-    tests::{
-        helpers::{build_rates, make_pair, make_rate},
-        mocks::mock_repository::MockRepository,
-    },
-    use_cases::analyze_pair::{AnalyzeError, AnalyzePairUseCase},
-};
+use crate::ports::exchange_rate_repository::RepositoryError;
+use crate::tests::helpers::{build_rates, make_pair, make_rate};
+use crate::tests::mocks::mock_repository::MockRepository;
+use crate::use_cases::analyze_pair::{AnalyzeError, AnalyzePairUseCase};
 
 #[tokio::test]
 async fn execute_returns_analysis_with_correct_pair() {

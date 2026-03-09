@@ -1,11 +1,11 @@
-use crate::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError};
-use crate::responses::analyze_pair_responses::{ChangeRecommendation, PairAnalysis};
-use domain::indicators::math::range_position;
-use domain::indicators::math::{highest_value, lowest_value};
+use domain::indicators::math::{highest_value, lowest_value, range_position};
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::rate_quality_config::RateQualityConfig;
 use rust_decimal::dec;
 use thiserror::Error;
+
+use crate::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError};
+use crate::responses::analyze_pair_responses::{ChangeRecommendation, PairAnalysis};
 
 /// Analyze a currency pair and produce change recommendation.
 pub struct AnalyzePairUseCase<R: ExchangeRateRepository> {

@@ -9,3 +9,6 @@ tokio.workspace = true
 application = { path = "../application" }
 domain = { path = "../domain" }
 shared = { path = "../shared" }
+
+[lints]
+workspace = true

@@ -1,5 +1,7 @@
 use chrono::{DateTime, Duration, Utc};
-use domain::types::{currency::Currency, currency_pair::CurrencyPair, exchange_rate::ExchangeRate};
+use domain::types::currency::Currency;
+use domain::types::currency_pair::CurrencyPair;
+use domain::types::exchange_rate::ExchangeRate;
 
 pub(crate) fn make_pair() -> CurrencyPair {
     CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap()

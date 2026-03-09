@@ -1,14 +1,10 @@
 use rust_decimal::{Decimal, dec};
 
-use crate::{
-    indicators::math::{average, clamp_0_100, median_i64, standard_deviation, z_score},
-    types::{
-        currency_pair::CurrencyPair,
-        exchange_rate::ExchangeRate,
-        rate_quality::{RateQuality, RateQualityBreakdown},
-        rate_quality_config::RateQualityConfig,
-    },
-};
+use crate::indicators::math::{average, clamp_0_100, median_i64, standard_deviation, z_score};
+use crate::types::currency_pair::CurrencyPair;
+use crate::types::exchange_rate::ExchangeRate;
+use crate::types::rate_quality::{RateQuality, RateQualityBreakdown};
+use crate::types::rate_quality_config::RateQualityConfig;
 
 pub struct TimeSeries {
     pair: CurrencyPair,

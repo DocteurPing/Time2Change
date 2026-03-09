@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
-use domain::types::{currency_pair::CurrencyPair, exchange_rate::ExchangeRate};
+use domain::types::currency_pair::CurrencyPair;
+use domain::types::exchange_rate::ExchangeRate;
 
 use crate::ports::rate_provider::{RateProvider, RateProviderError};
 

@@ -6,3 +6,6 @@ publish = false
 
 [dependencies]
 tokio.workspace = true
+
+[lints]
+workspace = true

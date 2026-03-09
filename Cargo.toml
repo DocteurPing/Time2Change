@@ -22,3 +22,44 @@ async-trait = "0"
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
+
+# ============================================================================ #
+# Workspace-wide lints — inherited by all crates via `lints.workspace = true`
+# ============================================================================ #
+[workspace.lints.rust]
+# Safety
+unsafe_code = "forbid"
+
+# Correctness & robustness
+missing_debug_implementations = "allow" # temporarily relaxed; CI uses -Dwarnings
+missing_docs = "allow" # temporarily relaxed; CI uses -Dwarnings
+unreachable_pub = "warn"
+unused_qualifications = "allow" # temporarily relaxed; CI uses -Dwarnings
+
+[workspace.lints.clippy]
+# Lint groups
+pedantic = { level = "allow", priority = -1 } # temporarily relaxed; CI uses -Dwarnings
+nursery = { level = "allow", priority = -1 } # temporarily relaxed; CI uses -Dwarnings
+
+# Pedantic overrides — too noisy for this project
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+
+# Nursery overrides
+future_not_send = "allow"
+redundant_pub_crate = "allow"
+
+# Correctness & safety
+unwrap_used = "allow" # temporarily relaxed; CI uses -Dwarnings
+expect_used = "allow" # temporarily relaxed; CI uses -Dwarnings
+panic = "warn"
+todo = "warn"
+unimplemented = "allow" # temporarily relaxed; CI uses -Dwarnings
+dbg_macro = "warn"
+
+# Style & clarity
+clone_on_ref_ptr = "warn"
+str_to_string = "warn"
+needless_pass_by_value = "warn"
+implicit_clone = "warn"
+semicolon_if_nothing_returned = "allow" # temporarily relaxed; CI uses -Dwarnings

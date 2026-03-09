@@ -1,0 +1,14 @@
+# Requires nightly: cargo +nightly fmt
+edition = "2024"
+
+# Imports
+imports_granularity = "Module"
+group_imports = "StdExternalCrate"
+
+# Readability
+use_field_init_shorthand = true
+use_try_shorthand = true
+
+# Formatting
+max_width = 100
+tab_spaces = 4

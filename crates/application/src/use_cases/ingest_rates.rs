@@ -1,9 +1,8 @@
-use crate::ports::{
-    exchange_rate_repository::{ExchangeRateRepository, RepositoryError},
-    rate_provider::{RateProvider, RateProviderError},
-};
 use domain::types::currency_pair::CurrencyPair;
 use thiserror::Error;
+
+use crate::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError};
+use crate::ports::rate_provider::{RateProvider, RateProviderError};
 
 /// Ingest latest FX rate for a pair and persist.
 pub struct IngestRatesUseCase<R, C>

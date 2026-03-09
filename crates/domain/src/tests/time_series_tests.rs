@@ -1,9 +1,9 @@
 use rust_decimal::{Decimal, dec};
 
-use crate::types::{
-    currency_pair::CurrencyPair, exchange_rate::ExchangeRate,
-    rate_quality_config::RateQualityConfig, time_series::TimeSeries,
-};
+use crate::types::currency_pair::CurrencyPair;
+use crate::types::exchange_rate::ExchangeRate;
+use crate::types::rate_quality_config::RateQualityConfig;
+use crate::types::time_series::TimeSeries;
 
 #[test]
 fn test_time_series_display() {
