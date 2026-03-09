@@ -90,8 +90,7 @@ fn test_rate_quality_with_gap_and_outlier() {
     let config = RateQualityConfig::new(
         RateQualityWeights::default(),
         RateQualityThresholds::new(dec!(1.0), dec!(1.0)).unwrap(),
-    )
-    .unwrap();
+    );
 
     let time = chrono::Utc::now();
 

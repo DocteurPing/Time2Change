@@ -123,14 +123,11 @@ impl RateQualityWeights {
 }
 
 impl RateQualityConfig {
-    pub fn new(
-        weights: RateQualityWeights,
-        thresholds: RateQualityThresholds,
-    ) -> Result<Self, RateQualityError> {
-        Ok(Self {
+    pub fn new(weights: RateQualityWeights, thresholds: RateQualityThresholds) -> Self {
+        Self {
             weights,
             thresholds,
-        })
+        }
     }
 
     pub const fn weights(&self) -> &RateQualityWeights {
@@ -158,8 +155,7 @@ fn test_rate_quality_config_new_valid() {
     let config = RateQualityConfig::new(
         RateQualityWeights::new(dec!(0.2), dec!(0.3), dec!(0.1), dec!(0.4)).unwrap(),
         RateQualityThresholds::new(dec!(2.5), dec!(0.1)).unwrap(),
-    )
-    .unwrap();
+    );
     assert_eq!(config.weights().completeness(), dec!(0.2));
     assert_eq!(config.weights().gap_consistency(), dec!(0.3));
     assert_eq!(config.weights().outlier(), dec!(0.1));
