@@ -62,4 +62,4 @@ clone_on_ref_ptr = "warn"
 str_to_string = "warn"
 needless_pass_by_value = "warn"
 implicit_clone = "warn"
-semicolon_if_nothing_returned = "allow" # temporarily relaxed; CI uses -Dwarnings
+semicolon_if_nothing_returned = "warn"
