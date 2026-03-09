@@ -8,6 +8,7 @@ use crate::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryE
 use crate::responses::analyze_pair_responses::{ChangeRecommendation, PairAnalysis};
 
 /// Analyze a currency pair and produce change recommendation.
+#[derive(Debug)]
 pub struct AnalyzePairUseCase<R: ExchangeRateRepository> {
     repository: R,
     config: RateQualityConfig,

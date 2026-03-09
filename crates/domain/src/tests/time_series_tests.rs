@@ -39,11 +39,7 @@ fn test_time_series_add_rate() {
 #[test]
 fn test_calculate_rate_quality_empty() {
     let time_series = TimeSeries::new(
-        crate::types::currency_pair::CurrencyPair::new(
-            "USD".try_into().unwrap(),
-            "EUR".try_into().unwrap(),
-        )
-        .unwrap(),
+        CurrencyPair::new("USD".try_into().unwrap(), "EUR".try_into().unwrap()).unwrap(),
         vec![],
     );
     let config = RateQualityConfig::default();
@@ -59,21 +55,11 @@ fn test_calculate_rate_quality_empty() {
 fn test_calculate_rate_quality_perfect() {
     let time = chrono::Utc::now();
     let time_series = TimeSeries::new(
-        crate::types::currency_pair::CurrencyPair::new(
-            "USD".try_into().unwrap(),
-            "EUR".try_into().unwrap(),
-        )
-        .unwrap(),
+        CurrencyPair::new("USD".try_into().unwrap(), "EUR".try_into().unwrap()).unwrap(),
         vec![
-            crate::types::exchange_rate::ExchangeRate::new(time, dec!(1.0)),
-            crate::types::exchange_rate::ExchangeRate::new(
-                time + chrono::Duration::seconds(60),
-                dec!(1.0),
-            ),
-            crate::types::exchange_rate::ExchangeRate::new(
-                time + chrono::Duration::seconds(120),
-                dec!(1.0),
-            ),
+            ExchangeRate::new(time, dec!(1.0)),
+            ExchangeRate::new(time + chrono::Duration::seconds(60), dec!(1.0)),
+            ExchangeRate::new(time + chrono::Duration::seconds(120), dec!(1.0)),
         ],
     );
     let config = RateQualityConfig::default();
@@ -95,33 +81,14 @@ fn test_rate_quality_with_gap_and_outlier() {
     let time = chrono::Utc::now();
 
     let mut series = TimeSeries::new(
-        crate::types::currency_pair::CurrencyPair::new(
-            "USD".try_into().unwrap(),
-            "EUR".try_into().unwrap(),
-        )
-        .unwrap(),
+        CurrencyPair::new("USD".try_into().unwrap(), "EUR".try_into().unwrap()).unwrap(),
         vec![
-            crate::types::exchange_rate::ExchangeRate::new(time, dec!(100)),
-            crate::types::exchange_rate::ExchangeRate::new(
-                time + chrono::Duration::seconds(60),
-                dec!(101),
-            ),
-            crate::types::exchange_rate::ExchangeRate::new(
-                time + chrono::Duration::seconds(120),
-                dec!(102),
-            ),
-            crate::types::exchange_rate::ExchangeRate::new(
-                time + chrono::Duration::seconds(180),
-                dec!(103),
-            ),
-            crate::types::exchange_rate::ExchangeRate::new(
-                time + chrono::Duration::seconds(300),
-                dec!(150),
-            ), // outlier
-            crate::types::exchange_rate::ExchangeRate::new(
-                time + chrono::Duration::seconds(360),
-                dec!(104),
-            ),
+            ExchangeRate::new(time, dec!(100)),
+            ExchangeRate::new(time + chrono::Duration::seconds(60), dec!(101)),
+            ExchangeRate::new(time + chrono::Duration::seconds(120), dec!(102)),
+            ExchangeRate::new(time + chrono::Duration::seconds(180), dec!(103)),
+            ExchangeRate::new(time + chrono::Duration::seconds(300), dec!(150)), // outlier
+            ExchangeRate::new(time + chrono::Duration::seconds(360), dec!(104)),
         ],
     );
     let result = series.calculate_rate_quality(&config);
@@ -132,7 +99,7 @@ fn test_rate_quality_with_gap_and_outlier() {
     assert!(*result.breakdown().volatility() > dec!(80));
     assert!(*result.overall() > dec!(60));
 
-    series.add_rate(crate::types::exchange_rate::ExchangeRate::new(
+    series.add_rate(ExchangeRate::new(
         time + chrono::Duration::seconds(420),
         dec!(105),
     ));

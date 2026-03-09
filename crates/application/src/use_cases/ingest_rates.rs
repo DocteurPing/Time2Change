@@ -5,6 +5,7 @@ use crate::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryE
 use crate::ports::rate_provider::{RateProvider, RateProviderError};
 
 /// Ingest latest FX rate for a pair and persist.
+#[derive(Debug)]
 pub struct IngestRatesUseCase<R, C>
 where
     R: ExchangeRateRepository,

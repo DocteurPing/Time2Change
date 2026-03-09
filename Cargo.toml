@@ -31,10 +31,10 @@ edition = "2024"
 unsafe_code = "forbid"
 
 # Correctness & robustness
-missing_debug_implementations = "allow" # temporarily relaxed; CI uses -Dwarnings
+missing_debug_implementations = "warn"
 missing_docs = "allow" # temporarily relaxed; CI uses -Dwarnings
 unreachable_pub = "warn"
-unused_qualifications = "allow" # temporarily relaxed; CI uses -Dwarnings
+unused_qualifications = "warn"
 
 [workspace.lints.clippy]
 # Lint groups
