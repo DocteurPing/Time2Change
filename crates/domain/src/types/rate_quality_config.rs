@@ -21,12 +21,13 @@ pub enum RateQualityError {
     },
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct RateQualityConfig {
     weights: RateQualityWeights,
     thresholds: RateQualityThresholds,
 }
 
+#[derive(Debug)]
 pub struct RateQualityWeights {
     completeness: Decimal,
     gap_consistency: Decimal,
@@ -34,6 +35,7 @@ pub struct RateQualityWeights {
     volatility: Decimal,
 }
 
+#[derive(Debug)]
 pub struct RateQualityThresholds {
     outlier_z: Decimal,
     max_volatility: Decimal,

@@ -6,6 +6,7 @@ use crate::types::exchange_rate::ExchangeRate;
 use crate::types::rate_quality::{RateQuality, RateQualityBreakdown};
 use crate::types::rate_quality_config::RateQualityConfig;
 
+#[derive(Debug)]
 pub struct TimeSeries {
     pair: CurrencyPair,
     rates: Vec<ExchangeRate>,

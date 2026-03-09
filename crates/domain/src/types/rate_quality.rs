@@ -1,5 +1,6 @@
 use rust_decimal::Decimal;
 
+#[derive(Debug)]
 pub struct RateQualityBreakdown {
     completeness: Decimal,    // 0..100
     gap_consistency: Decimal, // 0..100
@@ -50,6 +51,7 @@ impl RateQualityBreakdown {
     }
 }
 
+#[derive(Debug)]
 pub struct RateQuality {
     overall: Decimal, // 0..100
     breakdown: RateQualityBreakdown,
