@@ -4,7 +4,15 @@ use thiserror::Error;
 use crate::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError};
 use crate::ports::rate_provider::{RateProvider, RateProviderError};
 
-/// Ingest latest FX rate for a pair and persist.
+/// Use case that fetches the latest exchange rate for a currency pair and
+/// persists it through the configured repository.
+///
+/// This workflow coordinates two application ports:
+/// - a [`RateProvider`] that supplies the latest rate data
+/// - an [`ExchangeRateRepository`] that stores the retrieved rate
+///
+/// It returns an [`IngestResult`] containing the pair, timestamp, and rate that
+/// were successfully ingested.
 #[derive(Debug)]
 pub struct IngestRatesUseCase<R, C>
 where
@@ -20,6 +28,8 @@ where
     R: ExchangeRateRepository,
     C: RateProvider,
 {
+    /// Creates a new ingest-rates use case from a repository and rate provider.
+    #[must_use]
     pub fn new(repository: R, provider: C) -> Self {
         Self {
             repository,
@@ -27,6 +37,14 @@ where
         }
     }
 
+    /// Fetches the latest exchange rate for `pair`, persists it, and returns
+    /// the ingested values.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`IngestError::Provider`] when the upstream provider cannot
+    /// supply the latest rate, or [`IngestError::Repository`] when persistence
+    /// fails.
     pub async fn execute(&self, pair: CurrencyPair) -> Result<IngestResult, IngestError> {
         let fx_record = self.provider.fetch_latest(&pair).await?;
         let timestamp = *fx_record.timestamp();
@@ -41,11 +59,14 @@ where
         })
     }
 
+    /// Returns a reference to the repository used by this use case.
+    #[must_use]
     pub fn repository(&self) -> &R {
         &self.repository
     }
 }
 
+/// Result returned after a successful ingestion of the latest exchange rate.
 #[derive(Debug)]
 pub struct IngestResult {
     pair: CurrencyPair,
@@ -54,26 +75,33 @@ pub struct IngestResult {
 }
 
 impl IngestResult {
+    /// Returns the currency pair associated with the ingested rate.
     #[must_use]
     pub fn pair(&self) -> &CurrencyPair {
         &self.pair
     }
 
+    /// Returns the timestamp attached to the ingested exchange-rate record.
     #[must_use]
     pub fn timestamp(&self) -> &chrono::DateTime<chrono::Utc> {
         &self.timestamp
     }
 
+    /// Returns the ingested exchange-rate value.
     #[must_use]
     pub fn rate(&self) -> &rust_decimal::Decimal {
         &self.rate
     }
 }
 
+/// Errors that can occur while ingesting the latest exchange rate.
 #[derive(Error, Debug)]
 pub enum IngestError {
+    /// The upstream rate provider failed to fetch the latest exchange rate.
     #[error("provider error: {0}")]
     Provider(#[from] RateProviderError),
+
+    /// The repository failed to persist the fetched exchange rate.
     #[error("repository error: {0}")]
     Repository(#[from] RepositoryError),
 }

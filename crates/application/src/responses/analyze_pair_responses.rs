@@ -1,7 +1,16 @@
+//! Response models produced by the pair-analysis use case.
+//!
+//! These types provide a stable, application-level representation of the
+//! analysis outcome without exposing internal implementation details from
+//! the domain or infrastructure layers.
 use domain::types::currency_pair::CurrencyPair;
 use rust_decimal::Decimal;
 
-/// Recommendation for whether user should change money now or wait.
+/// Recommendation describing whether a user should exchange funds now.
+///
+/// The recommendation combines a boolean decision with a confidence score,
+/// a human-readable explanation, and the timestamp at which the decision
+/// was produced.
 #[derive(Debug)]
 pub struct ChangeRecommendation {
     pair: CurrencyPair,
@@ -11,7 +20,10 @@ pub struct ChangeRecommendation {
     timestamp: chrono::DateTime<chrono::Utc>,
 }
 
-/// Analysis result for a single pair.
+/// Aggregate analysis result for a single currency pair.
+///
+/// This structure contains the analyzed pair, the number of historical rates
+/// considered, the resulting quality score, and the final recommendation.
 #[derive(Debug)]
 pub struct PairAnalysis {
     pair: CurrencyPair,
@@ -21,6 +33,10 @@ pub struct PairAnalysis {
 }
 
 impl ChangeRecommendation {
+    /// Creates a new recommendation for a currency pair.
+    ///
+    /// `confidence` is expected to be normalized between `0` and `1`, where
+    /// higher values indicate stronger confidence in the recommendation.
     #[must_use]
     pub fn new(
         pair: CurrencyPair,
@@ -38,26 +54,31 @@ impl ChangeRecommendation {
         }
     }
 
+    /// Returns the currency pair this recommendation applies to.
     #[must_use]
     pub fn pair(&self) -> &CurrencyPair {
         &self.pair
     }
 
+    /// Returns whether the analysis recommends exchanging funds now.
     #[must_use]
     pub fn should_change_now(&self) -> bool {
         self.should_change_now
     }
 
+    /// Returns the confidence score associated with the recommendation.
     #[must_use]
     pub fn confidence(&self) -> &Decimal {
         &self.confidence
     }
 
+    /// Returns the human-readable reasoning behind the recommendation.
     #[must_use]
     pub fn reasoning(&self) -> &str {
         &self.reasoning
     }
 
+    /// Returns the timestamp at which the recommendation was generated.
     #[must_use]
     pub fn timestamp(&self) -> &chrono::DateTime<chrono::Utc> {
         &self.timestamp
@@ -65,6 +86,7 @@ impl ChangeRecommendation {
 }
 
 impl PairAnalysis {
+    /// Creates a new analysis result for a currency pair.
     #[must_use]
     pub fn new(
         pair: CurrencyPair,
@@ -80,21 +102,25 @@ impl PairAnalysis {
         }
     }
 
+    /// Returns the analyzed currency pair.
     #[must_use]
     pub fn pair(&self) -> &CurrencyPair {
         &self.pair
     }
 
+    /// Returns the number of rates used to produce the analysis.
     #[must_use]
     pub fn rate_count(&self) -> usize {
         self.rate_count
     }
 
+    /// Returns the overall quality score for the analyzed data set.
     #[must_use]
     pub fn quality_score(&self) -> &Decimal {
         &self.quality_score
     }
 
+    /// Returns the recommendation derived from the analysis.
     #[must_use]
     pub fn recommendation(&self) -> &ChangeRecommendation {
         &self.recommendation

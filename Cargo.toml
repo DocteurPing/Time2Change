@@ -32,7 +32,7 @@ unsafe_code = "forbid"
 
 # Correctness & robustness
 missing_debug_implementations = "warn"
-missing_docs = "allow" # temporarily relaxed; CI uses -Dwarnings
+missing_docs = "warn"
 unreachable_pub = "warn"
 unused_qualifications = "warn"
 
