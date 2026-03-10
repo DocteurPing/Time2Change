@@ -99,7 +99,7 @@ mod tests {
     #[test]
     fn error_is_debug() {
         let err = RepositoryError::NotFound("XYZ".into());
-        let debug = format!("{:?}", err);
+        let debug = format!("{err:?}");
         assert!(debug.contains("NotFound"));
         assert!(debug.contains("XYZ"));
     }

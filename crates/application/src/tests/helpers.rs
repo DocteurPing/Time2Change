@@ -18,12 +18,12 @@ pub(crate) fn build_rates(values: &[rust_decimal::Decimal], days_ago: i64) -> Ve
     let step = if values.len() <= 1 {
         Duration::hours(1)
     } else {
-        Duration::days(days_ago) / (values.len() as i32 - 1)
+        Duration::days(days_ago) / i32::try_from(values.len() - 1).unwrap_or_default()
     };
 
     values
         .iter()
         .enumerate()
-        .map(|(i, v)| make_rate(start + step * i as i32, *v))
+        .map(|(i, v)| make_rate(start + step * i32::try_from(i).unwrap_or_default(), *v))
         .collect()
 }

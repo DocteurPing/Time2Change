@@ -366,7 +366,7 @@ async fn analyze_error_display_insufficient_data() {
 #[tokio::test]
 async fn analyze_error_debug_impl() {
     let err = AnalyzeError::InsufficientData;
-    let debug = format!("{:?}", err);
+    let debug = format!("{err:?}");
     assert!(debug.contains("InsufficientData"));
 }
 
