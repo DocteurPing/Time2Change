@@ -7,7 +7,12 @@ use thiserror::Error;
 use crate::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError};
 use crate::responses::analyze_pair_responses::{ChangeRecommendation, PairAnalysis};
 
-/// Analyze a currency pair and produce change recommendation.
+/// Application use case for analyzing a currency pair over a historical window.
+///
+/// This workflow loads previously stored exchange-rate data for a pair,
+/// computes a quality score for the available time series, determines where the
+/// latest rate sits within the observed range, and produces a human-readable
+/// recommendation about whether exchanging now appears favorable.
 #[derive(Debug)]
 pub struct AnalyzePairUseCase<R: ExchangeRateRepository> {
     repository: R,
@@ -15,10 +20,28 @@ pub struct AnalyzePairUseCase<R: ExchangeRateRepository> {
 }
 
 impl<R: ExchangeRateRepository> AnalyzePairUseCase<R> {
+    /// Creates a new analyze-pair use case.
+    ///
+    /// The provided repository is used to load historical rates, while
+    /// `config` controls how time-series quality is evaluated during analysis.
+    #[must_use]
     pub fn new(repository: R, config: RateQualityConfig) -> Self {
         Self { repository, config }
     }
 
+    /// Analyzes the given currency pair using the specified historical lookback.
+    ///
+    /// The method:
+    /// - loads stored rates for the pair over the last `lookback_days`,
+    /// - computes the time-series quality score,
+    /// - finds the latest rate's position inside the observed min/max range,
+    /// - derives a recommendation and confidence score.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AnalyzeError::Repository`] if loading rates fails, or
+    /// [`AnalyzeError::InsufficientData`] if the available series cannot support
+    /// analysis.
     pub async fn execute(
         &self,
         pair: CurrencyPair,
@@ -81,10 +104,15 @@ impl<R: ExchangeRateRepository> AnalyzePairUseCase<R> {
     }
 }
 
+/// Errors that can occur while analyzing a currency pair.
 #[derive(Error, Debug)]
 pub enum AnalyzeError {
+    /// Wraps a repository failure that occurred while loading historical data.
     #[error("repository error: {0}")]
     Repository(#[from] RepositoryError),
+
+    /// Indicates that the available historical data is missing or too limited to
+    /// produce a meaningful analysis.
     #[error("insufficient historical data")]
     InsufficientData,
 }

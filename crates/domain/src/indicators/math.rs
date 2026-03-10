@@ -2,6 +2,9 @@ use rust_decimal::{Decimal, MathematicalOps, dec};
 
 use crate::types::exchange_rate::ExchangeRate;
 
+/// Returns the arithmetic mean of the provided decimal values.
+///
+/// When `values` is empty, this function returns `None`.
 #[must_use]
 pub fn average(values: &[Decimal]) -> Option<Decimal> {
     if values.is_empty() {
@@ -11,6 +14,14 @@ pub fn average(values: &[Decimal]) -> Option<Decimal> {
     }
 }
 
+/// Computes a rolling arithmetic mean over `values` using the given `window`.
+///
+/// The returned vector always has the same length as `values`.
+/// Entries that do not yet have enough preceding values to fill the window are
+/// represented as `None`.
+///
+/// If `window` is `0` or larger than the input length, the result contains only
+/// `None` values.
 #[must_use]
 pub fn rolling_average(values: &[Decimal], window: usize) -> Vec<Option<Decimal>> {
     if window == 0 || window > values.len() {
@@ -31,6 +42,12 @@ pub fn rolling_average(values: &[Decimal], window: usize) -> Vec<Option<Decimal>
     result
 }
 
+/// Returns the population standard deviation of the provided decimal values.
+///
+/// This function computes variance using `n` as the divisor rather than
+/// `n - 1`.
+///
+/// When `values` is empty, this function returns `None`.
 #[must_use]
 pub fn standard_deviation(values: &[Decimal]) -> Option<Decimal> {
     if values.is_empty() {
@@ -49,6 +66,14 @@ pub fn standard_deviation(values: &[Decimal]) -> Option<Decimal> {
     }
 }
 
+/// Returns the normalized position of `current` within the inclusive range
+/// defined by `low` and `high`.
+///
+/// The result is typically in the range `0..=1` when `current` lies between
+/// `low` and `high`, but values outside that interval are possible if
+/// `current` falls outside the range.
+///
+/// Returns `None` when `high == low`, because the range width is zero.
 #[must_use]
 pub fn range_position(current: Decimal, high: Decimal, low: Decimal) -> Option<Decimal> {
     if high == low {
@@ -58,6 +83,9 @@ pub fn range_position(current: Decimal, high: Decimal, low: Decimal) -> Option<D
     }
 }
 
+/// Computes the z-score of `current` relative to `mean` and `std_dev`.
+///
+/// Returns `None` when `std_dev` is zero.
 #[must_use]
 pub fn z_score(current: Decimal, mean: Decimal, std_dev: Decimal) -> Option<Decimal> {
     if std_dev == Decimal::ZERO {
@@ -67,6 +95,7 @@ pub fn z_score(current: Decimal, mean: Decimal, std_dev: Decimal) -> Option<Deci
     }
 }
 
+/// Clamps a decimal value into the inclusive `0..=100` range.
 #[must_use]
 pub fn clamp_0_100(value: Decimal) -> Decimal {
     if value < Decimal::ZERO {
@@ -76,6 +105,15 @@ pub fn clamp_0_100(value: Decimal) -> Decimal {
     }
 }
 
+/// Returns the median of the provided `i64` values.
+///
+/// The input vector is sorted in place before computing the result.
+///
+/// For an odd number of values, the middle element is returned.
+/// For an even number of values, the integer average of the two middle values
+/// is returned.
+///
+/// Returns `None` when `values` is empty.
 #[must_use]
 pub fn median_i64(mut values: Vec<i64>) -> Option<i64> {
     if values.is_empty() {
@@ -90,11 +128,21 @@ pub fn median_i64(mut values: Vec<i64>) -> Option<i64> {
     }
 }
 
+/// Returns the lowest exchange-rate value in the provided slice.
+///
+/// The function compares only the numeric rate values and ignores timestamps.
+///
+/// Returns `None` when `values` is empty.
 #[must_use]
 pub fn lowest_value(values: &[ExchangeRate]) -> Option<&Decimal> {
     values.iter().map(|r| r.rate()).min()
 }
 
+/// Returns the highest exchange-rate value in the provided slice.
+///
+/// The function compares only the numeric rate values and ignores timestamps.
+///
+/// Returns `None` when `values` is empty.
 #[must_use]
 pub fn highest_value(values: &[ExchangeRate]) -> Option<&Decimal> {
     values.iter().map(|r| r.rate()).max()

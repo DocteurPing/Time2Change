@@ -7,6 +7,14 @@ use crate::types::rate_quality::{RateQuality, RateQualityBreakdown};
 use crate::types::rate_quality_config::RateQualityConfig;
 
 /// Represents a time series of exchange rates for a specific currency pair.
+///
+/// A `TimeSeries` groups a [`CurrencyPair`] with its observed
+/// [`ExchangeRate`] values so the domain layer can reason about historical
+/// price behavior and compute quality metrics over the collected data.
+///
+/// The contained rates are expected to belong to the same pair and are
+/// typically ordered chronologically, although this type does not enforce
+/// sorting on construction.
 #[derive(Debug)]
 pub struct TimeSeries {
     pair: CurrencyPair,
@@ -14,30 +22,49 @@ pub struct TimeSeries {
 }
 
 impl TimeSeries {
-    /// Creates a new `TimeSeries` with the given currency pair and list of exchange rates.
+    /// Creates a new time series for the given currency pair and rates.
+    ///
+    /// This constructor stores the provided values as-is without reordering
+    /// or validating the timestamps.
     #[must_use]
     pub const fn new(pair: CurrencyPair, rates: Vec<ExchangeRate>) -> Self {
         Self { pair, rates }
     }
 
-    /// Returns a reference to the currency pair associated with this time series.
+    /// Returns the currency pair associated with this series.
     #[must_use]
     pub const fn pair(&self) -> &CurrencyPair {
         &self.pair
     }
 
-    /// Returns a reference to the list of exchange rates in the time series.
+    /// Returns all exchange-rate observations in the series.
     #[must_use]
     pub fn rates(&self) -> &[ExchangeRate] {
         &self.rates
     }
 
-    /// Adds a new exchange rate to the time series.
+    /// Appends a new exchange-rate observation to the series.
+    ///
+    /// The new rate is pushed to the end of the internal collection.
     pub fn add_rate(&mut self, rate: ExchangeRate) {
         self.rates.push(rate);
     }
 
-    /// Calculates the quality of the time series based on completeness, gap consistency, outliers, and volatility.
+    /// Calculates a quality score for the time series.
+    ///
+    /// The resulting [`RateQuality`] combines four dimensions:
+    ///
+    /// - completeness: how close the observed number of samples is to the
+    ///   expected count inferred from the typical gap between observations
+    /// - gap consistency: how regular the spacing between timestamps is
+    /// - outlier score: how many observations deviate strongly from the
+    ///   distribution of values
+    /// - volatility score: how stable the percentage returns are
+    ///
+    /// Each component is normalized to a `0..=100` range and then combined
+    /// using the weights and thresholds from `config`.
+    ///
+    /// If the series has no rates, a zeroed [`RateQuality`] is returned.
     #[must_use]
     pub fn calculate_rate_quality(&self, config: &RateQualityConfig) -> RateQuality {
         if self.rates().is_empty() {
@@ -132,7 +159,7 @@ impl TimeSeries {
         }
 
         let volatility = if returns.is_empty() {
-            dec!(100) // No returns to measure → consider perfectly stable
+            dec!(100) // No returns to measure -> consider perfectly stable
         } else {
             let std_returns = standard_deviation(&returns).unwrap_or(Decimal::ZERO);
             clamp_0_100(
@@ -156,6 +183,7 @@ impl TimeSeries {
 }
 
 impl std::fmt::Display for TimeSeries {
+    /// Formats the time series as `TimeSeries(PAIR, [rate1, rate2, ...])`.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "TimeSeries({}, [", self.pair)?;
         for (i, rate) in self.rates.iter().enumerate() {

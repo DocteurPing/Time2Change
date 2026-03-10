@@ -7,21 +7,37 @@ use domain::types::time_series::TimeSeries;
 use thiserror::Error;
 
 /// Repository port for persisting and retrieving exchange rates.
-/// Implementation lives in infrastructure crate.
+///
+/// This trait defines the persistence capabilities required by the application
+/// layer. Implementations are expected to live in infrastructure adapters and
+/// can be backed by databases, files, caches, or external services.
 #[async_trait::async_trait]
 pub trait ExchangeRateRepository: Send + Sync {
+    /// Persists a batch of exchange rates for the given currency pair.
+    ///
+    /// Implementations may reject duplicate or conflicting records depending on
+    /// the storage model.
     async fn save_rates(
         &self,
         pair: &CurrencyPair,
         rates: &[ExchangeRate],
     ) -> Result<(), RepositoryError>;
 
+    /// Loads all stored exchange rates for the given pair within the provided
+    /// inclusive time range.
+    ///
+    /// Returns a `TimeSeries` containing the matching rates when successful.
     async fn load_rates(
         &self,
         pair: &CurrencyPair,
         range: RangeInclusive<DateTime<Utc>>,
     ) -> Result<TimeSeries, RepositoryError>;
 
+    /// Returns whether data already exists for the given pair inside the
+    /// provided inclusive time range.
+    ///
+    /// This can be used by application services to avoid duplicate ingestion or
+    /// to short-circuit expensive fetch operations.
     async fn exists(
         &self,
         pair: &CurrencyPair,
@@ -29,14 +45,22 @@ pub trait ExchangeRateRepository: Send + Sync {
     ) -> Result<bool, RepositoryError>;
 }
 
+/// Errors produced by `ExchangeRateRepository` implementations.
 #[derive(Error, Debug, Clone)]
 pub enum RepositoryError {
+    /// The requested currency pair or data slice could not be found.
     #[error("pair {0} not found")]
     NotFound(String),
+
+    /// The requested write operation conflicts with already stored data.
     #[error("conflict: rates already stored: {0}")]
     Conflict(String),
+
+    /// The underlying storage system failed while processing the request.
     #[error("storage failure: {0}")]
     Storage(String),
+
+    /// The caller supplied invalid input for the repository operation.
     #[error("invalid input: {0}")]
     Invalid(String),
 }
