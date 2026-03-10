@@ -136,7 +136,7 @@ impl TimeSeries {
                         .iter()
                         .filter(|v| {
                             z_score(**v, mean, std_dev)
-                                .map(|z| z.abs() > config.threshold().outlier_z_threshold())
+                                .map(|z| z.abs() > config.thresholds().outlier_z_threshold())
                                 .unwrap_or(false)
                         })
                         .count();
@@ -164,7 +164,7 @@ impl TimeSeries {
             let std_returns = standard_deviation(&returns).unwrap_or(Decimal::ZERO);
             clamp_0_100(
                 dec!(100)
-                    / (Decimal::ONE + config.threshold().max_allowed_volatility() * std_returns),
+                    / (Decimal::ONE + config.thresholds().max_allowed_volatility() * std_returns),
             )
         };
 

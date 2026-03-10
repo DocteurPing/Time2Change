@@ -202,7 +202,7 @@ impl RateQualityConfig {
 
     /// Returns the thresholds used by the quality model.
     #[must_use]
-    pub const fn threshold(&self) -> &RateQualityThresholds {
+    pub const fn thresholds(&self) -> &RateQualityThresholds {
         &self.thresholds
     }
 }
@@ -214,8 +214,8 @@ fn test_rate_quality_config_default() {
     assert_eq!(config.weights().gap_consistency(), dec!(0.25));
     assert_eq!(config.weights().outlier(), dec!(0.25));
     assert_eq!(config.weights().volatility(), dec!(0.25));
-    assert_eq!(config.threshold().outlier_z_threshold(), dec!(3.0));
-    assert_eq!(config.threshold().max_allowed_volatility(), dec!(1.0));
+    assert_eq!(config.thresholds().outlier_z_threshold(), dec!(3.0));
+    assert_eq!(config.thresholds().max_allowed_volatility(), dec!(1.0));
 }
 
 #[test]
@@ -228,8 +228,8 @@ fn test_rate_quality_config_new_valid() {
     assert_eq!(config.weights().gap_consistency(), dec!(0.3));
     assert_eq!(config.weights().outlier(), dec!(0.1));
     assert_eq!(config.weights().volatility(), dec!(0.4));
-    assert_eq!(config.threshold().outlier_z_threshold(), dec!(2.5));
-    assert_eq!(config.threshold().max_allowed_volatility(), dec!(0.1));
+    assert_eq!(config.thresholds().outlier_z_threshold(), dec!(2.5));
+    assert_eq!(config.thresholds().max_allowed_volatility(), dec!(0.1));
 }
 
 #[test]

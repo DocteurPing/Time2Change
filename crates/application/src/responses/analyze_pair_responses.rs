@@ -1,8 +1,8 @@
-/// Response models produced by the pair-analysis use case.
-///
-/// These types provide a stable, application-level representation of the
-/// analysis outcome without exposing internal implementation details from
-/// the domain or infrastructure layers.
+//! Response models produced by the pair-analysis use case.
+//!
+//! These types provide a stable, application-level representation of the
+//! analysis outcome without exposing internal implementation details from
+//! the domain or infrastructure layers.
 use domain::types::currency_pair::CurrencyPair;
 use rust_decimal::Decimal;
 

@@ -1,4 +1,3 @@
-/// Abstractions for retrieving exchange-rate data from upstream providers.
 use chrono::{DateTime, Utc};
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;

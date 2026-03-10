@@ -1,4 +1,3 @@
-/// Errors returned when constructing or validating a [`Currency`].
 use thiserror::Error;
 
 /// Errors that can occur while creating a [`Currency`].
