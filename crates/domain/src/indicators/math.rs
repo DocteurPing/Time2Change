@@ -124,7 +124,7 @@ pub fn median_i64(mut values: Vec<i64>) -> Option<i64> {
     if values.len() % 2 == 1 {
         Some(values[mid])
     } else {
-        Some((values[mid - 1] + values[mid]) / 2)
+        Some(i64::midpoint(values[mid - 1], values[mid]))
     }
 }
 
@@ -135,7 +135,7 @@ pub fn median_i64(mut values: Vec<i64>) -> Option<i64> {
 /// Returns `None` when `values` is empty.
 #[must_use]
 pub fn lowest_value(values: &[ExchangeRate]) -> Option<&Decimal> {
-    values.iter().map(|r| r.rate()).min()
+    values.iter().map(ExchangeRate::rate).min()
 }
 
 /// Returns the highest exchange-rate value in the provided slice.
@@ -145,7 +145,7 @@ pub fn lowest_value(values: &[ExchangeRate]) -> Option<&Decimal> {
 /// Returns `None` when `values` is empty.
 #[must_use]
 pub fn highest_value(values: &[ExchangeRate]) -> Option<&Decimal> {
-    values.iter().map(|r| r.rate()).max()
+    values.iter().map(ExchangeRate::rate).max()
 }
 
 #[test]

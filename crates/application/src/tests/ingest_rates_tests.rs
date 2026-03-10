@@ -178,6 +178,6 @@ async fn ingest_result_debug_impl() {
     let uc = IngestRatesUseCase::new(repo, provider);
 
     let result = uc.execute(pair).await.unwrap();
-    let debug = format!("{:?}", result);
+    let debug = format!("{result:?}");
     assert!(debug.contains("IngestResult"));
 }

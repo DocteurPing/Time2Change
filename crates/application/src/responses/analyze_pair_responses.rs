@@ -286,7 +286,7 @@ mod tests {
         let analysis = PairAnalysis::new(make_pair(), 1, dec!(50), rec);
 
         // Verify Debug is implemented and doesn't panic
-        let debug_str = format!("{:?}", analysis);
+        let debug_str = format!("{analysis:?}");
         assert!(!debug_str.is_empty());
     }
 
@@ -295,7 +295,7 @@ mod tests {
         let now = Utc::now();
         let rec = ChangeRecommendation::new(make_pair(), true, dec!(0.5), "reason".into(), now);
 
-        let debug_str = format!("{:?}", rec);
+        let debug_str = format!("{rec:?}");
         assert!(debug_str.contains("ChangeRecommendation"));
     }
 }

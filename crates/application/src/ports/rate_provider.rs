@@ -86,14 +86,14 @@ mod tests {
     #[test]
     fn error_is_debug() {
         let err = RateProviderError::Timeout;
-        let debug = format!("{:?}", err);
+        let debug = format!("{err:?}");
         assert!(debug.contains("Timeout"));
     }
 
     #[test]
     fn pair_not_supported_debug_contains_value() {
         let err = RateProviderError::PairNotSupported("GBP-JPY".into());
-        let debug = format!("{:?}", err);
+        let debug = format!("{err:?}");
         assert!(debug.contains("PairNotSupported"));
         assert!(debug.contains("GBP-JPY"));
     }
@@ -101,7 +101,7 @@ mod tests {
     #[test]
     fn api_error_debug_contains_value() {
         let err = RateProviderError::ApiError("rate limit exceeded".into());
-        let debug = format!("{:?}", err);
+        let debug = format!("{err:?}");
         assert!(debug.contains("ApiError"));
         assert!(debug.contains("rate limit exceeded"));
     }
@@ -109,7 +109,7 @@ mod tests {
     #[test]
     fn parse_error_debug_contains_value() {
         let err = RateProviderError::ParseError("unexpected EOF".into());
-        let debug = format!("{:?}", err);
+        let debug = format!("{err:?}");
         assert!(debug.contains("ParseError"));
         assert!(debug.contains("unexpected EOF"));
     }

@@ -65,6 +65,7 @@ impl TimeSeries {
     /// using the weights and thresholds from `config`.
     ///
     /// If the series has no rates, a zeroed [`RateQuality`] is returned.
+    #[allow(clippy::too_many_lines)]
     #[must_use]
     pub fn calculate_rate_quality(&self, config: &RateQualityConfig) -> RateQuality {
         if self.rates().is_empty() {
@@ -135,9 +136,9 @@ impl TimeSeries {
                     let outliers = series_values
                         .iter()
                         .filter(|v| {
-                            z_score(**v, mean, std_dev)
-                                .map(|z| z.abs() > config.thresholds().outlier_z_threshold())
-                                .unwrap_or(false)
+                            z_score(**v, mean, std_dev).is_some_and(|z| {
+                                z.abs() > config.thresholds().outlier_z_threshold()
+                            })
                         })
                         .count();
                     let outlier_ratio =

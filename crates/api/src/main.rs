@@ -1,7 +1,7 @@
 //! API binary entrypoint for the `api` crate.
 //!
 //! This binary currently serves as a placeholder for the future HTTP or RPC
-//! server responsible for exposing the Time2Change application capabilities to
+//! server responsible for exposing the `Time2Change` application capabilities to
 //! external clients. As the API surface grows, this crate can host the server
 //! bootstrap logic, routing, dependency wiring, and runtime configuration.
 //!

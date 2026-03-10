@@ -38,7 +38,7 @@ unused_qualifications = "warn"
 
 [workspace.lints.clippy]
 # Lint groups
-pedantic = { level = "allow", priority = -1 } # temporarily relaxed; CI uses -Dwarnings
+pedantic = { level = "warn", priority = -1 }
 nursery = { level = "warn", priority = -1 }
 
 # Pedantic overrides — too noisy for this project
