@@ -9,7 +9,7 @@ use rust_decimal::Decimal;
 /// Instances of this type are immutable after creation and are intended to be
 /// used as atomic data points inside higher-level aggregates such as time
 /// series.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ExchangeRate {
     timestamp: DateTime<Utc>,
     rate: Decimal,

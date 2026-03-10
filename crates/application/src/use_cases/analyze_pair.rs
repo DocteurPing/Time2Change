@@ -25,7 +25,7 @@ impl<R: ExchangeRateRepository> AnalyzePairUseCase<R> {
     /// The provided repository is used to load historical rates, while
     /// `config` controls how time-series quality is evaluated during analysis.
     #[must_use]
-    pub fn new(repository: R, config: RateQualityConfig) -> Self {
+    pub const fn new(repository: R, config: RateQualityConfig) -> Self {
         Self { repository, config }
     }
 
