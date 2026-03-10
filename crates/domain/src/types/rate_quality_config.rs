@@ -2,31 +2,43 @@ use rust_decimal::{Decimal, dec};
 use thiserror::Error;
 
 #[derive(Debug, PartialEq, Eq, Error)]
+/// Errors that can occur when creating or validating `RateQualityConfig`
 pub enum RateQualityError {
+    /// Error indicating that the provided weights for completeness, gap consistency, outlier detection, and volatility do not sum to 1.0 (100%).
     #[error(
         "Invalid weights: completeness={completeness}, gap_consistency={gap_consistency}, outlier={outlier}, volatility={volatility}"
     )]
     InvalidWeights {
+        /// The weight for completeness in the overall rate quality score.
         completeness: Decimal,
+        /// The weight for gap consistency in the overall rate quality score.
         gap_consistency: Decimal,
+        /// The weight for outlier detection in the overall rate quality score.
         outlier: Decimal,
+        /// The weight for volatility in the overall rate quality score.
         volatility: Decimal,
     },
+    /// Error indicating that the provided thresholds for outlier detection and volatility assessment are invalid (e.g., negative or zero values).
     #[error(
         "Invalid thresholds: outlier_z_threshold={outlier_z_threshold}, max_allowed_volatility={max_allowed_volatility}"
     )]
     InvalidThresholds {
+        /// The Z-score threshold for outlier detection.
         outlier_z_threshold: Decimal,
+        /// The maximum allowed volatility for the time series.
         max_allowed_volatility: Decimal,
     },
 }
 
+/// Configuration for rate quality evaluation, including weights for the different components (completeness, gap consistency, outlier detection, and volatility) and thresholds for outlier detection and volatility assessment.
 #[derive(Default, Debug)]
 pub struct RateQualityConfig {
     weights: RateQualityWeights,
     thresholds: RateQualityThresholds,
 }
 
+/// Weights for the different components of the rate quality evaluation: completeness, gap consistency, outlier detection, and volatility.
+/// These weights determine the relative importance of each component in the overall rate quality score calculation.
 #[derive(Debug)]
 pub struct RateQualityWeights {
     completeness: Decimal,
@@ -35,6 +47,8 @@ pub struct RateQualityWeights {
     volatility: Decimal,
 }
 
+/// Thresholds for outlier detection and volatility assessment in the rate quality evaluation.
+/// These thresholds determine how sensitive the evaluation is to outliers and volatility in the exchange rate data.
 #[derive(Debug)]
 pub struct RateQualityThresholds {
     outlier_z: Decimal,
@@ -51,6 +65,8 @@ impl Default for RateQualityThresholds {
 }
 
 impl RateQualityThresholds {
+    /// Create a new `RateQualityThresholds` with the specified Z-score threshold for outlier detection and maximum allowed volatility.
+    /// Both thresholds must be greater than 0.
     pub fn new(outlier_z: Decimal, max_volatility: Decimal) -> Result<Self, RateQualityError> {
         if outlier_z <= Decimal::ZERO || max_volatility <= Decimal::ZERO {
             return Err(RateQualityError::InvalidThresholds {
@@ -64,11 +80,13 @@ impl RateQualityThresholds {
         })
     }
 
+    /// Get the Z-score threshold for outlier detection. Data points with a Z-score exceeding this threshold will be considered outliers and negatively impact the overall rate quality score.
     #[must_use]
     pub const fn outlier_z_threshold(&self) -> Decimal {
         self.outlier_z
     }
 
+    /// Get the maximum allowed volatility for the time series. If the calculated volatility exceeds this threshold, it will negatively impact the overall rate quality score.
     #[must_use]
     pub const fn max_allowed_volatility(&self) -> Decimal {
         self.max_volatility
@@ -87,6 +105,8 @@ impl Default for RateQualityWeights {
 }
 
 impl RateQualityWeights {
+    /// Create a new `RateQualityWeights` with the specified weights for completeness, gap consistency, outlier, and volatility.
+    /// The weights must sum to 1.0 (100%).
     pub fn new(
         completeness: Decimal,
         gap_consistency: Decimal,
@@ -109,21 +129,25 @@ impl RateQualityWeights {
         })
     }
 
+    /// Get the weight for completeness in the overall rate quality score.
     #[must_use]
     pub const fn completeness(&self) -> Decimal {
         self.completeness
     }
 
+    /// Get the weight for gap consistency in the overall rate quality score.
     #[must_use]
     pub const fn gap_consistency(&self) -> Decimal {
         self.gap_consistency
     }
 
+    /// Get the weight for outlier detection in the overall rate quality score.
     #[must_use]
     pub const fn outlier(&self) -> Decimal {
         self.outlier
     }
 
+    /// Get the weight for volatility in the overall rate quality score.
     #[must_use]
     pub const fn volatility(&self) -> Decimal {
         self.volatility
@@ -131,6 +155,7 @@ impl RateQualityWeights {
 }
 
 impl RateQualityConfig {
+    /// Create a new `RateQualityConfig` with the specified weights and thresholds.
     #[must_use]
     pub fn new(weights: RateQualityWeights, thresholds: RateQualityThresholds) -> Self {
         Self {
@@ -139,11 +164,13 @@ impl RateQualityConfig {
         }
     }
 
+    /// Get the weights for completeness, gap consistency, outlier, and volatility.
     #[must_use]
     pub const fn weights(&self) -> &RateQualityWeights {
         &self.weights
     }
 
+    /// Get the thresholds for outlier detection and volatility assessment.
     #[must_use]
     pub const fn threshold(&self) -> &RateQualityThresholds {
         &self.thresholds

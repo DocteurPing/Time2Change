@@ -6,6 +6,7 @@ use crate::types::exchange_rate::ExchangeRate;
 use crate::types::rate_quality::{RateQuality, RateQualityBreakdown};
 use crate::types::rate_quality_config::RateQualityConfig;
 
+/// Represents a time series of exchange rates for a specific currency pair.
 #[derive(Debug)]
 pub struct TimeSeries {
     pair: CurrencyPair,
@@ -13,25 +14,30 @@ pub struct TimeSeries {
 }
 
 impl TimeSeries {
+    /// Creates a new `TimeSeries` with the given currency pair and list of exchange rates.
     #[must_use]
     pub const fn new(pair: CurrencyPair, rates: Vec<ExchangeRate>) -> Self {
         Self { pair, rates }
     }
 
+    /// Returns a reference to the currency pair associated with this time series.
     #[must_use]
     pub const fn pair(&self) -> &CurrencyPair {
         &self.pair
     }
 
+    /// Returns a reference to the list of exchange rates in the time series.
     #[must_use]
     pub fn rates(&self) -> &[ExchangeRate] {
         &self.rates
     }
 
+    /// Adds a new exchange rate to the time series.
     pub fn add_rate(&mut self, rate: ExchangeRate) {
         self.rates.push(rate);
     }
 
+    /// Calculates the quality of the time series based on completeness, gap consistency, outliers, and volatility.
     #[must_use]
     pub fn calculate_rate_quality(&self, config: &RateQualityConfig) -> RateQuality {
         if self.rates().is_empty() {
