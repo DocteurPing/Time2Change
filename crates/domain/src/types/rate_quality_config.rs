@@ -187,7 +187,7 @@ impl RateQualityWeights {
 impl RateQualityConfig {
     /// Creates a new rate-quality configuration from weights and thresholds.
     #[must_use]
-    pub fn new(weights: RateQualityWeights, thresholds: RateQualityThresholds) -> Self {
+    pub const fn new(weights: RateQualityWeights, thresholds: RateQualityThresholds) -> Self {
         Self {
             weights,
             thresholds,

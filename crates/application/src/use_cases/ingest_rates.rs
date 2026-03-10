@@ -30,7 +30,7 @@ where
 {
     /// Creates a new ingest-rates use case from a repository and rate provider.
     #[must_use]
-    pub fn new(repository: R, provider: C) -> Self {
+    pub const fn new(repository: R, provider: C) -> Self {
         Self {
             repository,
             provider,
@@ -61,7 +61,7 @@ where
 
     /// Returns a reference to the repository used by this use case.
     #[must_use]
-    pub fn repository(&self) -> &R {
+    pub const fn repository(&self) -> &R {
         &self.repository
     }
 }
@@ -77,19 +77,19 @@ pub struct IngestResult {
 impl IngestResult {
     /// Returns the currency pair associated with the ingested rate.
     #[must_use]
-    pub fn pair(&self) -> &CurrencyPair {
+    pub const fn pair(&self) -> &CurrencyPair {
         &self.pair
     }
 
     /// Returns the timestamp attached to the ingested exchange-rate record.
     #[must_use]
-    pub fn timestamp(&self) -> &chrono::DateTime<chrono::Utc> {
+    pub const fn timestamp(&self) -> &chrono::DateTime<chrono::Utc> {
         &self.timestamp
     }
 
     /// Returns the ingested exchange-rate value.
     #[must_use]
-    pub fn rate(&self) -> &rust_decimal::Decimal {
+    pub const fn rate(&self) -> &rust_decimal::Decimal {
         &self.rate
     }
 }

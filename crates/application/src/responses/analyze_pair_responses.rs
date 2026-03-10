@@ -38,7 +38,7 @@ impl ChangeRecommendation {
     /// `confidence` is expected to be normalized between `0` and `1`, where
     /// higher values indicate stronger confidence in the recommendation.
     #[must_use]
-    pub fn new(
+    pub const fn new(
         pair: CurrencyPair,
         should_change_now: bool,
         confidence: Decimal,
@@ -56,19 +56,19 @@ impl ChangeRecommendation {
 
     /// Returns the currency pair this recommendation applies to.
     #[must_use]
-    pub fn pair(&self) -> &CurrencyPair {
+    pub const fn pair(&self) -> &CurrencyPair {
         &self.pair
     }
 
     /// Returns whether the analysis recommends exchanging funds now.
     #[must_use]
-    pub fn should_change_now(&self) -> bool {
+    pub const fn should_change_now(&self) -> bool {
         self.should_change_now
     }
 
     /// Returns the confidence score associated with the recommendation.
     #[must_use]
-    pub fn confidence(&self) -> &Decimal {
+    pub const fn confidence(&self) -> &Decimal {
         &self.confidence
     }
 
@@ -80,7 +80,7 @@ impl ChangeRecommendation {
 
     /// Returns the timestamp at which the recommendation was generated.
     #[must_use]
-    pub fn timestamp(&self) -> &chrono::DateTime<chrono::Utc> {
+    pub const fn timestamp(&self) -> &chrono::DateTime<chrono::Utc> {
         &self.timestamp
     }
 }
@@ -88,7 +88,7 @@ impl ChangeRecommendation {
 impl PairAnalysis {
     /// Creates a new analysis result for a currency pair.
     #[must_use]
-    pub fn new(
+    pub const fn new(
         pair: CurrencyPair,
         rate_count: usize,
         quality_score: Decimal,
@@ -104,25 +104,25 @@ impl PairAnalysis {
 
     /// Returns the analyzed currency pair.
     #[must_use]
-    pub fn pair(&self) -> &CurrencyPair {
+    pub const fn pair(&self) -> &CurrencyPair {
         &self.pair
     }
 
     /// Returns the number of rates used to produce the analysis.
     #[must_use]
-    pub fn rate_count(&self) -> usize {
+    pub const fn rate_count(&self) -> usize {
         self.rate_count
     }
 
     /// Returns the overall quality score for the analyzed data set.
     #[must_use]
-    pub fn quality_score(&self) -> &Decimal {
+    pub const fn quality_score(&self) -> &Decimal {
         &self.quality_score
     }
 
     /// Returns the recommendation derived from the analysis.
     #[must_use]
-    pub fn recommendation(&self) -> &ChangeRecommendation {
+    pub const fn recommendation(&self) -> &ChangeRecommendation {
         &self.recommendation
     }
 }

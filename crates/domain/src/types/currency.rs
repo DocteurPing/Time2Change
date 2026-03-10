@@ -63,7 +63,7 @@ impl TryFrom<&str> for Currency {
     ///
     /// Propagates the same validation errors as [`Currency::new`].
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Currency::new(value)
+        Self::new(value)
     }
 }
 
