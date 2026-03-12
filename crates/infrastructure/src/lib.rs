@@ -7,8 +7,6 @@
 //! - external rate provider clients
 //! - persistence and transport integrations
 //! - configuration-backed adapter wiring
-//!
-//! At the moment this crate is a placeholder and does not yet expose any
-//! production infrastructure components. As the project evolves, this crate
-//! will host the boundary code that connects the pure domain and application
-//! logic to databases, APIs, and other external systems.
+
+/// Concrete repository adapters backed by a database.
+pub mod repositories;

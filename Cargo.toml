@@ -16,8 +16,9 @@ serde = { version = "1", features = ["derive"] }
 thiserror = "2"
 tracing = "0"
 chrono = "0"
-rust_decimal = { version = "1", default-features = false, features = ["maths", "macros"] }
+rust_decimal = { version = "1", default-features = false, features = ["maths", "macros", "db-postgres"] }
 async-trait = "0"
+sqlx = { version = "0", features = ["runtime-tokio-rustls", "postgres", "chrono", "rust_decimal"] }
 
 [workspace.package]
 version = "0.1.0"

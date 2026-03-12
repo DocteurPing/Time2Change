@@ -6,6 +6,10 @@ publish = false
 
 [dependencies]
 tokio.workspace = true
+chrono.workspace = true
+async-trait.workspace = true
+sqlx.workspace = true
+rust_decimal.workspace = true
 application = { path = "../application" }
 domain = { path = "../domain" }
 shared = { path = "../shared" }
