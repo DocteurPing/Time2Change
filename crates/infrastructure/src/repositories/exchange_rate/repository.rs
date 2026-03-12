@@ -7,6 +7,7 @@ use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
 use domain::types::time_series::TimeSeries;
 use sqlx::PgPool;
+use sqlx::migrate::MigrateError;
 
 use super::model::ExchangeRateRow;
 use super::queries;
@@ -37,27 +38,22 @@ impl PostgresExchangeRateRepository {
     /// # Errors
     ///
     /// Returns [`RepositoryError::Storage`] if the DDL statement fails.
-    pub async fn migrate(&self) -> Result<(), RepositoryError> {
-        sqlx::migrate!("./migrations")
-            .run(&self.pool)
-            .await
-            .map_err(|e| RepositoryError::Storage(e.to_string()))?;
+    pub async fn migrate(&self) -> Result<(), MigrateError> {
+        sqlx::migrate!("./migrations").run(&self.pool).await?;
         Ok(())
     }
 }
 
 #[async_trait]
 impl ExchangeRateRepository for PostgresExchangeRateRepository {
-    /// Persists a batch of exchange rates for the given currency pair.
-    ///
-    /// All rates are being saved in a single transaction.
+    /// All rates are saved using a single `INSERT` statement, which is
+    /// executed atomically by `PostgreSQL`.
     /// Duplicate `(base, quote, timestamp)` triples are silently ignored
     /// (`ON CONFLICT DO NOTHING`).
     ///
     /// # Errors
     ///
-    /// Returns [`RepositoryError::Storage`] if the transaction or any
-    /// individual insert fails.
+    /// Returns [`RepositoryError::Storage`] if the batch insert fails.
     async fn save_rates(
         &self,
         pair: &CurrencyPair,

@@ -1,4 +1,4 @@
-/// Repository implementation for exchange rate data, including database models,
+/// Repository implementation for exchange rate data, including database models, and related components.
 pub mod model;
 
 /// Database queries and operations related to exchange rate data.
