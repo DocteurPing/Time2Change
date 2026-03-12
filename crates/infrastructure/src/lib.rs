@@ -10,3 +10,6 @@
 
 /// Concrete repository adapters backed by a database.
 pub mod repositories;
+
+#[cfg(test)]
+mod tests;
