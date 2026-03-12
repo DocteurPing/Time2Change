@@ -68,6 +68,22 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
     needs: [check]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: time2change
+          POSTGRES_PASSWORD: time2change
+          POSTGRES_DB: time2change_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://time2change:time2change@localhost:5432/time2change_test
     steps:
       - uses: actions/checkout@v4
 
