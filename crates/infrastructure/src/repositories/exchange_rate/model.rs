@@ -14,8 +14,8 @@ use rust_decimal::Decimal;
 /// them for every row.
 #[derive(Debug, sqlx::FromRow)]
 pub struct ExchangeRateRow {
-    pub(crate) timestamp: DateTime<Utc>,
-    pub(crate) rate: Decimal,
+    timestamp: DateTime<Utc>,
+    rate: Decimal,
 }
 
 impl From<ExchangeRateRow> for ExchangeRate {

@@ -38,10 +38,10 @@ impl PostgresExchangeRateRepository {
     ///
     /// Returns [`RepositoryError::Storage`] if the DDL statement fails.
     pub async fn migrate(&self) -> Result<(), RepositoryError> {
-        sqlx::query(queries::CREATE_TABLE)
-            .execute(&self.pool)
+        sqlx::migrate!("./migrations")
+            .run(&self.pool)
             .await
-            .map_err(to_repository_error)?;
+            .map_err(|e| RepositoryError::Storage(e.to_string()))?;
         Ok(())
     }
 }
@@ -63,6 +63,10 @@ impl ExchangeRateRepository for PostgresExchangeRateRepository {
         pair: &CurrencyPair,
         rates: &[ExchangeRate],
     ) -> Result<(), RepositoryError> {
+        if rates.is_empty() {
+            return Ok(());
+        }
+
         let timestamp: Vec<DateTime<Utc>> = rates.iter().map(|r| *r.timestamp()).collect();
         let rate: Vec<rust_decimal::Decimal> = rates.iter().map(|r| *r.rate()).collect();
 
