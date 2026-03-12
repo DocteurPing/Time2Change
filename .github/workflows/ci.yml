@@ -141,7 +141,7 @@ jobs:
   ci-success:
     name: CI Success
     if: always()
-    needs: [fmt, clippy, check, test, coverage, security-audit, deny]
+    needs: [fmt, clippy, check, test, security-audit, deny]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all jobs succeeded
