@@ -49,7 +49,7 @@ impl<R: ExchangeRateRepository> AnalyzePairUseCase<R> {
     ) -> Result<PairAnalysis, AnalyzeError> {
         let now = chrono::Utc::now();
         let start = now - chrono::Duration::days(i64::from(lookback_days));
-        let time_series = self.repository.load_rates(&pair, start..=now).await?;
+        let time_series = self.repository.load_rates(&pair, &(start..=now)).await?;
         let rates = time_series.rates();
 
         if rates.is_empty() {

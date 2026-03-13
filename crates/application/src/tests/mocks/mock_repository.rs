@@ -79,7 +79,7 @@ impl ExchangeRateRepository for MockRepository {
     async fn load_rates(
         &self,
         pair: &CurrencyPair,
-        _range: RangeInclusive<DateTime<Utc>>,
+        _range: &RangeInclusive<DateTime<Utc>>,
     ) -> Result<TimeSeries, RepositoryError> {
         if let Some(ref e) = self.load_error {
             return Err(e.clone());
@@ -90,7 +90,7 @@ impl ExchangeRateRepository for MockRepository {
     async fn exists(
         &self,
         pair: &CurrencyPair,
-        range: RangeInclusive<DateTime<Utc>>,
+        range: &RangeInclusive<DateTime<Utc>>,
     ) -> Result<bool, RepositoryError> {
         if let Some(ref e) = self.load_error {
             return Err(e.clone());

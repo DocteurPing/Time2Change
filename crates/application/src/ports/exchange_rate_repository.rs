@@ -30,7 +30,7 @@ pub trait ExchangeRateRepository: Send + Sync {
     async fn load_rates(
         &self,
         pair: &CurrencyPair,
-        range: RangeInclusive<DateTime<Utc>>,
+        range: &RangeInclusive<DateTime<Utc>>,
     ) -> Result<TimeSeries, RepositoryError>;
 
     /// Returns whether data already exists for the given pair inside the
@@ -41,7 +41,7 @@ pub trait ExchangeRateRepository: Send + Sync {
     async fn exists(
         &self,
         pair: &CurrencyPair,
-        range: RangeInclusive<DateTime<Utc>>,
+        range: &RangeInclusive<DateTime<Utc>>,
     ) -> Result<bool, RepositoryError>;
 }
 
