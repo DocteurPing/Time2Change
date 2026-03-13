@@ -37,7 +37,7 @@ impl PostgresExchangeRateRepository {
     ///
     /// # Errors
     ///
-    /// Returns [`RepositoryError::Storage`] if the DDL statement fails.
+    /// Returns [`MigrateError`] if applying the database migrations fails.
     pub async fn migrate(&self) -> Result<(), MigrateError> {
         sqlx::migrate!("./migrations").run(&self.pool).await?;
         Ok(())

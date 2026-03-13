@@ -17,7 +17,6 @@ fn make_pair() -> CurrencyPair {
 #[sqlx::test]
 async fn save_and_load_round_trip(pool: PgPool) {
     let repo = PostgresExchangeRateRepository::new(pool);
-    repo.migrate().await.unwrap();
 
     let now = Utc::now();
     let pair = make_pair();
@@ -37,7 +36,6 @@ async fn save_and_load_round_trip(pool: PgPool) {
 #[sqlx::test]
 async fn exists_no_data(pool: PgPool) {
     let repo = PostgresExchangeRateRepository::new(pool);
-    repo.migrate().await.unwrap();
     assert!(
         !repo
             .exists(&make_pair(), &(Utc::now()..=Utc::now()))
@@ -49,7 +47,6 @@ async fn exists_no_data(pool: PgPool) {
 #[sqlx::test]
 async fn save_multiple_rates(pool: PgPool) {
     let repo = PostgresExchangeRateRepository::new(pool);
-    repo.migrate().await.unwrap();
 
     let now = Utc::now();
     let pair = make_pair();
@@ -73,7 +70,6 @@ async fn save_multiple_rates(pool: PgPool) {
 #[sqlx::test]
 async fn save_duplicate_rates(pool: PgPool) {
     let repo = PostgresExchangeRateRepository::new(pool);
-    repo.migrate().await.unwrap();
 
     let now = Utc::now();
     let pair = make_pair();
@@ -97,7 +93,6 @@ async fn save_duplicate_rates(pool: PgPool) {
 #[sqlx::test]
 async fn save_duplicate_in_batch(pool: PgPool) {
     let repo = PostgresExchangeRateRepository::new(pool);
-    repo.migrate().await.unwrap();
 
     let now = Utc::now();
     let pair = make_pair();
