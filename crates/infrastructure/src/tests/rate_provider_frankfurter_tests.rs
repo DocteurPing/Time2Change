@@ -202,7 +202,7 @@ async fn returns_parse_error_on_non_decimal_rate() {
 }
 
 #[tokio::test]
-async fn test_fetch_currencies() {
+async fn fetch_currencies() {
     let (server, client) = mock_server().await;
     Mock::given(method("GET"))
         .and(path("/currencies"))
@@ -223,7 +223,7 @@ async fn test_fetch_currencies() {
 }
 
 #[tokio::test]
-async fn test_fetch_currencies_parse_error() {
+async fn fetch_currencies_parse_error() {
     let (server, client) = mock_server().await;
     Mock::given(method("GET"))
         .and(path("/currencies"))
