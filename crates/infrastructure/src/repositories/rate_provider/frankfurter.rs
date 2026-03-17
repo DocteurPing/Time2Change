@@ -1,9 +1,11 @@
 use application::ports::rate_provider::{RateProvider, RateProviderError};
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveTime, TimeZone, Utc};
-use domain::types::{currency_pair::CurrencyPair, exchange_rate::ExchangeRate};
+use domain::types::currency_pair::CurrencyPair;
+use domain::types::exchange_rate::ExchangeRate;
 use reqwest::Client;
-use rust_decimal::{Decimal, prelude::FromPrimitive};
+use rust_decimal::Decimal;
+use rust_decimal::prelude::FromPrimitive;
 
 use crate::repositories::rate_provider::dto::FrankfurterRateProviderResponse;
 
@@ -20,16 +22,22 @@ pub struct FrankfurterClient {
     base_url: String, // kept as a field for test
 }
 
-impl Default for FrankfurterClient {
-    fn default() -> Self {
-        Self {
-            client: Client::new(),
-            base_url: BASE_URL.to_owned(),
-        }
-    }
-}
-
 impl FrankfurterClient {
+    /// Creates a client pointing at the default base URL.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the underlying `reqwest::Client` cannot be built.
+    pub fn with_default_url() -> Result<Self, reqwest::Error> {
+        let client = Client::builder()
+            .timeout(std::time::Duration::from_secs(TIMEOUT_SECONDS))
+            .build()?;
+        Ok(Self {
+            client,
+            base_url: BASE_URL.to_owned(),
+        })
+    }
+
     /// Creates a client pointing at a custom base URL (useful for tests with
     /// a mock HTTP server such as `wiremock`).
     ///

@@ -1,12 +1,11 @@
 use application::ports::rate_provider::{RateProvider, RateProviderError};
 use chrono::TimeZone;
+use domain::types::currency::Currency;
 use domain::types::currency_pair::CurrencyPair;
 use wiremock::matchers::{method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use crate::repositories::rate_provider::frankfurter::FrankfurterClient;
-
-use domain::types::currency::Currency;
 
 async fn mock_server() -> (MockServer, FrankfurterClient) {
     let server = MockServer::start().await;
@@ -16,7 +15,7 @@ async fn mock_server() -> (MockServer, FrankfurterClient) {
 
 #[tokio::test]
 async fn create_client_test() {
-    let client = FrankfurterClient::default();
+    let client = FrankfurterClient::with_default_url().unwrap();
     assert_eq!(client.base_url(), "https://api.frankfurter.app");
 }
 
