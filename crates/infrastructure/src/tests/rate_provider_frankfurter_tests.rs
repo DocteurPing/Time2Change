@@ -8,7 +8,7 @@ use crate::repositories::rate_provider::frankfurter::FrankfurterClient;
 
 use domain::types::currency::Currency;
 
-async fn mock_server_with(_body: &str) -> (MockServer, FrankfurterClient) {
+async fn mock_server() -> (MockServer, FrankfurterClient) {
     let server = MockServer::start().await;
     let client = FrankfurterClient::with_base_url(server.uri()).unwrap();
     (server, client)
@@ -22,7 +22,7 @@ async fn create_client_test() {
 
 #[tokio::test]
 async fn fetch_latest_returns_exchange_rate() {
-    let (server, client) = mock_server_with("").await;
+    let (server, client) = mock_server().await;
     Mock::given(method("GET"))
         .and(path("/latest"))
         .and(query_param("base", "EUR"))
@@ -47,7 +47,7 @@ async fn fetch_latest_returns_exchange_rate() {
 
 #[tokio::test]
 async fn get_rate_returns_historical_exchange_rate() {
-    let (server, client) = mock_server_with("").await;
+    let (server, client) = mock_server().await;
     Mock::given(method("GET"))
         .and(path("/2024-01-01"))
         .and(query_param("base", "EUR"))
@@ -78,7 +78,7 @@ async fn get_rate_returns_historical_exchange_rate() {
 
 #[tokio::test]
 async fn returns_pair_not_supported_on_404() {
-    let (server, client) = mock_server_with("").await;
+    let (server, client) = mock_server().await;
     Mock::given(method("GET"))
         .and(path("/latest"))
         .and(query_param("base", "EUR"))
@@ -95,7 +95,7 @@ async fn returns_pair_not_supported_on_404() {
 
 #[tokio::test]
 async fn returns_api_error_on_500() {
-    let (server, client) = mock_server_with("").await;
+    let (server, client) = mock_server().await;
     Mock::given(method("GET"))
         .and(path("/latest"))
         .and(query_param("base", "EUR"))
@@ -112,7 +112,7 @@ async fn returns_api_error_on_500() {
 
 #[tokio::test]
 async fn returns_timeout_on_request_timeout() {
-    let (server, client) = mock_server_with("").await;
+    let (server, client) = mock_server().await;
     Mock::given(method("GET"))
         .and(path("/latest"))
         .and(query_param("base", "EUR"))
@@ -129,7 +129,7 @@ async fn returns_timeout_on_request_timeout() {
 
 #[tokio::test]
 async fn returns_pair_not_supported_when_quote_missing_from_rates() {
-    let (server, client) = mock_server_with("").await;
+    let (server, client) = mock_server().await;
     Mock::given(method("GET"))
         .and(path("/latest"))
         .and(query_param("base", "EUR"))
@@ -161,7 +161,7 @@ async fn returns_api_error_on_connection_refused() {
 
 #[tokio::test]
 async fn returns_parse_error_on_invalid_json() {
-    let (server, client) = mock_server_with("").await;
+    let (server, client) = mock_server().await;
     Mock::given(method("GET"))
         .and(path("/latest"))
         .and(query_param("base", "EUR"))
@@ -178,7 +178,7 @@ async fn returns_parse_error_on_invalid_json() {
 
 #[tokio::test]
 async fn returns_parse_error_on_non_decimal_rate() {
-    let (server, client) = mock_server_with("").await;
+    let (server, client) = mock_server().await;
     Mock::given(method("GET"))
         .and(path("/latest"))
         .and(query_param("base", "EUR"))
