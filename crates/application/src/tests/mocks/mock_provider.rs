@@ -41,8 +41,13 @@ impl RateProvider for MockProvider {
     }
 
     async fn fetch_currencies(&self) -> Result<HashMap<String, String>, RateProviderError> {
-        let mut map = HashMap::new();
-        map.insert("EUR".to_owned(), "Euro".to_owned());
-        Ok(map)
+        match &self.result {
+            Ok(_) => {
+                let mut map = HashMap::new();
+                map.insert("EUR".to_owned(), "Euro".to_owned());
+                Ok(map)
+            }
+            Err(e) => Err(e.clone()),
+        }
     }
 }
