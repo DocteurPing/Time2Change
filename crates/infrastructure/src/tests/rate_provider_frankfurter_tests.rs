@@ -95,7 +95,7 @@ async fn returns_pair_not_supported_on_404() {
     let pair =
         CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
     let error = client.fetch_latest(&pair).await;
-    assert!(matches!(error, Err(RateProviderError::ApiError(_))));
+    assert!(matches!(error, Err(RateProviderError::PairNotSupported(_))));
 }
 
 #[tokio::test]
@@ -232,4 +232,24 @@ async fn fetch_currencies_parse_error() {
         .await;
     let error = client.fetch_currencies().await;
     assert!(matches!(error, Err(RateProviderError::ParseError(_))));
+}
+
+#[tokio::test]
+async fn fetch_currencies_api_error() {
+    let client = FrankfurterClient::with_base_url("http://127.0.0.1:1").unwrap();
+    let error = client.fetch_currencies().await;
+    assert!(matches!(error, Err(RateProviderError::ApiError(_))));
+}
+
+#[tokio::test]
+async fn fetch_currencies_return_api_error_on_500() {
+    let (server, client) = mock_server().await;
+    Mock::given(method("GET"))
+        .and(path("/currencies"))
+        .respond_with(ResponseTemplate::new(500))
+        .mount(&server)
+        .await;
+
+    let error = client.fetch_currencies().await;
+    assert!(matches!(error, Err(RateProviderError::ApiError(_))));
 }

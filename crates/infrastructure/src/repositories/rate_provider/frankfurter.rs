@@ -79,7 +79,24 @@ impl FrankfurterClient {
         url: &str,
         pair: &CurrencyPair,
     ) -> Result<ExchangeRate, RateProviderError> {
-        let response = self.fetch(url).await?;
+        let response = self.client.get(url).send().await.map_err(|e| {
+            if e.is_timeout() {
+                RateProviderError::Timeout
+            } else {
+                RateProviderError::ApiError(e.to_string())
+            }
+        })?;
+
+        if response.status() == reqwest::StatusCode::NOT_FOUND {
+            return Err(RateProviderError::PairNotSupported(pair.to_string()));
+        }
+
+        if !response.status().is_success() {
+            return Err(RateProviderError::ApiError(format!(
+                "HTTP {}",
+                response.status()
+            )));
+        }
 
         let dto: FrankfurterRateProviderResponse = response
             .json()
