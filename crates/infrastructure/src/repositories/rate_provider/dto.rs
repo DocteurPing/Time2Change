@@ -4,9 +4,6 @@ use serde::Deserialize;
 /// Represents the response from the Frankfurter API for exchange rates.
 #[derive(Debug, Deserialize)]
 pub struct FrankfurterRateProviderResponse {
-    #[allow(dead_code)]
-    // the API response includes the base currency, but we don't need it
-    base: String,
     date: NaiveDate,
     rates: std::collections::HashMap<String, f64>,
 }
