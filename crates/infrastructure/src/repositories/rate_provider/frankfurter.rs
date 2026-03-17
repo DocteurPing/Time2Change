@@ -12,7 +12,7 @@ use rust_decimal::prelude::FromPrimitive;
 use crate::repositories::rate_provider::dto::FrankfurterRateProviderResponse;
 
 const BASE_URL: &str = "https://api.frankfurter.dev/v1";
-const TIMEOUT_SECONDS: u64 = 5000;
+const TIMEOUT_MILLIS: u64 = 5000;
 
 /// HTTP adapter for the Frankfurter public exchange-rate API.
 ///
@@ -32,7 +32,7 @@ impl FrankfurterClient {
     /// Returns an error if the underlying `reqwest::Client` cannot be built.
     pub fn with_default_url() -> Result<Self, reqwest::Error> {
         let client = Client::builder()
-            .timeout(std::time::Duration::from_secs(TIMEOUT_SECONDS))
+            .timeout(std::time::Duration::from_millis(TIMEOUT_MILLIS))
             .build()?;
         Ok(Self {
             client,
@@ -48,10 +48,10 @@ impl FrankfurterClient {
     /// Returns an error if the underlying `reqwest::Client` cannot be built
     pub fn with_base_url_and_timeout(
         base_url: impl Into<String>,
-        timeout: u64,
+        timeout_millis: u64,
     ) -> Result<Self, reqwest::Error> {
         let client = Client::builder()
-            .timeout(std::time::Duration::from_millis(timeout))
+            .timeout(std::time::Duration::from_millis(timeout_millis))
             .build()?;
         Ok(Self {
             client,
