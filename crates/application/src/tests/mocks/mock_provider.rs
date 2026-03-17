@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
@@ -36,5 +38,11 @@ impl RateProvider for MockProvider {
             Ok(r) => Ok(r.clone()),
             Err(e) => Err(e.clone()),
         }
+    }
+
+    async fn fetch_currencies(&self) -> Result<HashMap<String, String>, RateProviderError> {
+        let mut map = HashMap::new();
+        map.insert("EUR".to_owned(), "Euro".to_owned());
+        Ok(map)
     }
 }

@@ -1,15 +1,17 @@
+use std::collections::HashMap;
+
 use application::ports::rate_provider::{RateProvider, RateProviderError};
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveTime, TimeZone, Utc};
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
-use reqwest::Client;
+use reqwest::{Client, Response};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 
 use crate::repositories::rate_provider::dto::FrankfurterRateProviderResponse;
 
-const BASE_URL: &str = "https://api.frankfurter.app";
+const BASE_URL: &str = "https://api.frankfurter.dev/v1";
 const TIMEOUT_SECONDS: u64 = 5;
 
 /// HTTP adapter for the Frankfurter public exchange-rate API.
@@ -54,11 +56,7 @@ impl FrankfurterClient {
         })
     }
 
-    async fn fetch(
-        &self,
-        url: &str,
-        pair: &CurrencyPair,
-    ) -> Result<ExchangeRate, RateProviderError> {
+    async fn fetch(&self, url: &str) -> Result<Response, RateProviderError> {
         let response = self.client.get(url).send().await.map_err(|e| {
             if e.is_timeout() {
                 RateProviderError::Timeout
@@ -67,15 +65,21 @@ impl FrankfurterClient {
             }
         })?;
 
-        if response.status() == reqwest::StatusCode::NOT_FOUND {
-            return Err(RateProviderError::PairNotSupported(pair.to_string()));
-        }
         if !response.status().is_success() {
             return Err(RateProviderError::ApiError(format!(
                 "HTTP {}",
                 response.status()
             )));
         }
+        Ok(response)
+    }
+
+    async fn fetch_pair(
+        &self,
+        url: &str,
+        pair: &CurrencyPair,
+    ) -> Result<ExchangeRate, RateProviderError> {
+        let response = self.fetch(url).await?;
 
         let dto: FrankfurterRateProviderResponse = response
             .json()
@@ -112,7 +116,7 @@ impl RateProvider for FrankfurterClient {
             pair.base(),
             pair.quote()
         );
-        self.fetch(&url, pair).await
+        self.fetch_pair(&url, pair).await
     }
 
     async fn get_rate(
@@ -127,6 +131,16 @@ impl RateProvider for FrankfurterClient {
             pair.base(),
             pair.quote()
         );
-        self.fetch(&url, pair).await
+        self.fetch_pair(&url, pair).await
+    }
+
+    async fn fetch_currencies(&self) -> Result<HashMap<String, String>, RateProviderError> {
+        let url = format!("{}/currencies", self.base_url);
+        let response: Response = self.fetch(&url).await?;
+        let dto: HashMap<String, String> = response
+            .json()
+            .await
+            .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
+        Ok(dto)
     }
 }

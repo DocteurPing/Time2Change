@@ -16,7 +16,7 @@ async fn mock_server() -> (MockServer, FrankfurterClient) {
 #[tokio::test]
 async fn create_client_test() {
     let client = FrankfurterClient::with_default_url().unwrap();
-    assert_eq!(client.base_url(), "https://api.frankfurter.app");
+    assert_eq!(client.base_url(), "https://api.frankfurter.dev/v1");
 }
 
 #[tokio::test]
@@ -48,31 +48,37 @@ async fn fetch_latest_returns_exchange_rate() {
 async fn get_rate_returns_historical_exchange_rate() {
     let (server, client) = mock_server().await;
     Mock::given(method("GET"))
-        .and(path("/2024-01-01"))
-        .and(query_param("base", "EUR"))
-        .and(query_param("symbols", "USD"))
+        .and(path("/1999-01-01"))
+        .and(query_param("base", "USD"))
+        .and(query_param("symbols", "EUR"))
         .respond_with(ResponseTemplate::new(200).set_body_raw(
-            r#"{"base":"EUR","date":"2024-01-01","rates":{"USD":1.0850}}"#,
+            r#"{
+            "base": "USD",
+            "date": "1999-01-01",
+            "rates": {
+                "EUR": 0.84825
+            }
+            }"#,
             "application/json",
         ))
         .mount(&server)
         .await;
 
     let pair =
-        CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
+        CurrencyPair::new(Currency::new("USD").unwrap(), Currency::new("EUR").unwrap()).unwrap();
 
     let rate = client
         .get_rate(
             &pair,
-            chrono::Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap(),
+            chrono::Utc.with_ymd_and_hms(1999, 1, 1, 0, 0, 0).unwrap(),
         )
         .await
         .unwrap();
     assert_eq!(
         rate.timestamp(),
-        &chrono::Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap()
+        &chrono::Utc.with_ymd_and_hms(1999, 1, 1, 0, 0, 0).unwrap()
     );
-    assert_eq!(rate.rate(), &rust_decimal::Decimal::new(10850, 4));
+    assert_eq!(rate.rate(), &rust_decimal::Decimal::new(84825, 5));
 }
 
 #[tokio::test]
@@ -89,7 +95,7 @@ async fn returns_pair_not_supported_on_404() {
     let pair =
         CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
     let error = client.fetch_latest(&pair).await;
-    assert!(matches!(error, Err(RateProviderError::PairNotSupported(_))));
+    assert!(matches!(error, Err(RateProviderError::ApiError(_))));
 }
 
 #[tokio::test]
@@ -192,5 +198,38 @@ async fn returns_parse_error_on_non_decimal_rate() {
     let pair =
         CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
     let error = client.fetch_latest(&pair).await;
+    assert!(matches!(error, Err(RateProviderError::ParseError(_))));
+}
+
+#[tokio::test]
+async fn test_fetch_currencies() {
+    let (server, client) = mock_server().await;
+    Mock::given(method("GET"))
+        .and(path("/currencies"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(
+            r#"{
+            "AUD": "Australian Dollar",
+            "BRL": "Brazilian Real",
+            "CAD": "Canadian Dollar",
+            "CHF": "Swiss Franc"
+            }"#,
+            "application/json",
+        ))
+        .mount(&server)
+        .await;
+    let currencies = client.fetch_currencies().await.unwrap();
+    assert!(currencies.contains_key("BRL"));
+    assert!(currencies.contains_key("CHF"));
+}
+
+#[tokio::test]
+async fn test_fetch_currencies_parse_error() {
+    let (server, client) = mock_server().await;
+    Mock::given(method("GET"))
+        .and(path("/currencies"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(r#"{"EUR"}"#, "application/json"))
+        .mount(&server)
+        .await;
+    let error = client.fetch_currencies().await;
     assert!(matches!(error, Err(RateProviderError::ParseError(_))));
 }
