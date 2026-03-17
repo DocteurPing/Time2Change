@@ -11,11 +11,13 @@ async-trait.workspace = true
 sqlx.workspace = true
 rust_decimal.workspace = true
 serde.workspace = true
-wiremock.workspace = true
 reqwest.workspace = true
 application = { path = "../application" }
 domain = { path = "../domain" }
 shared = { path = "../shared" }
+
+[dev-dependencies]
+wiremock.workspace = true
 
 [lints]
 workspace = true
