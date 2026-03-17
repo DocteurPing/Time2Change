@@ -9,7 +9,7 @@ use crate::repositories::rate_provider::frankfurter::FrankfurterClient;
 
 async fn mock_server() -> (MockServer, FrankfurterClient) {
     let server = MockServer::start().await;
-    let client = FrankfurterClient::with_base_url(server.uri()).unwrap();
+    let client = FrankfurterClient::with_base_url_and_timeout(server.uri(), 100).unwrap();
     (server, client)
 }
 
@@ -122,7 +122,7 @@ async fn returns_timeout_on_request_timeout() {
         .and(path("/latest"))
         .and(query_param("base", "EUR"))
         .and(query_param("symbols", "USD"))
-        .respond_with(ResponseTemplate::new(200).set_delay(std::time::Duration::from_secs(10)))
+        .respond_with(ResponseTemplate::new(200).set_delay(std::time::Duration::from_millis(200)))
         .mount(&server)
         .await;
 
@@ -155,7 +155,7 @@ async fn returns_pair_not_supported_when_quote_missing_from_rates() {
 
 #[tokio::test]
 async fn returns_api_error_on_connection_refused() {
-    let client = FrankfurterClient::with_base_url("http://127.0.0.1:1").unwrap();
+    let client = FrankfurterClient::with_base_url_and_timeout("http://127.0.0.1:1", 5000).unwrap();
 
     let pair =
         CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
@@ -236,7 +236,7 @@ async fn fetch_currencies_parse_error() {
 
 #[tokio::test]
 async fn fetch_currencies_api_error() {
-    let client = FrankfurterClient::with_base_url("http://127.0.0.1:1").unwrap();
+    let client = FrankfurterClient::with_base_url_and_timeout("http://127.0.0.1:1", 5000).unwrap();
     let error = client.fetch_currencies().await;
     assert!(matches!(error, Err(RateProviderError::ApiError(_))));
 }
@@ -252,4 +252,17 @@ async fn fetch_currencies_return_api_error_on_500() {
 
     let error = client.fetch_currencies().await;
     assert!(matches!(error, Err(RateProviderError::ApiError(_))));
+}
+
+#[tokio::test]
+async fn fetch_currencies_return_timeout_on_timeout() {
+    let (server, client) = mock_server().await;
+    Mock::given(method("GET"))
+        .and(path("/currencies"))
+        .respond_with(ResponseTemplate::new(200).set_delay(std::time::Duration::from_millis(200)))
+        .mount(&server)
+        .await;
+
+    let error = client.fetch_currencies().await;
+    assert!(matches!(error, Err(RateProviderError::Timeout)));
 }
