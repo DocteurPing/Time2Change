@@ -29,7 +29,8 @@ allow = [
     "ISC",
     "Zlib",
     "BSD-3-Clause",
-    "CDLA-Permissive-2.0"
+    "CDLA-Permissive-2.0",
+    "OpenSSL"
 ]
 confidence-threshold = 0.8
 private = { ignore = true }
