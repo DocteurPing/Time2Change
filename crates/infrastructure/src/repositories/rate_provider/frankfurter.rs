@@ -1,16 +1,18 @@
+use std::collections::HashMap;
+
 use application::ports::rate_provider::{RateProvider, RateProviderError};
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveTime, TimeZone, Utc};
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
-use reqwest::Client;
+use reqwest::{Client, Response};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 
 use crate::repositories::rate_provider::dto::FrankfurterRateProviderResponse;
 
-const BASE_URL: &str = "https://api.frankfurter.app";
-const TIMEOUT_SECONDS: u64 = 5;
+const BASE_URL: &str = "https://api.frankfurter.dev/v1";
+const TIMEOUT_MILLIS: u64 = 5000;
 
 /// HTTP adapter for the Frankfurter public exchange-rate API.
 ///
@@ -30,7 +32,7 @@ impl FrankfurterClient {
     /// Returns an error if the underlying `reqwest::Client` cannot be built.
     pub fn with_default_url() -> Result<Self, reqwest::Error> {
         let client = Client::builder()
-            .timeout(std::time::Duration::from_secs(TIMEOUT_SECONDS))
+            .timeout(std::time::Duration::from_millis(TIMEOUT_MILLIS))
             .build()?;
         Ok(Self {
             client,
@@ -44,9 +46,12 @@ impl FrankfurterClient {
     /// # Errors
     ///
     /// Returns an error if the underlying `reqwest::Client` cannot be built
-    pub fn with_base_url(base_url: impl Into<String>) -> Result<Self, reqwest::Error> {
+    pub fn with_base_url_and_timeout(
+        base_url: impl Into<String>,
+        timeout_millis: u64,
+    ) -> Result<Self, reqwest::Error> {
         let client = Client::builder()
-            .timeout(std::time::Duration::from_secs(TIMEOUT_SECONDS))
+            .timeout(std::time::Duration::from_millis(timeout_millis))
             .build()?;
         Ok(Self {
             client,
@@ -54,7 +59,25 @@ impl FrankfurterClient {
         })
     }
 
-    async fn fetch(
+    async fn fetch(&self, url: &str) -> Result<Response, RateProviderError> {
+        let response = self.client.get(url).send().await.map_err(|e| {
+            if e.is_timeout() {
+                RateProviderError::Timeout
+            } else {
+                RateProviderError::ApiError(e.to_string())
+            }
+        })?;
+
+        if !response.status().is_success() {
+            return Err(RateProviderError::ApiError(format!(
+                "HTTP {}",
+                response.status()
+            )));
+        }
+        Ok(response)
+    }
+
+    async fn fetch_pair(
         &self,
         url: &str,
         pair: &CurrencyPair,
@@ -70,6 +93,7 @@ impl FrankfurterClient {
         if response.status() == reqwest::StatusCode::NOT_FOUND {
             return Err(RateProviderError::PairNotSupported(pair.to_string()));
         }
+
         if !response.status().is_success() {
             return Err(RateProviderError::ApiError(format!(
                 "HTTP {}",
@@ -112,7 +136,7 @@ impl RateProvider for FrankfurterClient {
             pair.base(),
             pair.quote()
         );
-        self.fetch(&url, pair).await
+        self.fetch_pair(&url, pair).await
     }
 
     async fn get_rate(
@@ -127,6 +151,16 @@ impl RateProvider for FrankfurterClient {
             pair.base(),
             pair.quote()
         );
-        self.fetch(&url, pair).await
+        self.fetch_pair(&url, pair).await
+    }
+
+    async fn fetch_currencies(&self) -> Result<HashMap<String, String>, RateProviderError> {
+        let url = format!("{}/currencies", self.base_url);
+        let response: Response = self.fetch(&url).await?;
+        let dto: HashMap<String, String> = response
+            .json()
+            .await
+            .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
+        Ok(dto)
     }
 }

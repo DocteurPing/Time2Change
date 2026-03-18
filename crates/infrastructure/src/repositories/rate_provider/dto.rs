@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::NaiveDate;
 use serde::Deserialize;
 
@@ -5,7 +7,7 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 pub struct FrankfurterRateProviderResponse {
     date: NaiveDate,
-    rates: std::collections::HashMap<String, f64>,
+    rates: HashMap<String, f64>,
 }
 
 impl FrankfurterRateProviderResponse {
@@ -17,7 +19,7 @@ impl FrankfurterRateProviderResponse {
 
     /// Returns the exchange rates map, where keys are quote currency codes and values are the corresponding exchange rates.
     #[must_use]
-    pub const fn rates(&self) -> &std::collections::HashMap<String, f64> {
+    pub const fn rates(&self) -> &HashMap<String, f64> {
         &self.rates
     }
 }
