@@ -3,15 +3,18 @@ use std::ops::RangeInclusive;
 use application::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
 use domain::types::time_series::TimeSeries;
+use rust_decimal::Decimal;
 use sqlx::PgPool;
 use sqlx::migrate::MigrateError;
 
 use super::model::ExchangeRateRow;
 use super::queries;
 use crate::repositories::exchange_rate::error::to_repository_error;
+use crate::repositories::exchange_rate::model::CurrencyInfoRow;
 
 /// Postgres-backed implementation of [`ExchangeRateRepository`].
 ///
@@ -46,14 +49,6 @@ impl PostgresExchangeRateRepository {
 
 #[async_trait]
 impl ExchangeRateRepository for PostgresExchangeRateRepository {
-    /// All rates are saved using a single `INSERT` statement, which is
-    /// executed atomically by `PostgreSQL`.
-    /// Duplicate `(base, quote, timestamp)` triples are silently ignored
-    /// (`ON CONFLICT DO NOTHING`).
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RepositoryError::Storage`] if the batch insert fails.
     async fn save_rates(
         &self,
         pair: &CurrencyPair,
@@ -64,7 +59,7 @@ impl ExchangeRateRepository for PostgresExchangeRateRepository {
         }
 
         let timestamp: Vec<DateTime<Utc>> = rates.iter().map(|r| *r.timestamp()).collect();
-        let rate: Vec<rust_decimal::Decimal> = rates.iter().map(|r| *r.rate()).collect();
+        let rate: Vec<Decimal> = rates.iter().map(|r| *r.rate()).collect();
 
         sqlx::query(queries::INSERT_RATE)
             .bind(pair.base().to_string())
@@ -78,13 +73,6 @@ impl ExchangeRateRepository for PostgresExchangeRateRepository {
         Ok(())
     }
 
-    /// Loads all stored rates for the pair within the inclusive time range.
-    ///
-    /// Rows are returned in ascending timestamp order.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RepositoryError::Storage`] if the query fails.
     async fn load_rates(
         &self,
         pair: &CurrencyPair,
@@ -106,11 +94,6 @@ impl ExchangeRateRepository for PostgresExchangeRateRepository {
         Ok(TimeSeries::new(pair.clone(), exchange_rates))
     }
 
-    /// Returns whether at least one rate exists for the pair in the range.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RepositoryError::Storage`] if the query fails.
     async fn exists(
         &self,
         pair: &CurrencyPair,
@@ -128,5 +111,33 @@ impl ExchangeRateRepository for PostgresExchangeRateRepository {
             .map_err(to_repository_error)?;
 
         Ok(exists)
+    }
+
+    async fn save_currencies(&self, currencies: &[CurrencyInfo]) -> Result<(), RepositoryError> {
+        if currencies.is_empty() {
+            return Ok(());
+        }
+        let codes: Vec<String> = currencies.iter().map(|c| c.code().to_owned()).collect();
+        let names: Vec<String> = currencies.iter().map(|c| c.name().to_owned()).collect();
+
+        sqlx::query(queries::SAVE_CURRENCIES)
+            .bind(&codes)
+            .bind(&names)
+            .execute(&self.pool)
+            .await
+            .map_err(to_repository_error)?;
+
+        Ok(())
+    }
+
+    async fn list_currencies(&self) -> Result<Vec<CurrencyInfo>, RepositoryError> {
+        let rows: Vec<CurrencyInfoRow> = sqlx::query_as(queries::LOAD_CURRENCIES)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(to_repository_error)?;
+
+        let currencies: Vec<CurrencyInfo> = rows.into_iter().map(CurrencyInfo::from).collect();
+
+        Ok(currencies)
     }
 }

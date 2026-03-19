@@ -21,3 +21,6 @@ pub mod rate_quality_config;
 
 /// Time-series aggregate for exchange rates and quality analysis.
 pub mod time_series;
+
+/// Currency information (symbol and name).
+pub mod currency_info;

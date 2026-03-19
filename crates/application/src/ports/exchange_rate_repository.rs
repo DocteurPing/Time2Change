@@ -1,6 +1,7 @@
 use std::ops::RangeInclusive;
 
 use chrono::{DateTime, Utc};
+use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
 use domain::types::time_series::TimeSeries;
@@ -17,6 +18,10 @@ pub trait ExchangeRateRepository: Send + Sync {
     ///
     /// Implementations may reject duplicate or conflicting records depending on
     /// the storage model.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`RepositoryError::Storage`] if the batch insert fails.
     async fn save_rates(
         &self,
         pair: &CurrencyPair,
@@ -27,6 +32,11 @@ pub trait ExchangeRateRepository: Send + Sync {
     /// inclusive time range.
     ///
     /// Returns a `TimeSeries` containing the matching rates when successful.
+    /// Rows are returned in ascending timestamp order.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`RepositoryError::Storage`] if the query fails.
     async fn load_rates(
         &self,
         pair: &CurrencyPair,
@@ -36,13 +46,28 @@ pub trait ExchangeRateRepository: Send + Sync {
     /// Returns whether data already exists for the given pair inside the
     /// provided inclusive time range.
     ///
-    /// This can be used by application services to avoid duplicate ingestion or
-    /// to short-circuit expensive fetch operations.
+    /// # Errors
+    ///
+    /// Returns `RepositoryError::Storage` if the underlying storage fails.
     async fn exists(
         &self,
         pair: &CurrencyPair,
         range: &RangeInclusive<DateTime<Utc>>,
     ) -> Result<bool, RepositoryError>;
+
+    /// Persists the list of currencies available in the API.
+    ///
+    /// # Errors
+    ///
+    /// Returns `RepositoryError::Storage` if the batch insert fails.
+    async fn save_currencies(&self, currencies: &[CurrencyInfo]) -> Result<(), RepositoryError>;
+
+    /// Returns the list of currencies available in the API.
+    ///
+    /// # Errors
+    ///
+    /// Returns `RepositoryError::Storage` if the underlying storage fails.
+    async fn list_currencies(&self) -> Result<Vec<CurrencyInfo>, RepositoryError>;
 }
 
 /// Errors produced by `ExchangeRateRepository` implementations.
