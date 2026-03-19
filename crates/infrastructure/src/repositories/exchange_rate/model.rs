@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use domain::types::currency_info::CurrencyInfo;
 use domain::types::exchange_rate::ExchangeRate;
 use rust_decimal::Decimal;
 
@@ -16,6 +17,23 @@ use rust_decimal::Decimal;
 pub struct ExchangeRateRow {
     timestamp: DateTime<Utc>,
     rate: Decimal,
+}
+
+/// Raw database row returned by the `currencies` table.
+///
+/// The field types map directly to the Postgres column types:
+/// - `currency` is `TEXT` — sqlx decodes it as `String` natively
+/// - `name` is `TEXT` — sqlx decodes it as `String` natively
+#[derive(Debug, sqlx::FromRow)]
+pub struct CurrencyInfoRow {
+    currency: String,
+    name: String,
+}
+
+impl From<CurrencyInfoRow> for CurrencyInfo {
+    fn from(row: CurrencyInfoRow) -> Self {
+        Self::new(row.currency, row.name)
+    }
 }
 
 impl From<ExchangeRateRow> for ExchangeRate {
