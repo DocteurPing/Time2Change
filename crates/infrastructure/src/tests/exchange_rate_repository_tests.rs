@@ -7,6 +7,10 @@ use domain::types::exchange_rate::ExchangeRate;
 use rust_decimal::dec;
 use sqlx::PgPool;
 
+fn make_currency(code: &str) -> Currency {
+    Currency::new(code).unwrap()
+}
+
 use crate::repositories::exchange_rate::repository::PostgresExchangeRateRepository;
 
 fn make_pair() -> CurrencyPair {
@@ -115,16 +119,16 @@ async fn save_duplicate_in_batch(pool: PgPool) {
 async fn save_list_currencies(pool: PgPool) {
     let repo = PostgresExchangeRateRepository::new(pool);
     let currencies = vec![
-        CurrencyInfo::new("USD".to_owned(), "US Dollar".to_owned()),
-        CurrencyInfo::new("EUR".to_owned(), "Euro".to_owned()),
+        CurrencyInfo::new(make_currency("USD"), "US Dollar".to_owned()),
+        CurrencyInfo::new(make_currency("EUR"), "Euro".to_owned()),
     ];
 
     repo.save_currencies(&currencies).await.unwrap();
 
     let saved = repo.list_currencies().await.unwrap();
     assert_eq!(saved.len(), 2);
-    assert_eq!(saved[0].code(), "EUR");
+    assert_eq!(saved[0].code().to_string(), "EUR");
     assert_eq!(saved[0].name(), "Euro");
-    assert_eq!(saved[1].code(), "USD");
+    assert_eq!(saved[1].code().to_string(), "USD");
     assert_eq!(saved[1].name(), "US Dollar");
 }

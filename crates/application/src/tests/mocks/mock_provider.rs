@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-
 use chrono::{DateTime, Utc};
+use domain::types::currency::Currency;
+use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
 
@@ -40,13 +40,12 @@ impl RateProvider for MockProvider {
         }
     }
 
-    async fn fetch_currencies(&self) -> Result<HashMap<String, String>, RateProviderError> {
+    async fn fetch_currencies(&self) -> Result<Vec<CurrencyInfo>, RateProviderError> {
         match &self.result {
-            Ok(_) => {
-                let mut map = HashMap::new();
-                map.insert("EUR".to_owned(), "Euro".to_owned());
-                Ok(map)
-            }
+            Ok(_) => Ok(vec![CurrencyInfo::new(
+                Currency::try_from("EUR").unwrap(),
+                "Euro".to_owned(),
+            )]),
             Err(e) => Err(e.clone()),
         }
     }

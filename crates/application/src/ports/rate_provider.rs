@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use chrono::{DateTime, Utc};
+use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
 use thiserror::Error;
@@ -42,7 +41,7 @@ pub trait RateProvider: Send + Sync {
     ///
     /// Returns a [`RateProviderError`] when the request fails or the response
     /// cannot be parsed.
-    async fn fetch_currencies(&self) -> Result<HashMap<String, String>, RateProviderError>;
+    async fn fetch_currencies(&self) -> Result<Vec<CurrencyInfo>, RateProviderError>;
 }
 
 /// Errors produced by [`RateProvider`] implementations.
