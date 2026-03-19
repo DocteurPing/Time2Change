@@ -1,6 +1,7 @@
 use application::ports::rate_provider::{RateProvider, RateProviderError};
 use chrono::TimeZone;
 use domain::types::currency::Currency;
+use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
 use wiremock::matchers::{method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -218,8 +219,14 @@ async fn fetch_currencies() {
         .mount(&server)
         .await;
     let currencies = client.fetch_currencies().await.unwrap();
-    assert!(currencies.contains_key("BRL"));
-    assert!(currencies.contains_key("CHF"));
+    assert!(currencies.contains(&CurrencyInfo::new(
+        Currency::try_from("BRL").unwrap(),
+        "Brazilian Real".to_owned()
+    )));
+    assert!(currencies.contains(&CurrencyInfo::new(
+        Currency::try_from("CHF").unwrap(),
+        "Swiss Franc".to_owned()
+    )));
 }
 
 #[tokio::test]
@@ -265,4 +272,22 @@ async fn fetch_currencies_return_timeout_on_timeout() {
 
     let error = client.fetch_currencies().await;
     assert!(matches!(error, Err(RateProviderError::Timeout)));
+}
+
+#[tokio::test]
+async fn fetch_currencies_parsing_failed() {
+    let (server, client) = mock_server().await;
+    Mock::given(method("GET"))
+        .and(path("/currencies"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(
+            r#"{
+            "AUDE": "Australian Dollar"
+            }"#,
+            "application/json",
+        ))
+        .mount(&server)
+        .await;
+
+    let error = client.fetch_currencies().await;
+    assert!(matches!(error, Err(RateProviderError::ParseError(_))));
 }

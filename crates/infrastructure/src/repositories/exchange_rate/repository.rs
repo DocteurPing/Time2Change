@@ -117,7 +117,7 @@ impl ExchangeRateRepository for PostgresExchangeRateRepository {
         if currencies.is_empty() {
             return Ok(());
         }
-        let codes: Vec<String> = currencies.iter().map(|c| c.code().to_owned()).collect();
+        let codes: Vec<String> = currencies.iter().map(|c| c.code().to_string()).collect();
         let names: Vec<String> = currencies.iter().map(|c| c.name().to_owned()).collect();
 
         sqlx::query(queries::SAVE_CURRENCIES)
@@ -136,7 +136,10 @@ impl ExchangeRateRepository for PostgresExchangeRateRepository {
             .await
             .map_err(to_repository_error)?;
 
-        let currencies: Vec<CurrencyInfo> = rows.into_iter().map(CurrencyInfo::from).collect();
+        let currencies: Vec<CurrencyInfo> = rows
+            .into_iter()
+            .map(CurrencyInfo::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
 
         Ok(currencies)
     }

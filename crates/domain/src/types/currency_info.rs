@@ -1,20 +1,22 @@
+use crate::types::currency::Currency;
+
 /// Currency information (symbol and name).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CurrencyInfo {
-    code: String,
+    code: Currency,
     name: String,
 }
 
 impl CurrencyInfo {
     /// Create a new `CurrencyInfo`.
     #[must_use]
-    pub const fn new(code: String, name: String) -> Self {
+    pub const fn new(code: Currency, name: String) -> Self {
         Self { code, name }
     }
 
     /// Get the currency code.
     #[must_use]
-    pub fn code(&self) -> &str {
+    pub const fn code(&self) -> &Currency {
         &self.code
     }
 

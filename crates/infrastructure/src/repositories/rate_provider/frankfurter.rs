@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use application::ports::rate_provider::{RateProvider, RateProviderError};
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveTime, TimeZone, Utc};
+use domain::types::currency::Currency;
+use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
 use reqwest::{Client, Response};
@@ -154,13 +156,19 @@ impl RateProvider for FrankfurterClient {
         self.fetch_pair(&url, pair).await
     }
 
-    async fn fetch_currencies(&self) -> Result<HashMap<String, String>, RateProviderError> {
+    async fn fetch_currencies(&self) -> Result<Vec<CurrencyInfo>, RateProviderError> {
         let url = format!("{}/currencies", self.base_url);
         let response: Response = self.fetch(&url).await?;
         let dto: HashMap<String, String> = response
             .json()
             .await
             .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
-        Ok(dto)
+        dto.into_iter()
+            .map(|(code, name)| {
+                let currency = Currency::new(&code)
+                    .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
+                Ok(CurrencyInfo::new(currency, name))
+            })
+            .collect()
     }
 }
