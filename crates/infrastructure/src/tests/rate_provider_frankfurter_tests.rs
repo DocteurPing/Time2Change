@@ -275,7 +275,7 @@ async fn fetch_currencies_return_timeout_on_timeout() {
 }
 
 #[tokio::test]
-async fn fetch_currencies_parsing_failed() {
+async fn fetch_currencies_returns_parse_error_on_invalid_currency_code() {
     let (server, client) = mock_server().await;
     Mock::given(method("GET"))
         .and(path("/currencies"))

@@ -1,3 +1,4 @@
+use application::ports::exchange_rate_repository::RepositoryError;
 use chrono::{DateTime, Utc};
 use domain::types::currency::Currency;
 use domain::types::currency_info::CurrencyInfo;
@@ -38,7 +39,7 @@ pub struct CurrencyInfoRow {
 }
 
 impl TryFrom<CurrencyInfoRow> for CurrencyInfo {
-    type Error = application::ports::exchange_rate_repository::RepositoryError;
+    type Error = RepositoryError;
 
     /// Converts a raw DB row into the domain [`CurrencyInfo`] type.
     ///
