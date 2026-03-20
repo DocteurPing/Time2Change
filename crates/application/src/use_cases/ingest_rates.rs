@@ -58,12 +58,6 @@ where
             rate,
         })
     }
-
-    /// Returns a reference to the repository used by this use case.
-    #[must_use]
-    pub const fn repository(&self) -> &R {
-        &self.repository
-    }
 }
 
 /// Result returned after a successful ingestion of the latest exchange rate.

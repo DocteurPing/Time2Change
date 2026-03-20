@@ -15,7 +15,7 @@ use rust_decimal::Decimal;
 pub struct ChangeRecommendation {
     pair: CurrencyPair,
     should_change_now: bool,
-    confidence: Decimal, // 0.0 to 1.0
+    confidence: Decimal, // 0.0 to 100.0
     reasoning: String,
     timestamp: chrono::DateTime<chrono::Utc>,
 }
@@ -35,7 +35,7 @@ pub struct PairAnalysis {
 impl ChangeRecommendation {
     /// Creates a new recommendation for a currency pair.
     ///
-    /// `confidence` is expected to be normalized between `0` and `1`, where
+    /// `confidence` is expected to be between `0` and `100`, where
     /// higher values indicate stronger confidence in the recommendation.
     #[must_use]
     pub const fn new(
