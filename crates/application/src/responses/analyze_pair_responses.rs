@@ -35,7 +35,7 @@ pub struct PairAnalysis {
 impl ChangeRecommendation {
     /// Creates a new recommendation for a currency pair.
     ///
-    /// `confidence` is expected to be normalized between `0` and `1`, where
+    /// `confidence` is expected to be between `0` and `100`, where
     /// higher values indicate stronger confidence in the recommendation.
     #[must_use]
     pub const fn new(
