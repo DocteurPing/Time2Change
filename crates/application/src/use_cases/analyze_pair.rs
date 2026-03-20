@@ -1,4 +1,4 @@
-use domain::indicators::math::{highest_value, lowest_value, range_position};
+use domain::indicators::math::range_position;
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::rate_quality_config::RateQualityConfig;
 use rust_decimal::dec;
@@ -58,8 +58,12 @@ impl<R: ExchangeRateRepository> AnalyzePairUseCase<R> {
 
         let current_rate = *rates.last().ok_or(AnalyzeError::InsufficientData)?.rate();
         let quality = time_series.calculate_rate_quality(&self.config);
-        let min_rate = lowest_value(rates).ok_or(AnalyzeError::InsufficientData)?;
-        let max_rate = highest_value(rates).ok_or(AnalyzeError::InsufficientData)?;
+        let min_rate = time_series
+            .lowest_value()
+            .ok_or(AnalyzeError::InsufficientData)?;
+        let max_rate = time_series
+            .highest_value()
+            .ok_or(AnalyzeError::InsufficientData)?;
 
         let position = range_position(current_rate, *max_rate, *min_rate)
             .ok_or(AnalyzeError::InsufficientData)?;

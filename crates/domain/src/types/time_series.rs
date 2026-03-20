@@ -102,7 +102,7 @@ impl TimeSeries {
                 _ => 0,
             };
 
-            let typical_gap = median_i64(gaps_seconds.clone()).unwrap_or(0);
+            let typical_gap = median_i64(&gaps_seconds).unwrap_or(0);
             if total_duration == 0 || typical_gap <= 0 {
                 dec!(100)
             } else {
@@ -180,6 +180,26 @@ impl TimeSeries {
             overall,
             RateQualityBreakdown::new(completeness, gap_consistency, outlier, volatility),
         )
+    }
+
+    /// Returns the lowest exchange-rate value in the provided slice.
+    ///
+    /// The function compares only the numeric rate values and ignores timestamps.
+    ///
+    /// Returns `None` when `values` is empty.
+    #[must_use]
+    pub fn lowest_value(&self) -> Option<&Decimal> {
+        self.rates.iter().map(ExchangeRate::rate).min()
+    }
+
+    /// Returns the highest exchange-rate value in the provided slice.
+    ///
+    /// The function compares only the numeric rate values and ignores timestamps.
+    ///
+    /// Returns `None` when `values` is empty.
+    #[must_use]
+    pub fn highest_value(&self) -> Option<&Decimal> {
+        self.rates.iter().map(ExchangeRate::rate).max()
     }
 }
 
