@@ -15,7 +15,7 @@ use crate::types::rate_quality_config::RateQualityConfig;
 /// The contained rates are expected to belong to the same pair and are
 /// typically ordered chronologically, although this type does not enforce
 /// sorting on construction.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TimeSeries {
     pair: CurrencyPair,
     rates: Vec<ExchangeRate>,
@@ -48,6 +48,11 @@ impl TimeSeries {
     /// The new rate is pushed to the end of the internal collection.
     pub fn add_rate(&mut self, rate: ExchangeRate) {
         self.rates.push(rate);
+    }
+
+    /// Extends the series with a slice of exchange-rate observations.
+    pub fn extend_rates(&mut self, rates: &[ExchangeRate]) {
+        self.rates.extend_from_slice(rates);
     }
 
     /// Calculates a quality score for the time series.

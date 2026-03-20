@@ -40,10 +40,11 @@ async fn execute_success_persists_rate() {
 
     let saved = saved_rates.lock().unwrap();
     assert_eq!(saved.len(), 1);
-    assert_eq!(saved[0].0, pair);
-    assert_eq!(saved[0].1.len(), 1);
-    assert_eq!(saved[0].1[0].rate(), &dec!(1.12));
-    assert_eq!(saved[0].1[0].timestamp(), &now);
+    assert_eq!(*saved[0].pair(), pair);
+    assert_eq!(saved[0].rates().len(), 1);
+    assert_eq!(saved[0].rates()[0].rate(), &dec!(1.12));
+    assert_eq!(saved[0].rates()[0].timestamp(), &now);
+    drop(saved);
 }
 
 #[tokio::test]
@@ -133,9 +134,7 @@ async fn execute_does_not_call_repo_when_provider_fails() {
     let uc = IngestRatesUseCase::new(repo, provider);
 
     let _ = uc.execute(pair).await;
-
-    let saved = saved_rates.lock().unwrap();
-    assert!(saved.is_empty());
+    assert!(saved_rates.lock().unwrap().is_empty());
 }
 
 #[tokio::test]
