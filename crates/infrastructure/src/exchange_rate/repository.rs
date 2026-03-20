@@ -13,8 +13,8 @@ use sqlx::migrate::MigrateError;
 
 use super::model::ExchangeRateRow;
 use super::queries;
-use crate::repositories::exchange_rate::error::to_repository_error;
-use crate::repositories::exchange_rate::model::CurrencyInfoRow;
+use crate::exchange_rate::error::to_repository_error;
+use crate::exchange_rate::model::CurrencyInfoRow;
 
 /// Postgres-backed implementation of [`ExchangeRateRepository`].
 ///
