@@ -55,10 +55,6 @@ impl MockRepository {
         }
     }
 
-    pub(crate) fn saved_rates(&self) -> Vec<TimeSeries> {
-        self.saved_rates.lock().unwrap().clone()
-    }
-
     pub(crate) fn saved_currencies(&self) -> Vec<CurrencyInfo> {
         self.saved_currencies.lock().unwrap().clone()
     }
@@ -112,7 +108,7 @@ impl ExchangeRateRepository for MockRepository {
         if let Some(ref e) = self.load_error {
             return Err(e.clone());
         }
-        Ok(self.saved_rates().iter().any(|time_series| {
+        Ok(self.saved_rates.lock().unwrap().iter().any(|time_series| {
             time_series.pair() == pair
                 && time_series
                     .rates()
