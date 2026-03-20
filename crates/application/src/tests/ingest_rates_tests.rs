@@ -40,10 +40,10 @@ async fn execute_success_persists_rate() {
 
     let saved = saved_rates.lock().unwrap();
     assert_eq!(saved.len(), 1);
-    assert_eq!(saved[0].0, pair);
-    assert_eq!(saved[0].1.len(), 1);
-    assert_eq!(saved[0].1[0].rate(), &dec!(1.12));
-    assert_eq!(saved[0].1[0].timestamp(), &now);
+    assert_eq!(*saved[0].pair(), pair);
+    assert_eq!(saved[0].rates().len(), 1);
+    assert_eq!(saved[0].rates()[0].rate(), &dec!(1.12));
+    assert_eq!(saved[0].rates()[0].timestamp(), &now);
 }
 
 #[tokio::test]

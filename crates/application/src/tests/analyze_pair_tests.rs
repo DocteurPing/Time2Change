@@ -10,7 +10,7 @@ use crate::use_cases::analyze_pair::{AnalyzeError, AnalyzePairUseCase};
 #[tokio::test]
 async fn execute_returns_analysis_with_correct_pair() {
     let rates = build_rates(&[dec!(1.05), dec!(1.06), dec!(1.07)], 30);
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
     let pair = make_pair();
 
@@ -22,7 +22,7 @@ async fn execute_returns_analysis_with_correct_pair() {
 #[tokio::test]
 async fn execute_returns_correct_rate_count() {
     let rates = build_rates(&[dec!(1.05), dec!(1.06), dec!(1.07), dec!(1.08)], 30);
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
@@ -36,7 +36,7 @@ async fn execute_quality_score_is_positive() {
         &[dec!(1.05), dec!(1.06), dec!(1.07), dec!(1.08), dec!(1.09)],
         30,
     );
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
@@ -64,7 +64,7 @@ async fn execute_rate_near_top_recommends_change() {
         ],
         30,
     );
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
@@ -90,7 +90,7 @@ async fn execute_rate_near_bottom_recommends_wait() {
         ],
         30,
     );
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
@@ -116,7 +116,7 @@ async fn execute_rate_in_middle_recommends_wait() {
         ],
         30,
     );
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
@@ -143,7 +143,7 @@ async fn execute_favorable_reasoning_when_should_change() {
         ],
         30,
     );
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
@@ -168,7 +168,7 @@ async fn execute_waiting_reasoning_when_should_not_change() {
         ],
         30,
     );
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
@@ -179,7 +179,7 @@ async fn execute_waiting_reasoning_when_should_not_change() {
 #[tokio::test]
 async fn execute_reasoning_contains_lookback_days() {
     let rates = build_rates(&[dec!(1.05), dec!(1.06), dec!(1.07)], 14);
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     let result = uc.execute(make_pair(), 14).await.unwrap();
@@ -192,7 +192,7 @@ async fn execute_reasoning_contains_lookback_days() {
 #[tokio::test]
 async fn execute_confidence_is_non_negative() {
     let rates = build_rates(&[dec!(1.05), dec!(1.06), dec!(1.07), dec!(1.08)], 30);
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
@@ -218,7 +218,7 @@ async fn execute_strong_signal_has_higher_confidence_than_weak() {
         ],
         30,
     );
-    let repo_strong = MockRepository::with_rates(strong_rates);
+    let repo_strong = MockRepository::with_rates(make_pair(), strong_rates);
     let uc_strong = AnalyzePairUseCase::new(repo_strong, RateQualityConfig::default());
     let result_strong = uc_strong.execute(make_pair(), 30).await.unwrap();
 
@@ -238,7 +238,7 @@ async fn execute_strong_signal_has_higher_confidence_than_weak() {
         ],
         30,
     );
-    let repo_weak = MockRepository::with_rates(weak_rates);
+    let repo_weak = MockRepository::with_rates(make_pair(), weak_rates);
     let uc_weak = AnalyzePairUseCase::new(repo_weak, RateQualityConfig::default());
     let result_weak = uc_weak.execute(make_pair(), 30).await.unwrap();
 
@@ -300,7 +300,7 @@ async fn execute_single_rate_returns_insufficient_data() {
     // A single rate means min == max, so range_position returns None → InsufficientData
     let now = Utc::now();
     let rates = vec![make_rate(now, dec!(1.05))];
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     let err = uc.execute(make_pair(), 30).await.unwrap_err();
@@ -315,7 +315,7 @@ async fn execute_two_identical_rates_does_not_panic() {
         make_rate(now - Duration::hours(1), dec!(1.05)),
         make_rate(now, dec!(1.05)),
     ];
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     // When high == low, range_position returns None → InsufficientData
@@ -326,7 +326,7 @@ async fn execute_two_identical_rates_does_not_panic() {
 #[tokio::test]
 async fn execute_different_lookback_days() {
     let rates = build_rates(&[dec!(1.05), dec!(1.06), dec!(1.07), dec!(1.08)], 7);
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     let result = uc.execute(make_pair(), 7).await.unwrap();
@@ -340,7 +340,7 @@ async fn execute_large_lookback_days() {
         &[dec!(1.00), dec!(1.05), dec!(1.10), dec!(1.15), dec!(1.20)],
         365,
     );
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     let result = uc.execute(make_pair(), 365).await.unwrap();
@@ -376,7 +376,7 @@ async fn analyze_error_debug_impl() {
 async fn execute_recommendation_has_recent_timestamp() {
     let before = Utc::now();
     let rates = build_rates(&[dec!(1.05), dec!(1.06), dec!(1.07)], 30);
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
@@ -406,7 +406,7 @@ async fn execute_position_exactly_at_085_recommends_change() {
         make_rate(now - Duration::days(1), dec!(1.84)),
         make_rate(now, dec!(1.85)), // position = 0.85
     ];
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
@@ -431,7 +431,7 @@ async fn execute_position_just_below_085_recommends_wait() {
         make_rate(now - Duration::days(1), dec!(1.80)),
         make_rate(now, dec!(1.84)), // position = 0.84
     ];
-    let repo = MockRepository::with_rates(rates);
+    let repo = MockRepository::with_rates(make_pair(), rates);
     let uc = AnalyzePairUseCase::new(repo, RateQualityConfig::default());
 
     let result = uc.execute(make_pair(), 30).await.unwrap();

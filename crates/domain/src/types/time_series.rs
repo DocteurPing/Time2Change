@@ -15,7 +15,7 @@ use crate::types::rate_quality_config::RateQualityConfig;
 /// The contained rates are expected to belong to the same pair and are
 /// typically ordered chronologically, although this type does not enforce
 /// sorting on construction.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TimeSeries {
     pair: CurrencyPair,
     rates: Vec<ExchangeRate>,
