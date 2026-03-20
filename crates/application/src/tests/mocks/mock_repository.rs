@@ -71,10 +71,14 @@ impl ExchangeRateRepository for MockRepository {
         pair: &CurrencyPair,
         rates: &[ExchangeRate],
     ) -> Result<(), RepositoryError> {
-        self.saved_rates
-            .lock()
-            .unwrap()
-            .push(TimeSeries::new(pair.clone(), rates.to_vec()));
+        let mut saved_rates = self.saved_rates.lock().unwrap();
+        saved_rates
+            .iter_mut()
+            .find(|ts| ts.pair() == pair)
+            .map(|ts| ts.extend_rates(rates))
+            .unwrap_or_else(|| saved_rates.push(TimeSeries::new(pair.clone(), rates.to_vec())));
+        drop(saved_rates);
+
         match &self.save_result {
             Ok(()) => Ok(()),
             Err(e) => Err(e.clone()),
