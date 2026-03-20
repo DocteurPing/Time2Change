@@ -8,7 +8,6 @@ use domain::types::exchange_rate::ExchangeRate;
 use domain::types::time_series::TimeSeries;
 
 use crate::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError};
-use crate::tests::helpers::make_pair;
 
 type SavedCurrenciesCall = Vec<CurrencyInfo>;
 
@@ -65,7 +64,7 @@ impl MockRepository {
     }
 
     pub(crate) fn get_arc_saved_rates(&self) -> Arc<Mutex<Vec<TimeSeries>>> {
-        self.saved_rates.clone()
+        Arc::<Mutex<Vec<TimeSeries>>>::clone(&self.saved_rates)
     }
 }
 
@@ -100,8 +99,8 @@ impl ExchangeRateRepository for MockRepository {
             .unwrap()
             .iter()
             .find(|time_series| time_series.pair() == pair)
-            .unwrap_or(&TimeSeries::new(make_pair(), vec![]))
-            .clone();
+            .cloned()
+            .unwrap_or_else(|| TimeSeries::new(pair.clone(), vec![]));
         Ok(time_series)
     }
 
