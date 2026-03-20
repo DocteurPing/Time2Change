@@ -33,12 +33,12 @@ async fn execute_success_persists_rate() {
 
     let provider = MockProvider::ok(rate);
     let repo = MockRepository::empty();
-    let saved_calls = repo.get_arc_saved_rates();
+    let saved_rates = repo.get_arc_saved_rates();
     let uc = IngestRatesUseCase::new(repo, provider);
 
     uc.execute(pair.clone()).await.unwrap();
 
-    let saved = saved_calls.lock().unwrap();
+    let saved = saved_rates.lock().unwrap();
     assert_eq!(saved.len(), 1);
     assert_eq!(saved[0].0, pair);
     assert_eq!(saved[0].1.len(), 1);
