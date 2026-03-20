@@ -61,12 +61,16 @@ impl MockRepository {
         }
     }
 
-    pub(crate) fn saved_calls(&self) -> Vec<(CurrencyPair, Vec<ExchangeRate>)> {
+    pub(crate) fn saved_rates(&self) -> Vec<(CurrencyPair, Vec<ExchangeRate>)> {
         self.saved_rates.lock().unwrap().clone()
     }
 
     pub(crate) fn saved_currencies(&self) -> Vec<CurrencyInfo> {
         self.saved_currencies.lock().unwrap().clone()
+    }
+
+    pub(crate) fn get_arc_saved_rates(&self) -> Arc<Mutex<Vec<SavedCall>>> {
+        self.saved_rates.clone()
     }
 }
 
@@ -107,7 +111,7 @@ impl ExchangeRateRepository for MockRepository {
             return Err(e.clone());
         }
         Ok(self
-            .saved_calls()
+            .saved_rates()
             .iter()
             .any(|(p, rates)| p == pair && rates.iter().any(|r| range.contains(r.timestamp()))))
     }

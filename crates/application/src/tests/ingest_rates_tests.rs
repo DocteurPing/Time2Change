@@ -33,11 +33,12 @@ async fn execute_success_persists_rate() {
 
     let provider = MockProvider::ok(rate);
     let repo = MockRepository::empty();
+    let saved_calls = repo.get_arc_saved_rates();
     let uc = IngestRatesUseCase::new(repo, provider);
 
     uc.execute(pair.clone()).await.unwrap();
 
-    let saved = uc.repository().saved_calls();
+    let saved = saved_calls.lock().unwrap();
     assert_eq!(saved.len(), 1);
     assert_eq!(saved[0].0, pair);
     assert_eq!(saved[0].1.len(), 1);
@@ -128,11 +129,12 @@ async fn execute_does_not_call_repo_when_provider_fails() {
     let pair = make_pair();
     let provider = MockProvider::err(RateProviderError::Timeout);
     let repo = MockRepository::empty();
+    let saved_rates = repo.get_arc_saved_rates();
     let uc = IngestRatesUseCase::new(repo, provider);
 
     let _ = uc.execute(pair).await;
 
-    let saved = uc.repository().saved_calls();
+    let saved = saved_rates.lock().unwrap();
     assert!(saved.is_empty());
 }
 

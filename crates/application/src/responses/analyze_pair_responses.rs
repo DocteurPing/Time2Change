@@ -15,7 +15,7 @@ use rust_decimal::Decimal;
 pub struct ChangeRecommendation {
     pair: CurrencyPair,
     should_change_now: bool,
-    confidence: Decimal, // 0.0 to 1.0
+    confidence: Decimal, // 0.0 to 100.0
     reasoning: String,
     timestamp: chrono::DateTime<chrono::Utc>,
 }
