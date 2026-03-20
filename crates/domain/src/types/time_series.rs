@@ -182,7 +182,7 @@ impl TimeSeries {
         )
     }
 
-    /// Returns the lowest exchange-rate value in the provided slice.
+    /// Returns the lowest exchange-rate value in the rates.
     ///
     /// The function compares only the numeric rate values and ignores timestamps.
     ///
@@ -192,7 +192,7 @@ impl TimeSeries {
         self.rates.iter().map(ExchangeRate::rate).min()
     }
 
-    /// Returns the highest exchange-rate value in the provided slice.
+    /// Returns the highest exchange-rate value in the rates.
     ///
     /// The function compares only the numeric rate values and ignores timestamps.
     ///

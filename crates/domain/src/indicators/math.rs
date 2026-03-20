@@ -120,7 +120,11 @@ pub fn median_i64(values: &[i64]) -> Option<i64> {
     let mid = values.len() / 2;
     let mut sorted = values.to_vec();
     let (_, median, _) = sorted.select_nth_unstable(mid);
-    Some(*median)
+    if values.len().is_multiple_of(2) {
+        Some((*median + sorted[..mid].iter().max()?) / 2)
+    } else {
+        Some(*median)
+    }
 }
 
 #[cfg(test)]
