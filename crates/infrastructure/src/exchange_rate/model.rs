@@ -5,7 +5,7 @@ use domain::types::currency_info::CurrencyInfo;
 use domain::types::exchange_rate::ExchangeRate;
 use rust_decimal::Decimal;
 
-use crate::repositories::exchange_rate::error::to_invalid_error;
+use crate::exchange_rate::error::to_invalid_error;
 
 /// Raw database row returned by the `exchange_rates` table.
 ///

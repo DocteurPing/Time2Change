@@ -11,7 +11,7 @@ fn make_currency(code: &str) -> Currency {
     Currency::new(code).unwrap()
 }
 
-use crate::repositories::exchange_rate::repository::PostgresExchangeRateRepository;
+use crate::exchange_rate::repository::PostgresExchangeRateRepository;
 
 fn make_pair() -> CurrencyPair {
     CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap()

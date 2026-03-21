@@ -11,7 +11,7 @@ use reqwest::{Client, Response};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 
-use crate::repositories::rate_provider::dto::FrankfurterRateProviderResponse;
+use crate::rate_provider::dto::FrankfurterRateProviderResponse;
 
 const BASE_URL: &str = "https://api.frankfurter.dev/v1";
 const TIMEOUT_MILLIS: u64 = 5000;
