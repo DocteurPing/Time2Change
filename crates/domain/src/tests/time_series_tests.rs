@@ -229,6 +229,7 @@ fn extend_rates() {
         ExchangeRate::new(time, dec!(8)),
         ExchangeRate::new(time, dec!(3)),
     ]);
+    assert_eq!(time_series.rates().len(), 4);
     let result = time_series.highest_value();
     assert_eq!(result, Some(&dec!(8)));
 }
