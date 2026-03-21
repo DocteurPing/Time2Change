@@ -131,6 +131,7 @@ fn test_lowest_value_non_empty() {
     let result = time_series.lowest_value();
     assert_eq!(result, Some(&dec!(2)));
 }
+
 #[test]
 fn test_lowest_value_empty() {
     let values: Vec<ExchangeRate> = vec![];
@@ -143,6 +144,7 @@ fn test_lowest_value_empty() {
     let result = time_series.lowest_value();
     assert_eq!(result, None);
 }
+
 #[test]
 fn test_lowest_value_all_equal() {
     let time = chrono::Utc::now();
@@ -160,6 +162,7 @@ fn test_lowest_value_all_equal() {
     let result = time_series.lowest_value();
     assert_eq!(result, Some(&dec!(3)));
 }
+
 #[test]
 fn test_highest_value_non_empty() {
     let time = chrono::Utc::now();
@@ -177,6 +180,7 @@ fn test_highest_value_non_empty() {
     let result = time_series.highest_value();
     assert_eq!(result, Some(&dec!(8)));
 }
+
 #[test]
 fn test_highest_value_empty() {
     let values: Vec<ExchangeRate> = vec![];
@@ -189,6 +193,7 @@ fn test_highest_value_empty() {
     let result = time_series.highest_value();
     assert_eq!(result, None);
 }
+
 #[test]
 fn test_highest_value_all_equal() {
     let time = chrono::Utc::now();
@@ -205,4 +210,25 @@ fn test_highest_value_all_equal() {
     let time_series = TimeSeries::new(currency_pair, values);
     let result = time_series.highest_value();
     assert_eq!(result, Some(&dec!(3)));
+}
+
+#[test]
+fn extend_rates() {
+    let time = chrono::Utc::now();
+    let values = vec![
+        ExchangeRate::new(time, dec!(5)),
+        ExchangeRate::new(time, dec!(2)),
+    ];
+    let currency_pair = CurrencyPair::new(
+        Currency::try_from("USD").unwrap(),
+        Currency::try_from("EUR").unwrap(),
+    )
+    .unwrap();
+    let mut time_series = TimeSeries::new(currency_pair, values);
+    time_series.extend_rates(&[
+        ExchangeRate::new(time, dec!(8)),
+        ExchangeRate::new(time, dec!(3)),
+    ]);
+    let result = time_series.highest_value();
+    assert_eq!(result, Some(&dec!(8)));
 }

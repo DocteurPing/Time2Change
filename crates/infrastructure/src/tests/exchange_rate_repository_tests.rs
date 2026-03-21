@@ -132,3 +132,10 @@ async fn save_list_currencies(pool: PgPool) {
     assert_eq!(saved[1].code().to_string(), "USD");
     assert_eq!(saved[1].name(), "US Dollar");
 }
+
+#[sqlx::test]
+async fn test_migration(pool: PgPool) {
+    let repo = PostgresExchangeRateRepository::new(pool);
+    let result = repo.migrate().await;
+    assert!(result.is_ok());
+}
