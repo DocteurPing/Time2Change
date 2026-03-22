@@ -33,7 +33,7 @@ async fn save_and_load_round_trip(pool: PgPool) {
     let series = repo.load_rates(&pair, &range).await.unwrap();
 
     assert_eq!(series.rates().len(), 1);
-    assert_eq!(series.rates()[0].rate(), &dec!(1.0850));
+    assert_eq!(series.rates().get(&now), Some(&dec!(1.0850)));
 
     assert!(repo.exists(&pair, &range).await.unwrap());
 }
@@ -67,9 +67,15 @@ async fn save_multiple_rates(pool: PgPool) {
     let series = repo.load_rates(&pair, &range).await.unwrap();
 
     assert_eq!(series.rates().len(), 3);
-    assert_eq!(series.rates()[0].rate(), &dec!(1.0850));
-    assert_eq!(series.rates()[1].rate(), &dec!(1.0860));
-    assert_eq!(series.rates()[2].rate(), &dec!(1.0870));
+    assert_eq!(series.rates().get(&now), Some(&dec!(1.0850)));
+    assert_eq!(
+        series.rates().get(&(now + chrono::Duration::seconds(60))),
+        Some(&dec!(1.0860))
+    );
+    assert_eq!(
+        series.rates().get(&(now + chrono::Duration::seconds(120))),
+        Some(&dec!(1.0870))
+    );
 }
 
 #[sqlx::test]
@@ -92,7 +98,7 @@ async fn save_duplicate_rates(pool: PgPool) {
     let series = repo.load_rates(&pair, &range).await.unwrap();
 
     assert_eq!(series.rates().len(), 1);
-    assert_eq!(series.rates()[0].rate(), &dec!(1.0850)); // original rate should be preserved
+    assert_eq!(series.rates().get(&now), Some(&dec!(1.0850))); // original rate should be preserved
 }
 
 #[sqlx::test]
@@ -112,7 +118,7 @@ async fn save_duplicate_in_batch(pool: PgPool) {
     let series = repo.load_rates(&pair, &range).await.unwrap();
 
     assert_eq!(series.rates().len(), 1);
-    assert_eq!(series.rates()[0].rate(), &dec!(1.0850)); // original rate should be preserved
+    assert_eq!(series.rates().get(&now), Some(&dec!(1.0850))); // original rate should be preserved
 }
 
 #[sqlx::test]

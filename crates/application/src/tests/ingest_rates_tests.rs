@@ -42,8 +42,7 @@ async fn execute_success_persists_rate() {
     assert_eq!(saved.len(), 1);
     assert_eq!(*saved[0].pair(), pair);
     assert_eq!(saved[0].rates().len(), 1);
-    assert_eq!(saved[0].rates()[0].rate(), &dec!(1.12));
-    assert_eq!(saved[0].rates()[0].timestamp(), &now);
+    assert_eq!(saved[0].rates().get(&now), Some(&dec!(1.12)));
     drop(saved);
 }
 

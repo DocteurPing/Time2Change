@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::ops::RangeInclusive;
 use std::sync::{Arc, Mutex};
 
@@ -23,7 +24,9 @@ impl MockRepository {
         Self {
             load_error: None,
             save_result: Ok(()),
-            saved_rates: Arc::new(Mutex::new(vec![TimeSeries::new(pair, rates)])),
+            saved_rates: Arc::new(Mutex::new(vec![TimeSeries::from_exchange_rates(
+                pair, rates,
+            )])),
             saved_currencies: Arc::new(Mutex::new(Vec::new())),
         }
     }
@@ -76,7 +79,12 @@ impl ExchangeRateRepository for MockRepository {
             .iter_mut()
             .find(|ts| ts.pair() == pair)
             .map(|ts| ts.extend_rates(rates))
-            .unwrap_or_else(|| saved_rates.push(TimeSeries::new(pair.clone(), rates.to_vec())));
+            .unwrap_or_else(|| {
+                saved_rates.push(TimeSeries::from_exchange_rates(
+                    pair.clone(),
+                    rates.iter().cloned(),
+                ));
+            });
         drop(saved_rates);
 
         match &self.save_result {
@@ -100,7 +108,7 @@ impl ExchangeRateRepository for MockRepository {
             .iter()
             .find(|time_series| time_series.pair() == pair)
             .cloned()
-            .unwrap_or_else(|| TimeSeries::new(pair.clone(), vec![]));
+            .unwrap_or_else(|| TimeSeries::new(pair.clone(), BTreeMap::new()));
         Ok(time_series)
     }
 
@@ -113,11 +121,7 @@ impl ExchangeRateRepository for MockRepository {
             return Err(e.clone());
         }
         Ok(self.saved_rates.lock().unwrap().iter().any(|time_series| {
-            time_series.pair() == pair
-                && time_series
-                    .rates()
-                    .iter()
-                    .any(|r| range.contains(r.timestamp()))
+            time_series.pair() == pair && time_series.rates().keys().any(|ts| range.contains(ts))
         }))
     }
 

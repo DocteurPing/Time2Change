@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::ops::RangeInclusive;
 
 use application::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError};
@@ -89,9 +90,11 @@ impl ExchangeRateRepository for PostgresExchangeRateRepository {
             .await
             .map_err(to_repository_error)?;
 
-        let exchange_rates: Vec<ExchangeRate> = rows.into_iter().map(ExchangeRate::from).collect();
-
-        Ok(TimeSeries::new(pair.clone(), exchange_rates))
+        let rates: BTreeMap<DateTime<Utc>, Decimal> = rows
+            .into_iter()
+            .map(|row| (row.timestamp, row.rate))
+            .collect();
+        Ok(TimeSeries::new(pair.clone(), rates))
     }
 
     async fn exists(
