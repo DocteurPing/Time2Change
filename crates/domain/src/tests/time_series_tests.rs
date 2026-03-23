@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use chrono::Utc;
+use chrono::{TimeZone, Utc};
 use rust_decimal::{Decimal, dec};
 
 use crate::types::currency::Currency;
@@ -207,4 +207,22 @@ fn test_highest_value_all_equal() {
     let time_series = TimeSeries::new(currency_pair, values);
     let result = time_series.highest_value();
     assert_eq!(result, Some(&dec!(3)));
+}
+
+#[test]
+fn add_rate_overwrites_existing_timestamp() {
+    // Construct a dummy currency pair without relying on specific details.
+    let pair = CurrencyPair::new(
+        Currency::try_from("USD").unwrap(),
+        Currency::try_from("EUR").unwrap(),
+    )
+    .unwrap();
+    let mut series = TimeSeries::new(pair, BTreeMap::new());
+    let timestamp = Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap();
+    let first_rate = dec!(1.23);
+    let second_rate = dec!(4.56);
+    series.add_rate(timestamp, first_rate);
+    series.add_rate(timestamp, second_rate);
+    assert_eq!(series.rates().len(), 1);
+    assert_eq!(series.rates().get(&timestamp), Some(&second_rate));
 }
