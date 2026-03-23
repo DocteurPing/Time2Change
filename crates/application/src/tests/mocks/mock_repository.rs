@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::ops::RangeInclusive;
 use std::sync::{Arc, Mutex};
 
@@ -23,7 +24,13 @@ impl MockRepository {
         Self {
             load_error: None,
             save_result: Ok(()),
-            saved_rates: Arc::new(Mutex::new(vec![TimeSeries::new(pair, rates)])),
+            saved_rates: Arc::new(Mutex::new(vec![TimeSeries::new(
+                pair,
+                rates
+                    .into_iter()
+                    .map(|r| (*r.timestamp(), *r.rate()))
+                    .collect(),
+            )])),
             saved_currencies: Arc::new(Mutex::new(Vec::new())),
         }
     }
@@ -75,8 +82,26 @@ impl ExchangeRateRepository for MockRepository {
         saved_rates
             .iter_mut()
             .find(|ts| ts.pair() == pair)
-            .map(|ts| ts.extend_rates(rates))
-            .unwrap_or_else(|| saved_rates.push(TimeSeries::new(pair.clone(), rates.to_vec())));
+            .map(|ts| {
+                // Mimic Postgres `ON CONFLICT DO NOTHING`: preserve existing values on duplicate timestamps.
+                for rate in rates {
+                    let ts_key = rate.timestamp();
+                    if !ts.rates().contains_key(ts_key) {
+                        ts.add_rate(*ts_key, *rate.rate());
+                    }
+                }
+            })
+            .unwrap_or_else(|| {
+                // When creating a new TimeSeries, also avoid overwriting duplicates within `rates`.
+                let mut map = BTreeMap::new();
+                for r in rates {
+                    let key = r.timestamp();
+                    if !map.contains_key(key) {
+                        map.insert(*key, *r.rate());
+                    }
+                }
+                saved_rates.push(TimeSeries::new(pair.clone(), map));
+            });
         drop(saved_rates);
 
         match &self.save_result {
@@ -100,7 +125,7 @@ impl ExchangeRateRepository for MockRepository {
             .iter()
             .find(|time_series| time_series.pair() == pair)
             .cloned()
-            .unwrap_or_else(|| TimeSeries::new(pair.clone(), vec![]));
+            .unwrap_or_else(|| TimeSeries::new(pair.clone(), BTreeMap::new()));
         Ok(time_series)
     }
 
@@ -113,11 +138,7 @@ impl ExchangeRateRepository for MockRepository {
             return Err(e.clone());
         }
         Ok(self.saved_rates.lock().unwrap().iter().any(|time_series| {
-            time_series.pair() == pair
-                && time_series
-                    .rates()
-                    .iter()
-                    .any(|r| range.contains(r.timestamp()))
+            time_series.pair() == pair && time_series.rates().keys().any(|ts| range.contains(ts))
         }))
     }
 

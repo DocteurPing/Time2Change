@@ -1,33 +1,40 @@
+use std::collections::BTreeMap;
+
+use chrono::{DateTime, Utc};
 use rust_decimal::{Decimal, dec};
 
 use crate::indicators::math::{average, clamp_0_100, median_i64, standard_deviation, z_score};
 use crate::types::currency_pair::CurrencyPair;
-use crate::types::exchange_rate::ExchangeRate;
 use crate::types::rate_quality::{RateQuality, RateQualityBreakdown};
 use crate::types::rate_quality_config::RateQualityConfig;
 
 /// Represents a time series of exchange rates for a specific currency pair.
 ///
-/// A `TimeSeries` groups a [`CurrencyPair`] with its observed
-/// [`ExchangeRate`] values so the domain layer can reason about historical
-/// price behavior and compute quality metrics over the collected data.
+/// A `TimeSeries` groups a [`CurrencyPair`] with its observed rate values
+/// stored in a [`BTreeMap`] keyed by [`DateTime<Utc>`].
 ///
-/// The contained rates are expected to belong to the same pair and are
-/// typically ordered chronologically, although this type does not enforce
-/// sorting on construction.
+/// Using a `BTreeMap` as the backing store provides three guarantees that a
+/// plain `Vec` cannot:
+///
+/// - **Uniqueness** – each timestamp can appear at most once; inserting a rate
+///   for an already-present timestamp silently overwrites the previous value.
+/// - **Chronological order** – iteration always proceeds from the oldest to
+///   the newest observation without a separate sort step.
+/// - **Efficient range queries** – a contiguous slice of the timeline can be
+///   retrieved in O(log n) time via [`BTreeMap::range`].
 #[derive(Debug, Clone)]
 pub struct TimeSeries {
     pair: CurrencyPair,
-    rates: Vec<ExchangeRate>,
+    rates: BTreeMap<DateTime<Utc>, Decimal>,
 }
 
 impl TimeSeries {
-    /// Creates a new time series for the given currency pair and rates.
+    /// Creates a new time series from a pre-built map of timestamp → rate.
     ///
-    /// This constructor stores the provided values as-is without reordering
-    /// or validating the timestamps.
+    /// The map is stored as-is; all ordering and uniqueness guarantees come
+    /// from the [`BTreeMap`] itself.
     #[must_use]
-    pub const fn new(pair: CurrencyPair, rates: Vec<ExchangeRate>) -> Self {
+    pub const fn new(pair: CurrencyPair, rates: BTreeMap<DateTime<Utc>, Decimal>) -> Self {
         Self { pair, rates }
     }
 
@@ -37,22 +44,18 @@ impl TimeSeries {
         &self.pair
     }
 
-    /// Returns all exchange-rate observations in the series.
+    /// Returns all exchange-rate observations as a map of timestamp → rate,
+    /// ordered chronologically from oldest to newest.
     #[must_use]
-    pub fn rates(&self) -> &[ExchangeRate] {
+    pub const fn rates(&self) -> &BTreeMap<DateTime<Utc>, Decimal> {
         &self.rates
     }
 
-    /// Appends a new exchange-rate observation to the series.
+    /// Inserts or overwrites the rate at the given timestamp.
     ///
-    /// The new rate is pushed to the end of the internal collection.
-    pub fn add_rate(&mut self, rate: ExchangeRate) {
-        self.rates.push(rate);
-    }
-
-    /// Extends the series with a slice of exchange-rate observations.
-    pub fn extend_rates(&mut self, rates: &[ExchangeRate]) {
-        self.rates.extend_from_slice(rates);
+    /// If a rate already exists for `timestamp` it is replaced silently.
+    pub fn add_rate(&mut self, timestamp: DateTime<Utc>, rate: Decimal) {
+        self.rates.insert(timestamp, rate);
     }
 
     /// Calculates a quality score for the time series.
@@ -73,7 +76,7 @@ impl TimeSeries {
     #[allow(clippy::too_many_lines)]
     #[must_use]
     pub fn calculate_rate_quality(&self, config: &RateQualityConfig) -> RateQuality {
-        if self.rates().is_empty() {
+        if self.rates.is_empty() {
             return RateQuality::new(
                 Decimal::ZERO,
                 RateQualityBreakdown::new(
@@ -85,25 +88,25 @@ impl TimeSeries {
             );
         }
 
-        let series_values: Vec<Decimal> = self.rates().iter().map(|r| *r.rate()).collect();
+        // Collect values in chronological order (BTreeMap guarantees this).
+        let series_values: Vec<Decimal> = self.rates.values().copied().collect();
+
+        // Collect timestamps for gap analysis.
+        let timestamps: Vec<DateTime<Utc>> = self.rates.keys().copied().collect();
 
         let mut gaps_seconds: Vec<i64> = Vec::new();
-        for window in self.rates().windows(2) {
-            let gap = (*window[1].timestamp() - *window[0].timestamp())
-                .num_seconds()
-                .abs();
+        for window in timestamps.windows(2) {
+            let gap = (window[1] - window[0]).num_seconds().abs();
             gaps_seconds.push(gap);
         }
 
         let completeness = if gaps_seconds.is_empty() {
             dec!(100)
         } else {
-            let total_duration = match (self.rates().first(), self.rates().last()) {
-                (Some(first), Some(last)) => last
-                    .timestamp()
-                    .signed_duration_since(*first.timestamp())
-                    .num_seconds()
-                    .abs(),
+            let total_duration = match (self.rates.keys().next(), self.rates.keys().next_back()) {
+                (Some(&first_ts), Some(&last_ts)) => {
+                    last_ts.signed_duration_since(first_ts).num_seconds().abs()
+                }
                 _ => 0,
             };
 
@@ -113,7 +116,7 @@ impl TimeSeries {
             } else {
                 let expected_count = total_duration / typical_gap + 1;
                 let expected_count_dec = Decimal::from(expected_count);
-                let observed_count_dec = Decimal::from(self.rates().len());
+                let observed_count_dec = Decimal::from(self.rates.len());
                 clamp_0_100(observed_count_dec / expected_count_dec * dec!(100))
             }
         };
@@ -154,7 +157,7 @@ impl TimeSeries {
             }
         };
 
-        // Compute percentage returns
+        // Compute percentage returns between consecutive observations.
         let mut returns: Vec<Decimal> = Vec::new();
         for window in series_values.windows(2) {
             let prev = window[0];
@@ -187,36 +190,39 @@ impl TimeSeries {
         )
     }
 
-    /// Returns the lowest exchange-rate value in the rates.
+    /// Returns the lowest exchange-rate value in the series.
     ///
-    /// The function compares only the numeric rate values and ignores timestamps.
+    /// Compares only the numeric rate values; timestamps are ignored.
     ///
-    /// Returns `None` when `values` is empty.
+    /// Returns `None` when the series is empty.
     #[must_use]
     pub fn lowest_value(&self) -> Option<&Decimal> {
-        self.rates.iter().map(ExchangeRate::rate).min()
+        self.rates.values().min()
     }
 
-    /// Returns the highest exchange-rate value in the rates.
+    /// Returns the highest exchange-rate value in the series.
     ///
-    /// The function compares only the numeric rate values and ignores timestamps.
+    /// Compares only the numeric rate values; timestamps are ignored.
     ///
-    /// Returns `None` when `values` is empty.
+    /// Returns `None` when the series is empty.
     #[must_use]
     pub fn highest_value(&self) -> Option<&Decimal> {
-        self.rates.iter().map(ExchangeRate::rate).max()
+        self.rates.values().max()
     }
 }
 
 impl std::fmt::Display for TimeSeries {
-    /// Formats the time series as `TimeSeries(PAIR, [rate1, rate2, ...])`.
+    /// Formats the time series as `TimeSeries(PAIR, [ts1: rate1, ts2: rate2, ...])`.
+    ///
+    /// Entries are always printed in chronological order because the backing
+    /// store is a [`BTreeMap`].
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "TimeSeries({}, [", self.pair)?;
-        for (i, rate) in self.rates.iter().enumerate() {
+        for (i, (ts, rate)) in self.rates.iter().enumerate() {
             if i > 0 {
                 write!(f, ", ")?;
             }
-            write!(f, "{rate}")?;
+            write!(f, "{ts}: {rate}")?;
         }
         write!(f, "])")
     }

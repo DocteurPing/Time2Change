@@ -19,8 +19,8 @@ use crate::exchange_rate::error::to_invalid_error;
 /// them for every row.
 #[derive(Debug, sqlx::FromRow)]
 pub struct ExchangeRateRow {
-    timestamp: DateTime<Utc>,
-    rate: Decimal,
+    pub(crate) timestamp: DateTime<Utc>,
+    pub(crate) rate: Decimal,
 }
 
 /// Raw database row returned by the `currencies` table.
