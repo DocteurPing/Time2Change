@@ -24,8 +24,12 @@ impl MockRepository {
         Self {
             load_error: None,
             save_result: Ok(()),
-            saved_rates: Arc::new(Mutex::new(vec![TimeSeries::from_exchange_rates(
-                pair, rates,
+            saved_rates: Arc::new(Mutex::new(vec![TimeSeries::new(
+                pair,
+                rates
+                    .into_iter()
+                    .map(|r| (*r.timestamp(), *r.rate()))
+                    .collect(),
             )])),
             saved_currencies: Arc::new(Mutex::new(Vec::new())),
         }
@@ -78,11 +82,15 @@ impl ExchangeRateRepository for MockRepository {
         saved_rates
             .iter_mut()
             .find(|ts| ts.pair() == pair)
-            .map(|ts| ts.extend_rates(rates))
+            .map(|ts| {
+                for rate in rates {
+                    ts.add_rate(*rate.timestamp(), *rate.rate());
+                }
+            })
             .unwrap_or_else(|| {
-                saved_rates.push(TimeSeries::from_exchange_rates(
+                saved_rates.push(TimeSeries::new(
                     pair.clone(),
-                    rates.iter().cloned(),
+                    rates.iter().map(|r| (*r.timestamp(), *r.rate())).collect(),
                 ));
             });
         drop(saved_rates);

@@ -5,7 +5,6 @@ use rust_decimal::{Decimal, dec};
 
 use crate::types::currency::Currency;
 use crate::types::currency_pair::CurrencyPair;
-use crate::types::exchange_rate::ExchangeRate;
 use crate::types::rate_quality_config::{
     RateQualityConfig, RateQualityThresholds, RateQualityWeights,
 };
@@ -208,26 +207,4 @@ fn test_highest_value_all_equal() {
     let time_series = TimeSeries::new(currency_pair, values);
     let result = time_series.highest_value();
     assert_eq!(result, Some(&dec!(3)));
-}
-
-#[test]
-fn extend_rates() {
-    let time = Utc::now();
-    let values = BTreeMap::from([
-        (time, dec!(5)),
-        (time + chrono::Duration::seconds(1), dec!(2)),
-    ]);
-    let currency_pair = CurrencyPair::new(
-        Currency::try_from("USD").unwrap(),
-        Currency::try_from("EUR").unwrap(),
-    )
-    .unwrap();
-    let mut time_series = TimeSeries::new(currency_pair, values);
-    time_series.extend_rates(&[
-        ExchangeRate::new(time + chrono::Duration::seconds(2), dec!(8)),
-        ExchangeRate::new(time + chrono::Duration::seconds(3), dec!(3)),
-    ]);
-    assert_eq!(time_series.rates().len(), 4);
-    let result = time_series.highest_value();
-    assert_eq!(result, Some(&dec!(8)));
 }

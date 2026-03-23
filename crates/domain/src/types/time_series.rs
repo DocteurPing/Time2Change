@@ -5,7 +5,6 @@ use rust_decimal::{Decimal, dec};
 
 use crate::indicators::math::{average, clamp_0_100, median_i64, standard_deviation, z_score};
 use crate::types::currency_pair::CurrencyPair;
-use crate::types::exchange_rate::ExchangeRate;
 use crate::types::rate_quality::{RateQuality, RateQualityBreakdown};
 use crate::types::rate_quality_config::RateQualityConfig;
 
@@ -39,23 +38,6 @@ impl TimeSeries {
         Self { pair, rates }
     }
 
-    /// Creates a new time series from an iterator of [`ExchangeRate`] values.
-    ///
-    /// Each item is decomposed into its `(timestamp, rate)` pair and inserted
-    /// into the backing map. If the iterator yields multiple entries with the
-    /// same timestamp, only the last one is retained.
-    #[must_use]
-    pub fn from_exchange_rates(
-        pair: CurrencyPair,
-        rates: impl IntoIterator<Item = ExchangeRate>,
-    ) -> Self {
-        let map = rates
-            .into_iter()
-            .map(|r| (*r.timestamp(), *r.rate()))
-            .collect();
-        Self { pair, rates: map }
-    }
-
     /// Returns the currency pair associated with this series.
     #[must_use]
     pub const fn pair(&self) -> &CurrencyPair {
@@ -74,16 +56,6 @@ impl TimeSeries {
     /// If a rate already exists for `timestamp` it is replaced silently.
     pub fn add_rate(&mut self, timestamp: DateTime<Utc>, rate: Decimal) {
         self.rates.insert(timestamp, rate);
-    }
-
-    /// Extends the series with a slice of [`ExchangeRate`] observations.
-    ///
-    /// Existing entries whose timestamps collide with incoming ones are
-    /// overwritten.
-    pub fn extend_rates(&mut self, rates: &[ExchangeRate]) {
-        for r in rates {
-            self.rates.insert(*r.timestamp(), *r.rate());
-        }
     }
 
     /// Calculates a quality score for the time series.
