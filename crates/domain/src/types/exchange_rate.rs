@@ -38,7 +38,8 @@ impl ExchangeRate {
     }
 
     /// Returns the timestamp and rate as separate values.
-    pub fn into_parts(self) -> (DateTime<Utc>, Decimal) {
+    #[must_use]
+    pub const fn into_parts(self) -> (DateTime<Utc>, Decimal) {
         (self.timestamp, self.rate)
     }
 }
