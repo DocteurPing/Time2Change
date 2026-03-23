@@ -83,15 +83,24 @@ impl ExchangeRateRepository for MockRepository {
             .iter_mut()
             .find(|ts| ts.pair() == pair)
             .map(|ts| {
+                // Mimic Postgres `ON CONFLICT DO NOTHING`: preserve existing values on duplicate timestamps.
                 for rate in rates {
-                    ts.add_rate(*rate.timestamp(), *rate.rate());
+                    let ts_key = rate.timestamp();
+                    if !ts.rates().contains_key(ts_key) {
+                        ts.add_rate(*ts_key, *rate.rate());
+                    }
                 }
             })
             .unwrap_or_else(|| {
-                saved_rates.push(TimeSeries::new(
-                    pair.clone(),
-                    rates.iter().map(|r| (*r.timestamp(), *r.rate())).collect(),
-                ));
+                // When creating a new TimeSeries, also avoid overwriting duplicates within `rates`.
+                let mut map = BTreeMap::new();
+                for r in rates {
+                    let key = r.timestamp();
+                    if !map.contains_key(key) {
+                        map.insert(*key, *r.rate());
+                    }
+                }
+                saved_rates.push(TimeSeries::new(pair.clone(), map));
             });
         drop(saved_rates);
 

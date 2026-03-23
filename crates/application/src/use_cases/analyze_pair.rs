@@ -58,7 +58,7 @@ impl<R: ExchangeRateRepository> AnalyzePairUseCase<R> {
 
         let current_rate = *rates
             .values()
-            .last()
+            .next_back()
             .ok_or(AnalyzeError::InsufficientData)?;
         let quality = time_series.calculate_rate_quality(&self.config);
         let min_rate = time_series
