@@ -26,10 +26,7 @@ impl MockRepository {
             save_result: Ok(()),
             saved_rates: Arc::new(Mutex::new(vec![TimeSeries::new(
                 pair,
-                rates
-                    .into_iter()
-                    .map(|r| (*r.timestamp(), *r.rate()))
-                    .collect(),
+                rates.into_iter().map(ExchangeRate::into_parts).collect(),
             )])),
             saved_currencies: Arc::new(Mutex::new(Vec::new())),
         }

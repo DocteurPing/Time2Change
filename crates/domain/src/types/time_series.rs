@@ -134,27 +134,21 @@ impl TimeSeries {
             }
         };
 
-        let outlier = if series_values.is_empty() {
-            Decimal::ZERO
-        } else {
-            let mean = average(&series_values);
-            let std_dev = standard_deviation(&series_values);
-            match (mean, std_dev) {
-                (Some(mean), Some(std_dev)) if std_dev != Decimal::ZERO => {
-                    let outliers = series_values
-                        .iter()
-                        .filter(|v| {
-                            z_score(**v, mean, std_dev).is_some_and(|z| {
-                                z.abs() > config.thresholds().outlier_z_threshold()
-                            })
-                        })
-                        .count();
-                    let outlier_ratio =
-                        Decimal::from(outliers) / Decimal::from(series_values.len());
-                    clamp_0_100((Decimal::ONE - outlier_ratio) * dec!(100))
-                }
-                _ => dec!(100),
+        let mean = average(&series_values);
+        let std_dev = standard_deviation(&series_values);
+        let outlier = match (mean, std_dev) {
+            (Some(mean), Some(std_dev)) if std_dev != Decimal::ZERO => {
+                let outliers = series_values
+                    .iter()
+                    .filter(|v| {
+                        z_score(**v, mean, std_dev)
+                            .is_some_and(|z| z.abs() > config.thresholds().outlier_z_threshold())
+                    })
+                    .count();
+                let outlier_ratio = Decimal::from(outliers) / Decimal::from(series_values.len());
+                clamp_0_100((Decimal::ONE - outlier_ratio) * dec!(100))
             }
+            _ => dec!(100),
         };
 
         // Compute percentage returns between consecutive observations.

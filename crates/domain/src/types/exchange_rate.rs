@@ -36,6 +36,11 @@ impl ExchangeRate {
     pub const fn rate(&self) -> &Decimal {
         &self.rate
     }
+
+    /// Returns the timestamp and rate as separate values.
+    pub fn into_parts(self) -> (DateTime<Utc>, Decimal) {
+        (self.timestamp, self.rate)
+    }
 }
 
 impl std::fmt::Display for ExchangeRate {
@@ -44,12 +49,25 @@ impl std::fmt::Display for ExchangeRate {
     }
 }
 
-#[test]
-fn test_exchange_rate_display() {
-    let timestamp = Utc::now();
-    let rate = rust_decimal::dec!(1.2345);
-    let exchange_rate = ExchangeRate::new(timestamp, rate);
-    assert_eq!(exchange_rate.timestamp(), &timestamp);
-    assert_eq!(exchange_rate.rate(), &rate);
-    assert_eq!(format!("{exchange_rate}"), format!("{timestamp}: {rate}"));
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_exchange_rate_display() {
+        let timestamp = Utc::now();
+        let rate = rust_decimal::dec!(1.2345);
+        let exchange_rate = ExchangeRate::new(timestamp, rate);
+        assert_eq!(exchange_rate.timestamp(), &timestamp);
+        assert_eq!(exchange_rate.rate(), &rate);
+        assert_eq!(format!("{exchange_rate}"), format!("{timestamp}: {rate}"));
+    }
+
+    #[test]
+    fn test_into_parts() {
+        let timestamp = Utc::now();
+        let rate = rust_decimal::dec!(1.2345);
+        let exchange_rate = ExchangeRate::new(timestamp, rate);
+        assert_eq!(exchange_rate.into_parts(), (timestamp, rate));
+    }
 }
