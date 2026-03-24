@@ -1,4 +1,6 @@
+use chrono::{DateTime, Utc};
 use domain::types::currency_pair::CurrencyPair;
+use rust_decimal::Decimal;
 use thiserror::Error;
 
 use crate::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError};
@@ -58,14 +60,38 @@ where
             rate,
         })
     }
+
+    /// Fetches the specific exchange rate for `pair` at `timestamp`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`IngestError::Provider`] when the upstream provider cannot
+    /// supply the rate, or [`IngestError::Repository`] when persistence fails.
+    pub async fn fetch_rate(
+        &self,
+        pair: &CurrencyPair,
+        timestamp: DateTime<Utc>,
+    ) -> Result<IngestResult, IngestError> {
+        let rate = self.provider.get_rate(pair, timestamp).await?;
+
+        self.repository
+            .save_rates(pair, std::slice::from_ref(&rate))
+            .await?;
+
+        Ok(IngestResult {
+            pair: pair.clone(),
+            timestamp,
+            rate: *rate.rate(),
+        })
+    }
 }
 
 /// Result returned after a successful ingestion of the latest exchange rate.
 #[derive(Debug)]
 pub struct IngestResult {
     pair: CurrencyPair,
-    timestamp: chrono::DateTime<chrono::Utc>,
-    rate: rust_decimal::Decimal,
+    timestamp: DateTime<Utc>,
+    rate: Decimal,
 }
 
 impl IngestResult {
@@ -77,13 +103,13 @@ impl IngestResult {
 
     /// Returns the timestamp attached to the ingested exchange-rate record.
     #[must_use]
-    pub const fn timestamp(&self) -> &chrono::DateTime<chrono::Utc> {
+    pub const fn timestamp(&self) -> &DateTime<Utc> {
         &self.timestamp
     }
 
     /// Returns the ingested exchange-rate value.
     #[must_use]
-    pub const fn rate(&self) -> &rust_decimal::Decimal {
+    pub const fn rate(&self) -> &Decimal {
         &self.rate
     }
 }
