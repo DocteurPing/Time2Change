@@ -11,8 +11,8 @@ use std::process::ExitCode;
 use application::ports::rate_provider::RateProvider;
 use application::use_cases::ingest_rates::IngestRatesUseCase;
 use chrono::naive::Days;
+use domain::types::currency_pair::CurrencyPair;
 use domain::types::utils::currency_info_list_to_currency_pairs;
-use domain::types::{currency::Currency, currency_pair::CurrencyPair};
 use infrastructure::exchange_rate::repository::PostgresExchangeRateRepository;
 use infrastructure::rate_provider::frankfurter::FrankfurterClient;
 use sqlx::postgres::PgPoolOptions;
@@ -75,14 +75,6 @@ async fn main() -> ExitCode {
     };
 
     let pairs: Vec<CurrencyPair> = currency_info_list_to_currency_pairs(&currencies);
-
-    let pairs = vec![
-        CurrencyPair::new(
-            Currency::try_from("EUR").unwrap(),
-            Currency::try_from("USD").unwrap(),
-        )
-        .unwrap(),
-    ];
 
     // ── Ingestion loop ──────────────────────────────────────────────
     info!("Starting ingestion loop");
