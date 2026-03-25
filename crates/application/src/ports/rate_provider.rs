@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
@@ -26,6 +26,24 @@ pub trait RateProvider: Send + Sync {
         pair: &CurrencyPair,
         timestamp: DateTime<Utc>,
     ) -> Result<ExchangeRate, RateProviderError>;
+
+    /// Retrieves all exchange rates for `pair` between `start` and `end`
+    /// (inclusive).
+    ///
+    /// Implementations should return one [`ExchangeRate`] per trading day
+    /// within the requested range, sorted in ascending order by timestamp.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`RateProviderError`] when the pair is unsupported, the
+    /// upstream request times out, the remote API fails, or the response
+    /// cannot be parsed into a valid list of [`ExchangeRate`] values.
+    async fn get_rates_for_range(
+        &self,
+        currency: &CurrencyPair,
+        start: NaiveDate,
+        end: NaiveDate,
+    ) -> Result<Vec<ExchangeRate>, RateProviderError>;
 
     /// Fetches the most recent available exchange rate for `pair`.
     ///

@@ -11,6 +11,7 @@ use std::process::ExitCode;
 use application::ports::rate_provider::RateProvider;
 use application::use_cases::ingest_rates::IngestRatesUseCase;
 use chrono::naive::Days;
+use chrono::{Datelike, Months, NaiveDate};
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::utils::currency_info_list_to_currency_pairs;
 use infrastructure::exchange_rate::repository::PostgresExchangeRateRepository;
@@ -92,30 +93,63 @@ async fn run_loop(
 ) {
     let use_case = IngestRatesUseCase::new(repository, provider);
     let mut interval = tokio::time::interval(config.interval());
-    let mut date = *config.start_date();
+
+    // Normalise to the first day of the configured start month so that we
+    // always request complete calendar months.
+    let start = config.start_date().date_naive();
+    let Some(mut month_start) = NaiveDate::from_ymd_opt(start.year(), start.month(), 1) else {
+        error!("Failed to compute start of month for configured start date");
+        return;
+    };
 
     loop {
         tokio::select! {
             _ = interval.tick() => {
+                // Last day of the current month: first day of next month minus 1 day.
+                let month_end = if let Some(next) = month_start.checked_add_months(Months::new(1)) { next - Days::new(1) } else {
+                    warn!(month = %month_start.format("%Y-%m"), "Overflow computing month end — stopping");
+                    break;
+                };
+
+                info!(
+                    month_start = %month_start,
+                    month_end   = %month_end,
+                    "Ingesting month"
+                );
+
                 for pair in pairs {
-                    let span = tracing::info_span!("ingest", pair = %pair);
+                    let span = tracing::info_span!(
+                        "ingest_month",
+                        pair  = %pair,
+                        month = %month_start.format("%Y-%m"),
+                    );
                     let _guard = span.enter();
 
-                    match use_case.fetch_rate(pair, date).await {
-                        Ok(result) => {
+                    match use_case.fetch_rates_for_range(pair, month_start, month_end).await {
+                        Ok(count) => {
                             info!(
-                                pair = %result.pair(),
-                                rate = %result.rate(),
-                                timestamp = %result.timestamp(),
-                                "Rate ingested successfully"
+                                pair  = %pair,
+                                month = %month_start.format("%Y-%m"),
+                                count,
+                                "Month rates ingested successfully"
                             );
                         }
                         Err(e) => {
-                            warn!(pair = %pair, error = %e, "Failed to ingest rate");
+                            warn!(
+                                pair  = %pair,
+                                month = %month_start.format("%Y-%m"),
+                                error = %e,
+                                "Failed to ingest month rates"
+                            );
                         }
                     }
                 }
-                date = date + Days::new(1);
+
+                // Advance to the first day of the next month.
+                if let Some(next) = month_start.checked_add_months(Months::new(1)) { month_start = next } else {
+                    warn!("Overflow advancing to next month — stopping");
+                    break;
+                }
             }
             _ = tokio::signal::ctrl_c() => {
                 info!("Received shutdown signal");

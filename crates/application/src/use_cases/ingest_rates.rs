@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use domain::types::currency_pair::CurrencyPair;
 use rust_decimal::Decimal;
 use thiserror::Error;
@@ -83,6 +83,33 @@ where
             timestamp,
             rate: *rate.rate(),
         })
+    }
+
+    /// Fetches all exchange rates for `pair` between `start` and `end`
+    /// (inclusive), persists the entire batch, and returns the number of
+    /// rates ingested.
+    ///
+    /// This is more efficient than calling [`Self::fetch_rate`] in a loop
+    /// because it issues a single request to the upstream provider and a
+    /// single bulk write to the repository.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`IngestError::Provider`] when the upstream provider cannot
+    /// supply the rates, or [`IngestError::Repository`] when persistence
+    /// fails.
+    pub async fn fetch_rates_for_range(
+        &self,
+        pair: &CurrencyPair,
+        start: NaiveDate,
+        end: NaiveDate,
+    ) -> Result<usize, IngestError> {
+        let rates = self.provider.get_rates_for_range(pair, start, end).await?;
+        let count = rates.len();
+
+        self.repository.save_rates(pair, &rates).await?;
+
+        Ok(count)
     }
 }
 

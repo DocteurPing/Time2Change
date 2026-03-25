@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use domain::types::currency::Currency;
 use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
@@ -29,6 +29,18 @@ impl RateProvider for MockProvider {
     ) -> Result<ExchangeRate, RateProviderError> {
         match &self.result {
             Ok(r) => Ok(r.clone()),
+            Err(e) => Err(e.clone()),
+        }
+    }
+
+    async fn get_rates_for_range(
+        &self,
+        _pair: &CurrencyPair,
+        _start: NaiveDate,
+        _end: NaiveDate,
+    ) -> Result<Vec<ExchangeRate>, RateProviderError> {
+        match &self.result {
+            Ok(r) => Ok(vec![r.clone()]),
             Err(e) => Err(e.clone()),
         }
     }
