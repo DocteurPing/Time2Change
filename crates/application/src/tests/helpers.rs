@@ -2,17 +2,18 @@ use chrono::{DateTime, Duration, Utc};
 use domain::types::currency::Currency;
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
+use rust_decimal::Decimal;
 
 pub(crate) fn make_pair() -> CurrencyPair {
     CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap()
 }
 
-pub(crate) fn make_rate(ts: DateTime<Utc>, rate: rust_decimal::Decimal) -> ExchangeRate {
+pub(crate) fn make_rate(ts: DateTime<Utc>, rate: Decimal) -> ExchangeRate {
     ExchangeRate::new(ts, rate)
 }
 
 /// Build a series of evenly-spaced rates starting `days_ago` days before now.
-pub(crate) fn build_rates(values: &[rust_decimal::Decimal], days_ago: i64) -> Vec<ExchangeRate> {
+pub(crate) fn build_rates(values: &[Decimal], days_ago: i64) -> Vec<ExchangeRate> {
     let now = Utc::now();
     let start = now - Duration::days(days_ago);
     let step = if values.len() <= 1 {
