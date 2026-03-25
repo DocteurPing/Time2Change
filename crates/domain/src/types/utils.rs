@@ -13,3 +13,34 @@ pub fn currency_info_list_to_currency_pairs(list_currency: &[CurrencyInfo]) -> V
         .filter_map(Result::ok)
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::currency::Currency;
+
+    #[test]
+    fn test_currency_info_list_to_currency_pairs() {
+        let currency_info_list = vec![
+            CurrencyInfo::new(
+                Currency::new("USD").unwrap(),
+                "United States Dollar".to_owned(),
+            ),
+            CurrencyInfo::new(Currency::new("EUR").unwrap(), "Euro".to_owned()),
+        ];
+        let currency_pairs = currency_info_list_to_currency_pairs(&currency_info_list);
+        assert_eq!(currency_pairs.len(), 2);
+        assert!(
+            currency_pairs.contains(
+                &CurrencyPair::new(Currency::new("USD").unwrap(), Currency::new("EUR").unwrap())
+                    .unwrap()
+            )
+        );
+        assert!(
+            currency_pairs.contains(
+                &CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap())
+                    .unwrap()
+            )
+        );
+    }
+}
