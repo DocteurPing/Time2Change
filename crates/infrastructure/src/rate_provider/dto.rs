@@ -33,26 +33,12 @@ impl FrankfurterRateProviderResponse {
 /// itself a map from quote currency code to the exchange rate on that date.
 #[derive(Debug, Deserialize)]
 pub struct FrankfurterRangeResponse {
-    start_date: NaiveDate,
-    end_date: NaiveDate,
     /// Outer key: date string `"YYYY-MM-DD"`.
     /// Inner key: quote currency code (e.g. `"USD"`).
     rates: HashMap<String, HashMap<String, f64>>,
 }
 
 impl FrankfurterRangeResponse {
-    /// Returns the first date covered by this response.
-    #[must_use]
-    pub const fn start_date(&self) -> &NaiveDate {
-        &self.start_date
-    }
-
-    /// Returns the last date covered by this response.
-    #[must_use]
-    pub const fn end_date(&self) -> &NaiveDate {
-        &self.end_date
-    }
-
     /// Returns the full nested rates map.
     ///
     /// The outer key is a date string (`"YYYY-MM-DD"`); the inner key is the
