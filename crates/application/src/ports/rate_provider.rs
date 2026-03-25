@@ -40,7 +40,7 @@ pub trait RateProvider: Send + Sync {
     /// cannot be parsed into a valid list of [`ExchangeRate`] values.
     async fn get_rates_for_range(
         &self,
-        currency: &CurrencyPair,
+        pair: &CurrencyPair,
         start: NaiveDate,
         end: NaiveDate,
     ) -> Result<Vec<ExchangeRate>, RateProviderError>;
