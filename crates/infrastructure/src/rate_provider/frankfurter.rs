@@ -87,12 +87,11 @@ impl FrankfurterClient {
         Ok(response)
     }
 
-    /// Fetches a single-date rate for `pair` from `url`.
-    async fn fetch_pair(
+    async fn fetch_pairs_and_validate(
         &self,
         url: &str,
         pair: &CurrencyPair,
-    ) -> Result<ExchangeRate, RateProviderError> {
+    ) -> Result<Response, RateProviderError> {
         let response = self.client.get(url).send().await.map_err(|e| {
             if e.is_timeout() {
                 RateProviderError::Timeout
@@ -111,7 +110,16 @@ impl FrankfurterClient {
                 response.status()
             )));
         }
+        Ok(response)
+    }
 
+    /// Fetches a single-date rate for `pair` from `url`.
+    async fn fetch_pair(
+        &self,
+        url: &str,
+        pair: &CurrencyPair,
+    ) -> Result<ExchangeRate, RateProviderError> {
+        let response = self.fetch_pairs_and_validate(url, pair).await?;
         let dto: FrankfurterRateProviderResponse = response
             .json()
             .await
@@ -137,25 +145,7 @@ impl FrankfurterClient {
         url: &str,
         pair: &CurrencyPair,
     ) -> Result<Vec<ExchangeRate>, RateProviderError> {
-        let response = self.client.get(url).send().await.map_err(|e| {
-            if e.is_timeout() {
-                RateProviderError::Timeout
-            } else {
-                RateProviderError::ApiError(e.to_string())
-            }
-        })?;
-
-        if response.status() == reqwest::StatusCode::NOT_FOUND {
-            return Err(RateProviderError::PairNotSupported(pair.to_string()));
-        }
-
-        if !response.status().is_success() {
-            return Err(RateProviderError::ApiError(format!(
-                "HTTP {}",
-                response.status()
-            )));
-        }
-
+        let response = self.fetch_pairs_and_validate(url, pair).await?;
         let dto: FrankfurterRangeResponse = response
             .json()
             .await
