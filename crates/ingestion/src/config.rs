@@ -34,6 +34,7 @@ impl IngestionConfig {
     ///
     /// Returns an error string if any required variable is missing or malformed.
     pub(crate) fn from_env() -> Result<Self, String> {
+        let _ = dotenvy::dotenv();
         Self::from_env_impl(|key| env::var(key))
     }
 
