@@ -1,4 +1,6 @@
+use chrono::{DateTime, NaiveDate, Utc};
 use domain::types::currency_pair::CurrencyPair;
+use rust_decimal::Decimal;
 use thiserror::Error;
 
 use crate::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError};
@@ -58,14 +60,65 @@ where
             rate,
         })
     }
+
+    /// Fetches the specific exchange rate for `pair` at `timestamp`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`IngestError::Provider`] when the upstream provider cannot
+    /// supply the rate, or [`IngestError::Repository`] when persistence fails.
+    pub async fn fetch_rate(
+        &self,
+        pair: &CurrencyPair,
+        timestamp: DateTime<Utc>,
+    ) -> Result<IngestResult, IngestError> {
+        let rate = self.provider.get_rate(pair, timestamp).await?;
+
+        self.repository
+            .save_rates(pair, std::slice::from_ref(&rate))
+            .await?;
+
+        Ok(IngestResult {
+            pair: pair.clone(),
+            timestamp,
+            rate: *rate.rate(),
+        })
+    }
+
+    /// Fetches all exchange rates for `pair` between `start` and `end`
+    /// (inclusive), persists the entire batch, and returns the number of
+    /// rates ingested.
+    ///
+    /// This is more efficient than calling [`Self::fetch_rate`] in a loop
+    /// because it issues a single request to the upstream provider and a
+    /// single bulk write to the repository.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`IngestError::Provider`] when the upstream provider cannot
+    /// supply the rates, or [`IngestError::Repository`] when persistence
+    /// fails.
+    pub async fn fetch_rates_for_range(
+        &self,
+        pair: &CurrencyPair,
+        start: NaiveDate,
+        end: NaiveDate,
+    ) -> Result<usize, IngestError> {
+        let rates = self.provider.get_rates_for_range(pair, start, end).await?;
+        let count = rates.len();
+
+        self.repository.save_rates(pair, &rates).await?;
+
+        Ok(count)
+    }
 }
 
 /// Result returned after a successful ingestion of the latest exchange rate.
 #[derive(Debug)]
 pub struct IngestResult {
     pair: CurrencyPair,
-    timestamp: chrono::DateTime<chrono::Utc>,
-    rate: rust_decimal::Decimal,
+    timestamp: DateTime<Utc>,
+    rate: Decimal,
 }
 
 impl IngestResult {
@@ -77,13 +130,13 @@ impl IngestResult {
 
     /// Returns the timestamp attached to the ingested exchange-rate record.
     #[must_use]
-    pub const fn timestamp(&self) -> &chrono::DateTime<chrono::Utc> {
+    pub const fn timestamp(&self) -> &DateTime<Utc> {
         &self.timestamp
     }
 
     /// Returns the ingested exchange-rate value.
     #[must_use]
-    pub const fn rate(&self) -> &rust_decimal::Decimal {
+    pub const fn rate(&self) -> &Decimal {
         &self.rate
     }
 }

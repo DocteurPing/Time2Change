@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use application::ports::rate_provider::{RateProvider, RateProviderError};
 use async_trait::async_trait;
-use chrono::{DateTime, NaiveTime, TimeZone, Utc};
+use chrono::{DateTime, NaiveDate, NaiveTime, TimeZone, Utc};
 use domain::types::currency::Currency;
 use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
@@ -11,7 +11,7 @@ use reqwest::{Client, Response};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 
-use crate::rate_provider::dto::FrankfurterRateProviderResponse;
+use crate::rate_provider::dto::{FrankfurterRangeResponse, FrankfurterRateProviderResponse};
 
 const BASE_URL: &str = "https://api.frankfurter.dev/v1";
 const TIMEOUT_MILLIS: u64 = 5000;
@@ -47,7 +47,7 @@ impl FrankfurterClient {
     ///
     /// # Errors
     ///
-    /// Returns an error if the underlying `reqwest::Client` cannot be built
+    /// Returns an error if the underlying `reqwest::Client` cannot be built.
     pub fn with_base_url_and_timeout(
         base_url: impl Into<String>,
         timeout_millis: u64,
@@ -61,6 +61,14 @@ impl FrankfurterClient {
         })
     }
 
+    /// Returns the base URL used by this client.
+    #[must_use]
+    pub fn base_url(&self) -> &str {
+        &self.base_url
+    }
+
+    /// Performs a GET request and returns the raw [`Response`], mapping HTTP
+    /// and transport errors to [`RateProviderError`].
     async fn fetch(&self, url: &str) -> Result<Response, RateProviderError> {
         let response = self.client.get(url).send().await.map_err(|e| {
             if e.is_timeout() {
@@ -79,11 +87,11 @@ impl FrankfurterClient {
         Ok(response)
     }
 
-    async fn fetch_pair(
+    async fn fetch_pairs_and_validate(
         &self,
         url: &str,
         pair: &CurrencyPair,
-    ) -> Result<ExchangeRate, RateProviderError> {
+    ) -> Result<Response, RateProviderError> {
         let response = self.client.get(url).send().await.map_err(|e| {
             if e.is_timeout() {
                 RateProviderError::Timeout
@@ -102,7 +110,16 @@ impl FrankfurterClient {
                 response.status()
             )));
         }
+        Ok(response)
+    }
 
+    /// Fetches a single-date rate for `pair` from `url`.
+    async fn fetch_pair(
+        &self,
+        url: &str,
+        pair: &CurrencyPair,
+    ) -> Result<ExchangeRate, RateProviderError> {
+        let response = self.fetch_pairs_and_validate(url, pair).await?;
         let dto: FrankfurterRateProviderResponse = response
             .json()
             .await
@@ -114,18 +131,50 @@ impl FrankfurterClient {
             .get(&quote_str)
             .ok_or_else(|| RateProviderError::PairNotSupported(pair.to_string()))?;
 
-        // Should never fail since the API returns a number
+        // Should never fail since the API returns a number.
         let rate = Decimal::from_f64(*raw_rate).unwrap_or_default();
-
         let timestamp: DateTime<Utc> = Utc.from_utc_datetime(&dto.date().and_time(NaiveTime::MIN));
 
         Ok(ExchangeRate::new(timestamp, rate))
     }
 
-    /// Returns the base URL used by this client
-    #[must_use]
-    pub fn base_url(&self) -> &str {
-        &self.base_url
+    /// Fetches a date-range of rates for `pair` from `url` and returns them
+    /// sorted in ascending chronological order.
+    async fn fetch_pair_range(
+        &self,
+        url: &str,
+        pair: &CurrencyPair,
+    ) -> Result<Vec<ExchangeRate>, RateProviderError> {
+        let response = self.fetch_pairs_and_validate(url, pair).await?;
+        let dto: FrankfurterRangeResponse = response
+            .json()
+            .await
+            .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
+
+        let quote_str = pair.quote().to_string();
+
+        let mut rates = dto
+            .rates()
+            .iter()
+            .map(|(date_str, currency_rates)| {
+                let date = date_str
+                    .parse::<NaiveDate>()
+                    .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
+
+                let raw_rate = currency_rates
+                    .get(&quote_str)
+                    .ok_or_else(|| RateProviderError::PairNotSupported(pair.to_string()))?;
+
+                let rate = Decimal::from_f64(*raw_rate).unwrap_or_default();
+                let timestamp = Utc.from_utc_datetime(&date.and_time(NaiveTime::MIN));
+
+                Ok(ExchangeRate::new(timestamp, rate))
+            })
+            .collect::<Result<Vec<_>, RateProviderError>>()?;
+
+        rates.sort_by_key(|r| *r.timestamp());
+
+        Ok(rates)
     }
 }
 
@@ -154,6 +203,23 @@ impl RateProvider for FrankfurterClient {
             pair.quote()
         );
         self.fetch_pair(&url, pair).await
+    }
+
+    async fn get_rates_for_range(
+        &self,
+        pair: &CurrencyPair,
+        start: NaiveDate,
+        end: NaiveDate,
+    ) -> Result<Vec<ExchangeRate>, RateProviderError> {
+        let url = format!(
+            "{}/{}..{}?base={}&symbols={}",
+            self.base_url,
+            start,
+            end,
+            pair.base(),
+            pair.quote()
+        );
+        self.fetch_pair_range(&url, pair).await
     }
 
     async fn fetch_currencies(&self) -> Result<Vec<CurrencyInfo>, RateProviderError> {

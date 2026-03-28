@@ -1,9 +1,18 @@
 //! Ingestion service entrypoint.
 //!
-//! This binary is intended to host exchange-rate ingestion workflows,
-//! such as polling external providers and persisting the latest rates.
-//! The implementation is currently a placeholder and will be expanded
-//! as the ingestion pipeline is introduced.
-fn main() {
-    println!("Hello, world!");
+//! This binary polls external exchange-rate providers on a configurable
+//! interval and persists the results into Postgres via the application
+//! layer's `IngestRatesUseCase`.
+
+mod config;
+mod runner;
+mod setup;
+
+use std::process::ExitCode;
+
+use crate::setup::setup_and_launch;
+
+#[tokio::main]
+async fn main() -> ExitCode {
+    setup_and_launch().await
 }

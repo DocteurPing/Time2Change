@@ -24,3 +24,6 @@ pub mod time_series;
 
 /// Currency information (symbol and name).
 pub mod currency_info;
+
+/// Utility functions for working with currency pairs.
+pub mod utils;

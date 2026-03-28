@@ -181,3 +181,34 @@ async fn ingest_result_debug_impl() {
     let debug = format!("{result:?}");
     assert!(debug.contains("IngestResult"));
 }
+
+#[tokio::test]
+async fn fetch_pair() {
+    let now = Utc::now();
+    let pair = make_pair();
+    let rate = make_rate(now, dec!(1.05));
+
+    let provider = MockProvider::ok(rate.clone());
+    let repo = MockRepository::empty();
+    let uc = IngestRatesUseCase::new(repo, provider);
+
+    let result = uc.fetch_rate(&pair, now).await.unwrap();
+    assert_eq!(result.rate(), rate.rate());
+}
+
+#[tokio::test]
+async fn fetch_pair_range() {
+    let now = Utc::now();
+    let pair = make_pair();
+    let rate = make_rate(now, dec!(1.0034));
+
+    let provider = MockProvider::ok(rate.clone());
+    let repo = MockRepository::empty();
+    let uc = IngestRatesUseCase::new(repo, provider);
+
+    let result = uc
+        .fetch_rates_for_range(&pair, now.date_naive(), now.date_naive())
+        .await
+        .unwrap();
+    assert_eq!(result, 1);
+}

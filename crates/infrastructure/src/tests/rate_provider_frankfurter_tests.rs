@@ -1,8 +1,10 @@
 use application::ports::rate_provider::{RateProvider, RateProviderError};
-use chrono::TimeZone;
+use chrono::{NaiveDate, TimeZone};
 use domain::types::currency::Currency;
 use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
+use domain::types::exchange_rate::ExchangeRate;
+use rust_decimal::{Decimal, dec};
 use wiremock::matchers::{method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -42,7 +44,7 @@ async fn fetch_latest_returns_exchange_rate() {
         rate.timestamp(),
         &chrono::Utc.with_ymd_and_hms(2024, 1, 15, 0, 0, 0).unwrap()
     );
-    assert_eq!(rate.rate(), &rust_decimal::Decimal::new(10945, 4));
+    assert_eq!(rate.rate(), &Decimal::new(10945, 4));
 }
 
 #[tokio::test]
@@ -79,7 +81,7 @@ async fn get_rate_returns_historical_exchange_rate() {
         rate.timestamp(),
         &chrono::Utc.with_ymd_and_hms(1999, 1, 1, 0, 0, 0).unwrap()
     );
-    assert_eq!(rate.rate(), &rust_decimal::Decimal::new(84825, 5));
+    assert_eq!(rate.rate(), &Decimal::new(84825, 5));
 }
 
 #[tokio::test]
@@ -290,4 +292,153 @@ async fn fetch_currencies_returns_parse_error_on_invalid_currency_code() {
 
     let error = client.fetch_currencies().await;
     assert!(matches!(error, Err(RateProviderError::ParseError(_))));
+}
+
+#[tokio::test]
+async fn get_rates_for_range_returns_ok_on_valid_response() {
+    let (server, client) = mock_server().await;
+    Mock::given(method("GET"))
+        .and(path("/2023-12-29..2026-03-24"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(
+            r#"{
+                "base": "EUR",
+                "start_date": "2023-12-29",
+                "end_date": "2026-03-24",
+                "rates": {
+                  "2023-12-29": {
+                    "USD": 1.105
+                  },
+                  "2024-01-02": {
+                    "USD": 1.0956
+                  },
+                  "2024-01-03": {
+                    "USD": 1.0919
+                  },
+                  "2024-01-04": {
+                    "USD": 1.0953
+                  }
+                }
+              }"#,
+            "application/json",
+        ))
+        .mount(&server)
+        .await;
+
+    let pair =
+        CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
+    let result = client
+        .get_rates_for_range(
+            &pair,
+            NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
+            NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
+        )
+        .await;
+    assert!(result.is_ok());
+    let result = result.unwrap();
+    assert!(result.len() == 4);
+    assert!(result.contains(&ExchangeRate::new(
+        chrono::Utc.with_ymd_and_hms(2023, 12, 29, 0, 0, 0).unwrap(),
+        dec!(1.105)
+    )));
+    assert!(result.contains(&ExchangeRate::new(
+        chrono::Utc.with_ymd_and_hms(2024, 1, 2, 0, 0, 0).unwrap(),
+        dec!(1.0956)
+    )));
+    assert!(result.contains(&ExchangeRate::new(
+        chrono::Utc.with_ymd_and_hms(2024, 1, 3, 0, 0, 0).unwrap(),
+        dec!(1.0919)
+    )));
+    assert!(result.contains(&ExchangeRate::new(
+        chrono::Utc.with_ymd_and_hms(2024, 1, 4, 0, 0, 0).unwrap(),
+        dec!(1.0953)
+    )));
+}
+
+#[tokio::test]
+async fn get_rates_for_range_returns_err_on_invalid_response() {
+    let (server, client) = mock_server().await;
+    Mock::given(method("GET"))
+        .and(path("/2023-12-29..2026-03-24"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(
+            r#"{
+            "AUDE": "Australian Dollar"
+            }"#,
+            "application/json",
+        ))
+        .mount(&server)
+        .await;
+    let pair =
+        CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
+    let result = client
+        .get_rates_for_range(
+            &pair,
+            NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
+            NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
+        )
+        .await;
+    assert!(result.is_err_and(|e| matches!(e, RateProviderError::ParseError(_))));
+}
+
+#[tokio::test]
+async fn get_rates_for_range_returns_err_on_wrong_date() {
+    let (server, client) = mock_server().await;
+    Mock::given(method("GET"))
+        .and(path("/2023-12-29..2026-03-24"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(
+            r#"{
+                "base": "EUR",
+                "start_date": "2023-12-29",
+                "end_date": "2026-03-24",
+                "rates": {
+                  "2023-22-29": {
+                    "USD": 1.105
+                  }
+                }
+              }"#,
+            "application/json",
+        ))
+        .mount(&server)
+        .await;
+    let pair =
+        CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
+    let result = client
+        .get_rates_for_range(
+            &pair,
+            NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
+            NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
+        )
+        .await;
+    assert!(result.is_err_and(|e| matches!(e, RateProviderError::ParseError(_))));
+}
+
+#[tokio::test]
+async fn get_rates_for_range_returns_err_on_wrong_pair() {
+    let (server, client) = mock_server().await;
+    Mock::given(method("GET"))
+        .and(path("/2023-12-29..2026-03-24"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(
+            r#"{
+                "base": "EUR",
+                "start_date": "2023-12-29",
+                "end_date": "2026-03-24",
+                "rates": {
+                  "2023-12-29": {
+                    "EUR": 1.105
+                  }
+                }
+              }"#,
+            "application/json",
+        ))
+        .mount(&server)
+        .await;
+    let pair =
+        CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
+    let result = client
+        .get_rates_for_range(
+            &pair,
+            NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
+            NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
+        )
+        .await;
+    assert!(result.is_err_and(|e| matches!(e, RateProviderError::PairNotSupported(_))));
 }
