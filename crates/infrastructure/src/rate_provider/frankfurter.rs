@@ -1,6 +1,6 @@
 use application::ports::rate_provider::{RateProvider, RateProviderError};
 use async_trait::async_trait;
-use chrono::{DateTime, NaiveDate, NaiveTime, TimeZone, Utc};
+use chrono::{NaiveDate, NaiveTime, TimeZone, Utc};
 use domain::types::currency::Currency;
 use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
@@ -9,9 +9,7 @@ use reqwest::{Client, Response};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 
-use crate::rate_provider::dto::{
-    FrankfurterCurrenciesResponse, FrankfurterRangeResponse, FrankfurterRateProviderResponse,
-};
+use crate::rate_provider::dto::{FrankfurterCurrenciesResponse, FrankfurterRangeResponse};
 
 const BASE_URL: &str = "https://api.frankfurter.dev/v2";
 const TIMEOUT_MILLIS: u64 = 5000;
@@ -113,31 +111,6 @@ impl FrankfurterClient {
         Ok(response)
     }
 
-    /// Fetches a single-date rate for `pair` from `url`.
-    async fn fetch_pair(
-        &self,
-        url: &str,
-        pair: &CurrencyPair,
-    ) -> Result<ExchangeRate, RateProviderError> {
-        let response = self.fetch_pairs_and_validate(url, pair).await?;
-        let dto: FrankfurterRateProviderResponse = response
-            .json()
-            .await
-            .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
-
-        let quote_str = pair.quote().to_string();
-        let raw_rate = dto
-            .rates()
-            .get(&quote_str)
-            .ok_or_else(|| RateProviderError::PairNotSupported(pair.to_string()))?;
-
-        // Should never fail since the API returns a number.
-        let rate = Decimal::from_f64(*raw_rate).unwrap_or_default();
-        let timestamp: DateTime<Utc> = Utc.from_utc_datetime(&dto.date().and_time(NaiveTime::MIN));
-
-        Ok(ExchangeRate::new(timestamp, rate))
-    }
-
     /// Fetches a date-range of rates for `pair` from `url` and returns them
     /// sorted in ascending chronological order.
     async fn fetch_pair_range(
@@ -172,31 +145,6 @@ impl FrankfurterClient {
 
 #[async_trait]
 impl RateProvider for FrankfurterClient {
-    async fn fetch_latest(&self, pair: &CurrencyPair) -> Result<ExchangeRate, RateProviderError> {
-        let url = format!(
-            "{}/latest?base={}&symbols={}",
-            self.base_url,
-            pair.base(),
-            pair.quote()
-        );
-        self.fetch_pair(&url, pair).await
-    }
-
-    async fn get_rate(
-        &self,
-        pair: &CurrencyPair,
-        timestamp: DateTime<Utc>,
-    ) -> Result<ExchangeRate, RateProviderError> {
-        let date = timestamp.format("%Y-%m-%d");
-        let url = format!(
-            "{}/{date}?base={}&symbols={}",
-            self.base_url,
-            pair.base(),
-            pair.quote()
-        );
-        self.fetch_pair(&url, pair).await
-    }
-
     async fn get_rates_for_range(
         &self,
         pair: &CurrencyPair,

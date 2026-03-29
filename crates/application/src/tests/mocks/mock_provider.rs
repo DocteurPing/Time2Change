@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::NaiveDate;
 use domain::types::currency::Currency;
 use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
@@ -14,25 +14,10 @@ impl MockProvider {
     pub(crate) fn ok(rate: ExchangeRate) -> Self {
         Self { result: Ok(rate) }
     }
-
-    pub(crate) fn err(e: RateProviderError) -> Self {
-        Self { result: Err(e) }
-    }
 }
 
 #[async_trait::async_trait]
 impl RateProvider for MockProvider {
-    async fn get_rate(
-        &self,
-        _pair: &CurrencyPair,
-        _timestamp: DateTime<Utc>,
-    ) -> Result<ExchangeRate, RateProviderError> {
-        match &self.result {
-            Ok(r) => Ok(r.clone()),
-            Err(e) => Err(e.clone()),
-        }
-    }
-
     async fn get_rates_for_range(
         &self,
         _pair: &CurrencyPair,
@@ -41,13 +26,6 @@ impl RateProvider for MockProvider {
     ) -> Result<Vec<ExchangeRate>, RateProviderError> {
         match &self.result {
             Ok(r) => Ok(vec![r.clone()]),
-            Err(e) => Err(e.clone()),
-        }
-    }
-
-    async fn fetch_latest(&self, _pair: &CurrencyPair) -> Result<ExchangeRate, RateProviderError> {
-        match &self.result {
-            Ok(r) => Ok(r.clone()),
             Err(e) => Err(e.clone()),
         }
     }

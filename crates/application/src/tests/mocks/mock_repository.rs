@@ -50,21 +50,8 @@ impl MockRepository {
         }
     }
 
-    pub(crate) fn err(e: RepositoryError) -> Self {
-        Self {
-            load_error: None,
-            save_result: Err(e),
-            saved_rates: Arc::new(Mutex::new(Vec::new())),
-            saved_currencies: Arc::new(Mutex::new(Vec::new())),
-        }
-    }
-
     pub(crate) fn saved_currencies(&self) -> Vec<CurrencyInfo> {
         self.saved_currencies.lock().unwrap().clone()
-    }
-
-    pub(crate) fn get_arc_saved_rates(&self) -> Arc<Mutex<Vec<TimeSeries>>> {
-        Arc::<Mutex<Vec<TimeSeries>>>::clone(&self.saved_rates)
     }
 }
 

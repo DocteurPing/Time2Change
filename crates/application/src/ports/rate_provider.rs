@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::NaiveDate;
 use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
@@ -11,22 +11,6 @@ use thiserror::Error;
 /// business logic.
 #[async_trait::async_trait]
 pub trait RateProvider: Send + Sync {
-    /// Retrieves the exchange rate for `pair` at a specific `timestamp`.
-    ///
-    /// Implementations may satisfy this request from a historical endpoint,
-    /// a cache, or another upstream data source.
-    ///
-    /// # Errors
-    ///
-    /// Returns a [`RateProviderError`] when the pair is unsupported, the
-    /// upstream request times out, the remote API fails, or the response
-    /// cannot be parsed into a valid [`ExchangeRate`].
-    async fn get_rate(
-        &self,
-        pair: &CurrencyPair,
-        timestamp: DateTime<Utc>,
-    ) -> Result<ExchangeRate, RateProviderError>;
-
     /// Retrieves all exchange rates for `pair` between `start` and `end`
     /// (inclusive).
     ///
@@ -44,14 +28,6 @@ pub trait RateProvider: Send + Sync {
         start: NaiveDate,
         end: NaiveDate,
     ) -> Result<Vec<ExchangeRate>, RateProviderError>;
-
-    /// Fetches the most recent available exchange rate for `pair`.
-    ///
-    /// # Errors
-    ///
-    /// Returns a [`RateProviderError`] when the pair is unsupported, the
-    /// upstream request fails, or the provider response cannot be parsed.
-    async fn fetch_latest(&self, pair: &CurrencyPair) -> Result<ExchangeRate, RateProviderError>;
 
     /// Returns the list of available currencies.
     ///
