@@ -151,12 +151,13 @@ impl FrankfurterClient {
             .await
             .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
 
+        let base = pair.base().to_string();
+        let quote = pair.quote().to_string();
         let rates = list_rate
             .iter()
             .map(|dto| {
                 let date = dto.date();
-                if dto.base() != pair.base().to_string() || dto.quote() != pair.quote().to_string()
-                {
+                if dto.base() != base || dto.quote() != quote {
                     return Err(RateProviderError::PairNotSupported(pair.to_string()));
                 }
                 let rate = Decimal::from_f64(dto.rate()).unwrap_or_default();
