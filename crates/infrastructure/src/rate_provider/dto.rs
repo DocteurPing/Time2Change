@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use serde::Deserialize;
 
-/// Represents the response from the Frankfurter API for a date-range exchange
+/// Represents the response from the Frankfurter API for a date-range exchange rate request.
 #[derive(Debug, Deserialize)]
 pub struct FrankfurterRangeResponse {
     date: NaiveDate,

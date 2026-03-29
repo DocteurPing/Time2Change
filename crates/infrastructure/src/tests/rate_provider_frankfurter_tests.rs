@@ -70,7 +70,7 @@ async fn returns_pair_not_supported_on_404() {
     Mock::given(method("GET"))
         .and(path("/rates"))
         .and(query_param("base", "EUR"))
-        .and(query_param("symbols", "USD"))
+        .and(query_param("quotes", "USD"))
         .respond_with(ResponseTemplate::new(404))
         .mount(&server)
         .await;

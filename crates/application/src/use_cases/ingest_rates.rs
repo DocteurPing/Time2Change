@@ -9,7 +9,7 @@ use crate::ports::rate_provider::{RateProvider, RateProviderError};
 /// persists it through the configured repository.
 ///
 /// This workflow coordinates two application ports:
-/// - a [`RateProvider`] that supplies the latest rate data
+/// - a [`RateProvider`] that supplies the rate data for a given currency pair at a given date range
 /// - an [`ExchangeRateRepository`] that stores the retrieved rate
 ///
 /// It returns an [`IngestResult`] containing the pair, timestamp, and rate that
@@ -66,7 +66,7 @@ where
     }
 }
 
-/// Errors that can occur while ingesting the latest exchange rate.
+/// Errors that can occur while ingesting the exchange rate.
 #[derive(Error, Debug)]
 pub enum IngestError {
     /// The upstream rate provider failed to fetch the latest exchange rate.
