@@ -19,7 +19,7 @@ async fn mock_server() -> (MockServer, FrankfurterClient) {
 #[tokio::test]
 async fn create_client_test() {
     let client = FrankfurterClient::with_default_url().unwrap();
-    assert_eq!(client.base_url(), "https://api.frankfurter.dev/v1");
+    assert_eq!(client.base_url(), "https://api.frankfurter.dev/v2");
 }
 
 #[tokio::test]
@@ -210,24 +210,48 @@ async fn fetch_currencies() {
     Mock::given(method("GET"))
         .and(path("/currencies"))
         .respond_with(ResponseTemplate::new(200).set_body_raw(
-            r#"{
-            "AUD": "Australian Dollar",
-            "BRL": "Brazilian Real",
-            "CAD": "Canadian Dollar",
-            "CHF": "Swiss Franc"
-            }"#,
+            r#"[
+              {
+                "iso_code": "AED",
+                "iso_numeric": "784",
+                "name": "United Arab Emirates Dirham",
+                "symbol": "د.إ",
+                "...": "..."
+              },
+              {
+                "iso_code": "AFN",
+                "iso_numeric": "971",
+                "name": "Afghan Afghani",
+                "symbol": "؋",
+                "...": "..."
+              },
+              {
+                "iso_code": "ALL",
+                "iso_numeric": "008",
+                "name": "Albanian Lek",
+                "symbol": "L",
+                "...": "..."
+              },
+              {
+                "iso_code": "AMD",
+                "iso_numeric": "051",
+                "name": "Armenian Dram",
+                "symbol": "֏",
+                "...": "..."
+              }
+            ]"#,
             "application/json",
         ))
         .mount(&server)
         .await;
     let currencies = client.fetch_currencies().await.unwrap();
     assert!(currencies.contains(&CurrencyInfo::new(
-        Currency::try_from("BRL").unwrap(),
-        "Brazilian Real".to_owned()
+        Currency::try_from("AED").unwrap(),
+        "United Arab Emirates Dirham".to_owned()
     )));
     assert!(currencies.contains(&CurrencyInfo::new(
-        Currency::try_from("CHF").unwrap(),
-        "Swiss Franc".to_owned()
+        Currency::try_from("AMD").unwrap(),
+        "Armenian Dram".to_owned()
     )));
 }
 
@@ -237,6 +261,28 @@ async fn fetch_currencies_parse_error() {
     Mock::given(method("GET"))
         .and(path("/currencies"))
         .respond_with(ResponseTemplate::new(200).set_body_raw(r#"{"EUR"}"#, "application/json"))
+        .mount(&server)
+        .await;
+    let error = client.fetch_currencies().await;
+    assert!(matches!(error, Err(RateProviderError::ParseError(_))));
+}
+
+#[tokio::test]
+async fn fetch_currencies_parse_error_currency_format() {
+    let (server, client) = mock_server().await;
+    Mock::given(method("GET"))
+        .and(path("/currencies"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(
+            r#"[
+          {
+            "iso_code": "AEDD",
+            "iso_numeric": "784",
+            "name": "United Arab Emirates Dirham",
+            "symbol": "د.إ",
+            "...": "..."
+          }]"#,
+            "application/json",
+        ))
         .mount(&server)
         .await;
     let error = client.fetch_currencies().await;
@@ -294,31 +340,39 @@ async fn fetch_currencies_returns_parse_error_on_invalid_currency_code() {
     assert!(matches!(error, Err(RateProviderError::ParseError(_))));
 }
 
+#[allow(clippy::too_many_lines)]
 #[tokio::test]
 async fn get_rates_for_range_returns_ok_on_valid_response() {
     let (server, client) = mock_server().await;
     Mock::given(method("GET"))
-        .and(path("/2023-12-29..2026-03-24"))
+        .and(path("/rates"))
         .respond_with(ResponseTemplate::new(200).set_body_raw(
-            r#"{
+            r#"[
+              {
+                "date": "2024-01-01",
                 "base": "EUR",
-                "start_date": "2023-12-29",
-                "end_date": "2026-03-24",
-                "rates": {
-                  "2023-12-29": {
-                    "USD": 1.105
-                  },
-                  "2024-01-02": {
-                    "USD": 1.0956
-                  },
-                  "2024-01-03": {
-                    "USD": 1.0919
-                  },
-                  "2024-01-04": {
-                    "USD": 1.0953
-                  }
-                }
-              }"#,
+                "quote": "USD",
+                "rate": 1.1077
+              },
+              {
+                "date": "2024-01-02",
+                "base": "EUR",
+                "quote": "USD",
+                "rate": 1.1024
+              },
+              {
+                "date": "2024-01-03",
+                "base": "EUR",
+                "quote": "USD",
+                "rate": 1.0936
+              },
+              {
+                "date": "2024-01-04",
+                "base": "EUR",
+                "quote": "USD",
+                "rate": 1.092
+              }
+            ]"#,
             "application/json",
         ))
         .mount(&server)
@@ -329,28 +383,28 @@ async fn get_rates_for_range_returns_ok_on_valid_response() {
     let result = client
         .get_rates_for_range(
             &pair,
-            NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
-            NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 5).unwrap(),
         )
         .await;
     assert!(result.is_ok());
     let result = result.unwrap();
     assert!(result.len() == 4);
     assert!(result.contains(&ExchangeRate::new(
-        chrono::Utc.with_ymd_and_hms(2023, 12, 29, 0, 0, 0).unwrap(),
-        dec!(1.105)
+        chrono::Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap(),
+        dec!(1.1077)
     )));
     assert!(result.contains(&ExchangeRate::new(
         chrono::Utc.with_ymd_and_hms(2024, 1, 2, 0, 0, 0).unwrap(),
-        dec!(1.0956)
+        dec!(1.1024)
     )));
     assert!(result.contains(&ExchangeRate::new(
         chrono::Utc.with_ymd_and_hms(2024, 1, 3, 0, 0, 0).unwrap(),
-        dec!(1.0919)
+        dec!(1.0936)
     )));
     assert!(result.contains(&ExchangeRate::new(
         chrono::Utc.with_ymd_and_hms(2024, 1, 4, 0, 0, 0).unwrap(),
-        dec!(1.0953)
+        dec!(1.092)
     )));
 }
 
@@ -358,7 +412,7 @@ async fn get_rates_for_range_returns_ok_on_valid_response() {
 async fn get_rates_for_range_returns_err_on_invalid_response() {
     let (server, client) = mock_server().await;
     Mock::given(method("GET"))
-        .and(path("/2023-12-29..2026-03-24"))
+        .and(path("/rates"))
         .respond_with(ResponseTemplate::new(200).set_body_raw(
             r#"{
             "AUDE": "Australian Dollar"
@@ -383,7 +437,7 @@ async fn get_rates_for_range_returns_err_on_invalid_response() {
 async fn get_rates_for_range_returns_err_on_wrong_date() {
     let (server, client) = mock_server().await;
     Mock::given(method("GET"))
-        .and(path("/2023-12-29..2026-03-24"))
+        .and(path("/rates"))
         .respond_with(ResponseTemplate::new(200).set_body_raw(
             r#"{
                 "base": "EUR",
@@ -415,18 +469,16 @@ async fn get_rates_for_range_returns_err_on_wrong_date() {
 async fn get_rates_for_range_returns_err_on_wrong_pair() {
     let (server, client) = mock_server().await;
     Mock::given(method("GET"))
-        .and(path("/2023-12-29..2026-03-24"))
+        .and(path("/rates"))
         .respond_with(ResponseTemplate::new(200).set_body_raw(
-            r#"{
+            r#"[
+              {
+                "date": "2024-01-01",
                 "base": "EUR",
-                "start_date": "2023-12-29",
-                "end_date": "2026-03-24",
-                "rates": {
-                  "2023-12-29": {
-                    "EUR": 1.105
-                  }
-                }
-              }"#,
+                "quote": "EUR",
+                "rate": 1.1077
+              }
+            ]"#,
             "application/json",
         ))
         .mount(&server)

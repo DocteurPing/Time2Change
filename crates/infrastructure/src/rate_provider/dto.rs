@@ -27,24 +27,57 @@ impl FrankfurterRateProviderResponse {
 }
 
 /// Represents the response from the Frankfurter API for a date-range exchange
-/// rate request (e.g. `2000-01-01..2000-12-31`).
-///
-/// The `rates` map is keyed by date string (`"YYYY-MM-DD"`) and each value is
-/// itself a map from quote currency code to the exchange rate on that date.
 #[derive(Debug, Deserialize)]
 pub struct FrankfurterRangeResponse {
-    /// Outer key: date string `"YYYY-MM-DD"`.
-    /// Inner key: quote currency code (e.g. `"USD"`).
-    rates: HashMap<String, HashMap<String, f64>>,
+    date: NaiveDate,
+    base: String,
+    quote: String,
+    rate: f64,
 }
 
 impl FrankfurterRangeResponse {
-    /// Returns the full nested rates map.
-    ///
-    /// The outer key is a date string (`"YYYY-MM-DD"`); the inner key is the
-    /// quote currency code.
+    /// Returns the date of the exchange rates, as provided by the API.
     #[must_use]
-    pub const fn rates(&self) -> &HashMap<String, HashMap<String, f64>> {
-        &self.rates
+    pub const fn date(&self) -> &NaiveDate {
+        &self.date
+    }
+
+    /// Returns the base currency code, as provided by the API.
+    #[must_use]
+    pub fn base(&self) -> &str {
+        &self.base
+    }
+
+    /// Returns the quote currency code, as provided by the API.
+    #[must_use]
+    pub fn quote(&self) -> &str {
+        &self.quote
+    }
+
+    /// Returns the exchange rate, as provided by the API.
+    #[must_use]
+    pub const fn rate(&self) -> f64 {
+        self.rate
+    }
+}
+
+/// Represents a currency returned by the Frankfurter API.
+#[derive(Debug, Deserialize)]
+pub struct FrankfurterCurrenciesResponse {
+    iso_code: String,
+    name: String,
+}
+
+impl FrankfurterCurrenciesResponse {
+    /// Returns the ISO currency code, as provided by the API.
+    #[must_use]
+    pub fn iso_code(&self) -> &str {
+        &self.iso_code
+    }
+
+    /// Returns the currency name, as provided by the API.
+    #[must_use]
+    pub fn name(&self) -> &str {
+        &self.name
     }
 }
