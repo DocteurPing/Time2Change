@@ -346,6 +346,10 @@ async fn get_rates_for_range_returns_ok_on_valid_response() {
     let (server, client) = mock_server().await;
     Mock::given(method("GET"))
         .and(path("/rates"))
+        .and(query_param("from", "2024-01-01"))
+        .and(query_param("to", "2024-01-05"))
+        .and(query_param("base", "EUR"))
+        .and(query_param("quotes", "USD"))
         .respond_with(ResponseTemplate::new(200).set_body_raw(
             r#"[
               {
