@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use application::ports::rate_provider::{RateProvider, RateProviderError};
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDate, NaiveTime, TimeZone, Utc};
@@ -11,9 +9,11 @@ use reqwest::{Client, Response};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 
-use crate::rate_provider::dto::{FrankfurterRangeResponse, FrankfurterRateProviderResponse};
+use crate::rate_provider::dto::{
+    FrankfurterCurrenciesResponse, FrankfurterRangeResponse, FrankfurterRateProviderResponse,
+};
 
-const BASE_URL: &str = "https://api.frankfurter.dev/v1";
+const BASE_URL: &str = "https://api.frankfurter.dev/v2";
 const TIMEOUT_MILLIS: u64 = 5000;
 
 /// HTTP adapter for the Frankfurter public exchange-rate API.
@@ -146,33 +146,25 @@ impl FrankfurterClient {
         pair: &CurrencyPair,
     ) -> Result<Vec<ExchangeRate>, RateProviderError> {
         let response = self.fetch_pairs_and_validate(url, pair).await?;
-        let dto: FrankfurterRangeResponse = response
+        let list_rate: Vec<FrankfurterRangeResponse> = response
             .json()
             .await
             .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
 
-        let quote_str = pair.quote().to_string();
-
-        let mut rates = dto
-            .rates()
+        let base = pair.base().to_string();
+        let quote = pair.quote().to_string();
+        let rates = list_rate
             .iter()
-            .map(|(date_str, currency_rates)| {
-                let date = date_str
-                    .parse::<NaiveDate>()
-                    .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
-
-                let raw_rate = currency_rates
-                    .get(&quote_str)
-                    .ok_or_else(|| RateProviderError::PairNotSupported(pair.to_string()))?;
-
-                let rate = Decimal::from_f64(*raw_rate).unwrap_or_default();
+            .map(|dto| {
+                let date = dto.date();
+                if dto.base() != base || dto.quote() != quote {
+                    return Err(RateProviderError::PairNotSupported(pair.to_string()));
+                }
+                let rate = Decimal::from_f64(dto.rate()).unwrap_or_default();
                 let timestamp = Utc.from_utc_datetime(&date.and_time(NaiveTime::MIN));
-
                 Ok(ExchangeRate::new(timestamp, rate))
             })
             .collect::<Result<Vec<_>, RateProviderError>>()?;
-
-        rates.sort_by_key(|r| *r.timestamp());
 
         Ok(rates)
     }
@@ -212,7 +204,7 @@ impl RateProvider for FrankfurterClient {
         end: NaiveDate,
     ) -> Result<Vec<ExchangeRate>, RateProviderError> {
         let url = format!(
-            "{}/{}..{}?base={}&symbols={}",
+            "{}/rates?from={}&to={}&base={}&quotes={}",
             self.base_url,
             start,
             end,
@@ -225,15 +217,15 @@ impl RateProvider for FrankfurterClient {
     async fn fetch_currencies(&self) -> Result<Vec<CurrencyInfo>, RateProviderError> {
         let url = format!("{}/currencies", self.base_url);
         let response: Response = self.fetch(&url).await?;
-        let dto: HashMap<String, String> = response
+        let dto: Vec<FrankfurterCurrenciesResponse> = response
             .json()
             .await
             .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
-        dto.into_iter()
-            .map(|(code, name)| {
-                let currency = Currency::new(&code)
+        dto.iter()
+            .map(|currency| {
+                let iso_code = Currency::new(currency.iso_code())
                     .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
-                Ok(CurrencyInfo::new(currency, name))
+                Ok(CurrencyInfo::new(iso_code, currency.name().to_owned()))
             })
             .collect()
     }
