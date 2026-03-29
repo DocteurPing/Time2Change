@@ -42,10 +42,6 @@ where
     /// (inclusive), persists the entire batch, and returns the number of
     /// rates ingested.
     ///
-    /// This is more efficient than calling [`Self::fetch_rate`] in a loop
-    /// because it issues a single request to the upstream provider and a
-    /// single bulk write to the repository.
-    ///
     /// # Errors
     ///
     /// Returns [`IngestError::Provider`] when the upstream provider cannot
