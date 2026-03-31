@@ -15,7 +15,6 @@ pub(crate) async fn run_loop(
     config: &IngestionConfig,
 ) {
     let mut interval = tokio::time::interval(config.interval());
-    let now = chrono::Utc::now().date_naive();
 
     // Normalise to the first day of the configured start month so that we
     // always request complete calendar months.
@@ -51,7 +50,7 @@ pub(crate) async fn run_loop(
                     return None;
                 };
 
-                if month_start >= now {
+                if month_start > chrono::Utc::now().date_naive() {
                     info!(
                         month = %month_start.format("%Y-%m"),
                         "End of the ingestion process, we reached the current date - stopping"
