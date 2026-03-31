@@ -8,12 +8,14 @@ use tracing::{error, info, warn};
 
 use crate::config::IngestionConfig;
 
+#[allow(clippy::too_many_lines)]
 pub(crate) async fn run_loop(
     use_case: &IngestRatesUseCase<impl ExchangeRateRepository, impl RateProvider>,
     pairs: &[CurrencyPair],
     config: &IngestionConfig,
 ) {
     let mut interval = tokio::time::interval(config.interval());
+    let now = chrono::Utc::now().date_naive();
 
     // Normalise to the first day of the configured start month so that we
     // always request complete calendar months.
@@ -23,14 +25,39 @@ pub(crate) async fn run_loop(
         return;
     };
 
+    let ctrl_c = tokio::signal::ctrl_c();
+    tokio::pin!(ctrl_c);
+
     loop {
-        tokio::select! {
-            _ = interval.tick() => {
-                // Last day of the current month: first day of next month minus 1 day.
-                let month_end = if let Some(next) = month_start.checked_add_months(Months::new(1)) { next - Days::new(1) } else {
-                    warn!(month = %month_start.format("%Y-%m"), "Overflow computing month end — stopping");
-                    break;
+        let next_month: Option<NaiveDate> = tokio::select! {
+            biased;
+
+            _ = &mut ctrl_c => {
+                info!("Received shutdown signal");
+                break;
+            }
+
+            next = async {
+                interval.tick().await;
+
+                let Some(month_end) = month_start
+                    .checked_add_months(Months::new(1))
+                    .map(|n| n - Days::new(1))
+                else {
+                    warn!(
+                        month = %month_start.format("%Y-%m"),
+                        "Overflow computing month end — stopping"
+                    );
+                    return None;
                 };
+
+                if month_start >= now {
+                    info!(
+                        month = %month_start.format("%Y-%m"),
+                        "End of the ingestion process, we reached the current date - stopping"
+                    );
+                    return None;
+                }
 
                 info!(
                     month_start = %month_start,
@@ -47,35 +74,28 @@ pub(crate) async fn run_loop(
                     let _guard = span.enter();
 
                     match use_case.fetch_rates_for_range(pair, month_start, month_end).await {
-                        Ok(count) => {
-                            info!(
-                                pair  = %pair,
-                                month = %month_start.format("%Y-%m"),
-                                count,
-                                "Month rates ingested successfully"
-                            );
-                        }
-                        Err(e) => {
-                            warn!(
-                                pair  = %pair,
-                                month = %month_start.format("%Y-%m"),
-                                error = %e,
-                                "Failed to ingest month rates"
-                            );
-                        }
+                        Ok(count) => info!(
+                            pair  = %pair,
+                            month = %month_start.format("%Y-%m"),
+                            count,
+                            "Month rates ingested successfully"
+                        ),
+                        Err(e) => warn!(
+                            pair  = %pair,
+                            month = %month_start.format("%Y-%m"),
+                            error = %e,
+                            "Failed to ingest month rates"
+                        ),
                     }
                 }
 
-                // Advance to the first day of the next month.
-                if let Some(next) = month_start.checked_add_months(Months::new(1)) { month_start = next } else {
-                    warn!("Overflow advancing to next month — stopping");
-                    break;
-                }
-            }
-            _ = tokio::signal::ctrl_c() => {
-                info!("Received shutdown signal");
-                break;
-            }
-        }
+                month_start.checked_add_months(Months::new(1))
+            } => next,
+        };
+
+        let Some(next) = next_month else {
+            break;
+        };
+        month_start = next;
     }
 }
