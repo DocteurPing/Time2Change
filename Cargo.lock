@@ -2179,11 +2179,6 @@ dependencies = [
 [[package]]
 name = "shared"
 version = "0.1.0"
-dependencies = [
- "chrono",
- "dotenvy",
- "thiserror 2.0.18",
-]
 
 [[package]]
 name = "shlex"
