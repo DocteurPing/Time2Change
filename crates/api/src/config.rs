@@ -98,7 +98,7 @@ mod tests {
 
     #[test]
     fn test_from_env_default() {
-        let result = ApiConfig::from_env();
-        assert!(result.is_ok());
+        let result = ApiConfig::from_env().unwrap();
+        assert_eq!(result.bind_addr(), "0.0.0.0:8080");
     }
 }

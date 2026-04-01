@@ -24,3 +24,15 @@ impl IntoResponse for ApiError {
         (status, Json(ErrorBody { error: msg })).into_response()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_internal_error() {
+        let error = ApiError::Internal("Internal error".to_string());
+        let response = error.into_response();
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    }
+}
