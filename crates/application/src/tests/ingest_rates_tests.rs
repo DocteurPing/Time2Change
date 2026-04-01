@@ -1,8 +1,8 @@
 use chrono::Utc;
 use rust_decimal::dec;
 
-use crate::ports::exchange_rate_repository::RepositoryError;
 use crate::ports::rate_provider::RateProviderError;
+use crate::ports::repository_errors::RepositoryError;
 use crate::tests::helpers::{make_pair, make_rate};
 use crate::tests::mocks::mock_provider::MockProvider;
 use crate::tests::mocks::mock_repository::MockRepository;

@@ -43,19 +43,3 @@ pub const EXISTS: &str = "
           AND  timestamp <= $4
     )
 ";
-
-/// Saves a batch of currencies, upserting on `code`.
-///
-/// Bind order: `$1` = codes, `$2` = names.
-pub const SAVE_CURRENCIES: &str = "
-    INSERT INTO currencies (currency, name)
-    SELECT UNNEST($1::TEXT[]), UNNEST($2::TEXT[])
-    ON CONFLICT (currency) DO UPDATE SET name = EXCLUDED.name
-";
-
-/// Loads all currencies from the database.
-pub const LOAD_CURRENCIES: &str = "
-    SELECT currency, name
-    FROM   currencies
-    ORDER  BY currency ASC
-";

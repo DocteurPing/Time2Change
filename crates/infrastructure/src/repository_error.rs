@@ -1,4 +1,4 @@
-use application::ports::exchange_rate_repository::RepositoryError;
+use application::ports::repository_errors::RepositoryError;
 
 #[allow(clippy::needless_pass_by_value)]
 pub(crate) fn to_repository_error(e: sqlx::Error) -> RepositoryError {
@@ -13,10 +13,6 @@ pub(crate) fn to_repository_error(e: sqlx::Error) -> RepositoryError {
         }
         _ => RepositoryError::Storage(e.to_string()),
     }
-}
-
-pub(crate) fn to_invalid_error(msg: &str) -> RepositoryError {
-    RepositoryError::Invalid(msg.to_owned())
 }
 
 #[cfg(test)]
@@ -111,13 +107,6 @@ mod tests {
 
         assert!(matches!(repo_error, RepositoryError::Storage(_)));
         assert!(repo_error.to_string().contains("Invalid configuration"));
-    }
-
-    #[test]
-    fn test_to_invalid_error() {
-        let repo_error = to_invalid_error("bad currency code: XY");
-        assert!(matches!(repo_error, RepositoryError::Invalid(_)));
-        assert!(repo_error.to_string().contains("bad currency code: XY"));
     }
 
     #[test]

@@ -7,12 +7,37 @@ use domain::types::exchange_rate::ExchangeRate;
 use crate::ports::rate_provider::{RateProvider, RateProviderError};
 
 pub(crate) struct MockProvider {
-    result: Result<ExchangeRate, RateProviderError>,
+    rates_result: Result<ExchangeRate, RateProviderError>,
+    currencies_result: Result<Vec<CurrencyInfo>, RateProviderError>,
 }
 
 impl MockProvider {
     pub(crate) fn ok(rate: ExchangeRate) -> Self {
-        Self { result: Ok(rate) }
+        Self {
+            rates_result: Ok(rate),
+            currencies_result: Ok(vec![CurrencyInfo::new(
+                Currency::try_from("EUR").unwrap(),
+                "Euro".to_owned(),
+            )]),
+        }
+    }
+
+    pub(crate) fn with_currencies_ok(currencies: Vec<CurrencyInfo>) -> Self {
+        let default_rate = ExchangeRate::new(chrono::Utc::now(), rust_decimal::Decimal::new(1, 0));
+
+        Self {
+            rates_result: Ok(default_rate),
+            currencies_result: Ok(currencies),
+        }
+    }
+
+    pub(crate) fn with_currencies_err(error: RateProviderError) -> Self {
+        let default_rate = ExchangeRate::new(chrono::Utc::now(), rust_decimal::Decimal::new(1, 0));
+
+        Self {
+            rates_result: Ok(default_rate),
+            currencies_result: Err(error),
+        }
     }
 }
 
@@ -24,19 +49,13 @@ impl RateProvider for MockProvider {
         _start: NaiveDate,
         _end: NaiveDate,
     ) -> Result<Vec<ExchangeRate>, RateProviderError> {
-        match &self.result {
+        match &self.rates_result {
             Ok(r) => Ok(vec![r.clone()]),
             Err(e) => Err(e.clone()),
         }
     }
 
     async fn fetch_currencies(&self) -> Result<Vec<CurrencyInfo>, RateProviderError> {
-        match &self.result {
-            Ok(_) => Ok(vec![CurrencyInfo::new(
-                Currency::try_from("EUR").unwrap(),
-                "Euro".to_owned(),
-            )]),
-            Err(e) => Err(e.clone()),
-        }
+        self.currencies_result.clone()
     }
 }

@@ -1,11 +1,12 @@
 use std::ops::RangeInclusive;
 
 use chrono::{DateTime, Utc};
-use domain::types::currency_info::CurrencyInfo;
+
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
 use domain::types::time_series::TimeSeries;
-use thiserror::Error;
+
+use crate::ports::repository_errors::RepositoryError;
 
 /// Repository port for persisting and retrieving exchange rates.
 ///
@@ -54,78 +55,4 @@ pub trait ExchangeRateRepository: Send + Sync {
         pair: &CurrencyPair,
         range: &RangeInclusive<DateTime<Utc>>,
     ) -> Result<bool, RepositoryError>;
-
-    /// Persists the list of currencies available in the API.
-    ///
-    /// # Errors
-    ///
-    /// Returns `RepositoryError::Storage` if the batch insert fails.
-    async fn save_currencies(&self, currencies: &[CurrencyInfo]) -> Result<(), RepositoryError>;
-
-    /// Returns the list of currencies available in the API.
-    ///
-    /// # Errors
-    ///
-    /// Returns `RepositoryError::Storage` if the underlying storage fails.
-    async fn list_currencies(&self) -> Result<Vec<CurrencyInfo>, RepositoryError>;
-}
-
-/// Errors produced by `ExchangeRateRepository` implementations.
-#[derive(Error, Debug, Clone)]
-pub enum RepositoryError {
-    /// The requested currency pair or data slice could not be found.
-    #[error("pair {0} not found")]
-    NotFound(String),
-
-    /// The requested write operation conflicts with already stored data.
-    #[error("conflict: rates already stored: {0}")]
-    Conflict(String),
-
-    /// The underlying storage system failed while processing the request.
-    #[error("storage failure: {0}")]
-    Storage(String),
-
-    /// The caller supplied invalid input for the repository operation.
-    #[error("invalid input: {0}")]
-    Invalid(String),
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn not_found_display() {
-        let err = RepositoryError::NotFound("EUR-USD".into());
-        assert_eq!(err.to_string(), "pair EUR-USD not found");
-    }
-
-    #[test]
-    fn conflict_display() {
-        let err = RepositoryError::Conflict("2024-01-01".into());
-        assert_eq!(
-            err.to_string(),
-            "conflict: rates already stored: 2024-01-01"
-        );
-    }
-
-    #[test]
-    fn storage_display() {
-        let err = RepositoryError::Storage("connection refused".into());
-        assert_eq!(err.to_string(), "storage failure: connection refused");
-    }
-
-    #[test]
-    fn invalid_display() {
-        let err = RepositoryError::Invalid("empty range".into());
-        assert_eq!(err.to_string(), "invalid input: empty range");
-    }
-
-    #[test]
-    fn error_is_debug() {
-        let err = RepositoryError::NotFound("XYZ".into());
-        let debug = format!("{err:?}");
-        assert!(debug.contains("NotFound"));
-        assert!(debug.contains("XYZ"));
-    }
 }

@@ -1,10 +1,11 @@
 use std::collections::BTreeMap;
 use std::ops::RangeInclusive;
 
-use application::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError};
+use application::ports::exchange_rate_repository::ExchangeRateRepository;
+use application::ports::repository_errors::RepositoryError;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use domain::types::currency_info::CurrencyInfo;
+
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
 use domain::types::time_series::TimeSeries;
@@ -12,10 +13,10 @@ use rust_decimal::Decimal;
 use sqlx::PgPool;
 use sqlx::migrate::MigrateError;
 
+use crate::repository_error::to_repository_error;
+
 use super::model::ExchangeRateRow;
 use super::queries;
-use crate::exchange_rate::error::to_repository_error;
-use crate::exchange_rate::model::CurrencyInfoRow;
 
 /// Postgres-backed implementation of [`ExchangeRateRepository`].
 ///
@@ -114,36 +115,5 @@ impl ExchangeRateRepository for PostgresExchangeRateRepository {
             .map_err(to_repository_error)?;
 
         Ok(exists)
-    }
-
-    async fn save_currencies(&self, currencies: &[CurrencyInfo]) -> Result<(), RepositoryError> {
-        if currencies.is_empty() {
-            return Ok(());
-        }
-        let codes: Vec<String> = currencies.iter().map(|c| c.code().to_string()).collect();
-        let names: Vec<String> = currencies.iter().map(|c| c.name().to_owned()).collect();
-
-        sqlx::query(queries::SAVE_CURRENCIES)
-            .bind(&codes)
-            .bind(&names)
-            .execute(&self.pool)
-            .await
-            .map_err(to_repository_error)?;
-
-        Ok(())
-    }
-
-    async fn list_currencies(&self) -> Result<Vec<CurrencyInfo>, RepositoryError> {
-        let rows: Vec<CurrencyInfoRow> = sqlx::query_as(queries::LOAD_CURRENCIES)
-            .fetch_all(&self.pool)
-            .await
-            .map_err(to_repository_error)?;
-
-        let currencies: Vec<CurrencyInfo> = rows
-            .into_iter()
-            .map(CurrencyInfo::try_from)
-            .collect::<Result<Vec<_>, _>>()?;
-
-        Ok(currencies)
     }
 }

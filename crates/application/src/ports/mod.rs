@@ -9,3 +9,9 @@ pub mod exchange_rate_repository;
 
 /// Abstractions for fetching exchange-rate data from upstream providers.
 pub mod rate_provider;
+
+/// Repository abstraction for storing and loading currency catalog data.
+pub mod currency_repository;
+
+/// Errors produced by repository operations.
+pub mod repository_errors;
