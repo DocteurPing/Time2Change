@@ -9,10 +9,7 @@ use crate::ports::repository_errors::RepositoryError;
 ///
 /// This workflow coordinates two application ports:
 /// - a [`RateProvider`] that returns the current list of available currencies
-/// - an [`ExchangeRateRepository`] that persists that list
-///
-/// It returns a [`SyncCurrenciesResult`] with simple counters useful for
-/// logging/telemetry.
+/// - an [`CurrencyRepository`] that persists that list
 #[derive(Debug)]
 pub struct SyncCurrenciesUseCase<R, C>
 where
@@ -38,6 +35,7 @@ where
     }
 
     /// Fetches the available currencies from the provider and persists them.
+    /// Returns the number of currencies fetched.
     ///
     /// # Errors
     ///

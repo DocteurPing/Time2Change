@@ -70,7 +70,6 @@ pub(crate) async fn setup_and_launch() -> ExitCode {
 
     info!(
         fetched = fetched_count,
-        persisted = fetched_count,
         "Currency sync completed successfully"
     );
 
