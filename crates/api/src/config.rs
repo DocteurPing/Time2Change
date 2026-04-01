@@ -82,4 +82,10 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), ConfigError::MissingDatabaseUrl);
     }
+
+    #[test]
+    fn test_from_env_default() {
+        let result = ApiConfig::from_env();
+        assert!(result.is_ok());
+    }
 }
