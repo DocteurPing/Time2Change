@@ -1144,7 +1144,6 @@ dependencies = [
  "domain",
  "dotenvy",
  "infrastructure",
- "shared",
  "sqlx",
  "tokio",
  "tracing",
