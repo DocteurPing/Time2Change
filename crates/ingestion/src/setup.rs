@@ -7,11 +7,11 @@ use domain::types::utils::currency_info_list_to_currency_pairs;
 use infrastructure::currency::repository::PostgresCurrencyRepository;
 use infrastructure::exchange_rate::repository::PostgresExchangeRateRepository;
 use infrastructure::rate_provider::frankfurter::FrankfurterClient;
+use shared::config::IngestionConfig;
 use sqlx::postgres::PgPoolOptions;
 use tracing::{error, info};
 use tracing_subscriber::{EnvFilter, fmt};
 
-use crate::config::IngestionConfig;
 use crate::runner::run_loop;
 
 #[allow(clippy::too_many_lines)]

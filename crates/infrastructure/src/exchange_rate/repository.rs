@@ -5,7 +5,6 @@ use application::ports::exchange_rate_repository::ExchangeRateRepository;
 use application::ports::repository_errors::RepositoryError;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
 use domain::types::time_series::TimeSeries;
@@ -13,10 +12,9 @@ use rust_decimal::Decimal;
 use sqlx::PgPool;
 use sqlx::migrate::MigrateError;
 
-use crate::repository_error::to_repository_error;
-
 use super::model::ExchangeRateRow;
 use super::queries;
+use crate::repository_error::to_repository_error;
 
 /// Postgres-backed implementation of [`ExchangeRateRepository`].
 ///

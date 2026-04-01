@@ -4,7 +4,6 @@
 //! interval and persists the results into Postgres via the application
 //! layer's `IngestRatesUseCase`.
 
-mod config;
 mod runner;
 mod setup;
 

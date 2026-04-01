@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-
 use domain::types::exchange_rate::ExchangeRate;
 use rust_decimal::Decimal;
 

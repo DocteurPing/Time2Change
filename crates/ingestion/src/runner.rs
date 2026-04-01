@@ -4,9 +4,8 @@ use application::use_cases::ingest_rates::IngestRatesUseCase;
 use chrono::naive::Days;
 use chrono::{Datelike, Months, NaiveDate};
 use domain::types::currency_pair::CurrencyPair;
+use shared::config::IngestionConfig;
 use tracing::{error, info, warn};
-
-use crate::config::IngestionConfig;
 
 #[allow(clippy::too_many_lines)]
 pub(crate) async fn run_loop(

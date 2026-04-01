@@ -1,14 +1,42 @@
-//! API binary entrypoint for the `api` crate.
+//! The main entry point for the API server.
 //!
-//! This binary currently serves as a placeholder for the future HTTP or RPC
-//! server responsible for exposing the `Time2Change` application capabilities to
-//! external clients. As the API surface grows, this crate can host the server
-//! bootstrap logic, routing, dependency wiring, and runtime configuration.
-//!
-//! For now, the executable only prints a simple message so the crate can build
-//! and be exercised during early development.
+//! This module sets up the HTTP server, routes, and application state.
 
-/// Placeholder for API server implementation. This will be expanded in the future.
-fn main() {
-    println!("Hello, world!");
+use std::sync::Arc;
+
+use axum::Router;
+use axum::routing::get;
+use infrastructure::currency::repository::PostgresCurrencyRepository;
+use shared::config::IngestionConfig;
+use sqlx::postgres::PgPoolOptions;
+
+use crate::routes::list_currencies;
+use crate::state::AppState;
+
+mod errors;
+mod routes;
+mod state;
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let config = IngestionConfig::from_env()?;
+    let pool = PgPoolOptions::new()
+        .max_connections(10)
+        .connect(config.database_url())
+        .await?;
+
+    let state = AppState {
+        currency_repo: Arc::new(PostgresCurrencyRepository::new(pool)),
+    };
+
+    let app = Router::new()
+        .route("/currencies", get(list_currencies))
+        .with_state(state);
+
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+
+    println!("Backend running on http://localhost:3000");
+
+    axum::serve(listener, app).await?;
+    Ok(())
 }
