@@ -7,9 +7,9 @@ use domain::types::utils::currency_info_list_to_currency_pairs;
 use infrastructure::currency::repository::PostgresCurrencyRepository;
 use infrastructure::exchange_rate::repository::PostgresExchangeRateRepository;
 use infrastructure::rate_provider::frankfurter::FrankfurterClient;
+use shared::tracing::init_tracing;
 use sqlx::postgres::PgPoolOptions;
 use tracing::{error, info};
-use tracing_subscriber::{EnvFilter, fmt};
 
 use crate::config::IngestionConfig;
 use crate::runner::run_loop;
@@ -93,17 +93,4 @@ pub(crate) async fn setup_and_launch() -> ExitCode {
 
     info!("Ingestion service shut down gracefully");
     ExitCode::SUCCESS
-}
-
-fn init_tracing() {
-    let filter =
-        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info,sqlx=warn"));
-
-    fmt()
-        .with_env_filter(filter)
-        .with_target(true)
-        .with_thread_ids(false)
-        .with_file(false)
-        .with_line_number(false)
-        .init();
 }

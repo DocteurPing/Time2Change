@@ -14,6 +14,7 @@ chrono.workspace = true
 application = { path = "../application" }
 infrastructure = { path = "../infrastructure" }
 domain = { path = "../domain" }
+shared = { path = "../shared" }
 
 [lints]
 workspace = true

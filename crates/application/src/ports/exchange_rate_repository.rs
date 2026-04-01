@@ -1,7 +1,6 @@
 use std::ops::RangeInclusive;
 
 use chrono::{DateTime, Utc};
-
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
 use domain::types::time_series::TimeSeries;

@@ -6,7 +6,16 @@ publish = false
 
 [dependencies]
 tokio.workspace = true
+axum.workspace = true
+sqlx.workspace = true
+tracing.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+dotenvy.workspace = true
+
 application = { path = "../application" }
+infrastructure = { path = "../infrastructure" }
 shared = { path = "../shared" }
 
 [lints]
