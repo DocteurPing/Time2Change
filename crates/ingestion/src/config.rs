@@ -8,26 +8,13 @@ use std::env;
 use std::time::Duration;
 
 use chrono::Utc;
-use thiserror::Error;
 
 const DEFAULT_START_DATE: &str = "2026-01-01T00:00:00Z";
 const DEFAULT_INTERVAL: Duration = Duration::from_millis(100);
 
-/// Errors that can occur while loading ingestion configuration.
-#[derive(Debug, Error, PartialEq, Eq)]
-pub enum ConfigError {
-    /// The `DATABASE_URL` environment variable is required.
-    #[error("DATABASE_URL environment variable is required")]
-    MissingDatabaseUrl,
-
-    /// The `START_DATE` environment variable is invalid.
-    #[error("invalid START_DATE: {0}")]
-    InvalidStartDate(String),
-}
-
 /// Ingestion service configuration loaded from the environment.
 #[derive(Debug, Clone)]
-pub struct IngestionConfig {
+pub(crate) struct IngestionConfig {
     /// Postgres connection string.
     database_url: String,
     /// Starting date for the ingestion process.
@@ -46,22 +33,22 @@ impl IngestionConfig {
     /// # Errors
     ///
     /// Returns an error string if any required variable is missing or malformed.
-    pub fn from_env() -> Result<Self, ConfigError> {
+    pub(crate) fn from_env() -> Result<Self, String> {
         let _ = dotenvy::dotenv();
         Self::from_env_impl(|key| env::var(key))
     }
 
-    fn from_env_impl<F>(var_fn: F) -> Result<Self, ConfigError>
+    fn from_env_impl<F>(var_fn: F) -> Result<Self, String>
     where
         F: Fn(&str) -> Result<String, env::VarError>,
     {
-        let database_url = var_fn("DATABASE_URL").map_err(|_| ConfigError::MissingDatabaseUrl)?;
+        let database_url =
+            var_fn("DATABASE_URL").map_err(|_| "DATABASE_URL environment variable is required")?;
 
-        let start_date_raw = var_fn("START_DATE").unwrap_or_else(|_| DEFAULT_START_DATE.to_owned());
-
-        let start_date = start_date_raw
+        let start_date = var_fn("START_DATE")
+            .unwrap_or_else(|_| DEFAULT_START_DATE.to_owned())
             .parse::<chrono::DateTime<Utc>>()
-            .map_err(|e| ConfigError::InvalidStartDate(e.to_string()))?;
+            .map_err(|e| format!("invalid START_DATE: {e}"))?;
 
         let interval = DEFAULT_INTERVAL;
 
@@ -74,19 +61,19 @@ impl IngestionConfig {
 
     /// Returns the database connection URL.
     #[must_use]
-    pub fn database_url(&self) -> &str {
+    pub(crate) fn database_url(&self) -> &str {
         &self.database_url
     }
 
     /// Returns the starting date for the ingestion process.
     #[must_use]
-    pub const fn start_date(&self) -> &chrono::DateTime<Utc> {
+    pub(crate) const fn start_date(&self) -> &chrono::DateTime<Utc> {
         &self.start_date
     }
 
     /// Returns the interval between ingestion runs.
     #[must_use]
-    pub const fn interval(&self) -> Duration {
+    pub(crate) const fn interval(&self) -> Duration {
         self.interval
     }
 }
@@ -141,10 +128,10 @@ mod tests {
         let result = IngestionConfig::from_env_impl(mock_var(&vars));
 
         assert!(result.is_err());
-        assert!(matches!(
+        assert_eq!(
             result.unwrap_err(),
-            ConfigError::MissingDatabaseUrl
-        ));
+            "DATABASE_URL environment variable is required"
+        );
     }
 
     #[test]
@@ -156,10 +143,7 @@ mod tests {
         let result = IngestionConfig::from_env_impl(mock_var(&vars));
 
         assert!(result.is_err());
-        assert!(matches!(
-            result.unwrap_err(),
-            ConfigError::InvalidStartDate(_)
-        ));
+        assert!(result.unwrap_err().contains("invalid START_DATE"));
     }
 
     #[test]

@@ -7,19 +7,20 @@ use std::sync::Arc;
 use axum::Router;
 use axum::routing::get;
 use infrastructure::currency::repository::PostgresCurrencyRepository;
-use shared::config::IngestionConfig;
 use sqlx::postgres::PgPoolOptions;
 
+use crate::config::ApiConfig;
 use crate::routes::list_currencies;
 use crate::state::AppState;
 
+mod config;
 mod errors;
 mod routes;
 mod state;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let config = IngestionConfig::from_env()?;
+    let config = ApiConfig::from_env()?;
     let pool = PgPoolOptions::new()
         .max_connections(10)
         .connect(config.database_url())

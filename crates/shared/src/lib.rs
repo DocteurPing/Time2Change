@@ -12,5 +12,3 @@
 //! - small utility traits or functions used in several crates.
 //!
 //! The crate is currently a placeholder and does not yet expose any public API.
-
-pub mod config;

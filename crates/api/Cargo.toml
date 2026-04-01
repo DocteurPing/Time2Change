@@ -12,6 +12,8 @@ sqlx.workspace = true
 tracing.workspace = true
 anyhow.workspace = true
 serde.workspace = true
+thiserror.workspace = true
+dotenvy.workspace = true
 
 application = { path = "../application" }
 infrastructure = { path = "../infrastructure" }
