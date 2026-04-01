@@ -7,7 +7,9 @@ use std::sync::Arc;
 use axum::Router;
 use axum::routing::get;
 use infrastructure::currency::repository::PostgresCurrencyRepository;
+use shared::tracing::init_tracing;
 use sqlx::postgres::PgPoolOptions;
+use tracing::info;
 
 use crate::config::ApiConfig;
 use crate::routes::list_currencies;
@@ -20,6 +22,7 @@ mod state;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    init_tracing();
     let config = ApiConfig::from_env()?;
     let pool = PgPoolOptions::new()
         .max_connections(10)
@@ -36,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
 
-    println!("Backend running on http://localhost:3000");
+    info!("Backend running on http://localhost:3000");
 
     axum::serve(listener, app).await?;
     Ok(())
