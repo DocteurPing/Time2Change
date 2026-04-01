@@ -8,7 +8,9 @@ use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
 use domain::types::time_series::TimeSeries;
 
-use crate::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError};
+use crate::ports::currency_repository::CurrencyRepository;
+use crate::ports::exchange_rate_repository::ExchangeRateRepository;
+use crate::ports::repository_errors::RepositoryError;
 
 type SavedCurrenciesCall = Vec<CurrencyInfo>;
 
@@ -36,6 +38,15 @@ impl MockRepository {
         Self {
             load_error: Some(e),
             save_result: Ok(()),
+            saved_rates: Arc::new(Mutex::new(Vec::new())),
+            saved_currencies: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+
+    pub(crate) fn with_save_error(e: RepositoryError) -> Self {
+        Self {
+            load_error: None,
+            save_result: Err(e),
             saved_rates: Arc::new(Mutex::new(Vec::new())),
             saved_currencies: Arc::new(Mutex::new(Vec::new())),
         }
@@ -125,12 +136,16 @@ impl ExchangeRateRepository for MockRepository {
             time_series.pair() == pair && time_series.rates().keys().any(|ts| range.contains(ts))
         }))
     }
+}
 
+#[async_trait::async_trait]
+impl CurrencyRepository for MockRepository {
     async fn save_currencies(&self, currencies: &[CurrencyInfo]) -> Result<(), RepositoryError> {
         self.saved_currencies
             .lock()
             .unwrap()
             .extend_from_slice(currencies);
+
         match &self.save_result {
             Ok(()) => Ok(()),
             Err(e) => Err(e.clone()),

@@ -1,9 +1,10 @@
 use std::process::ExitCode;
 
-use application::ports::rate_provider::RateProvider;
 use application::use_cases::ingest_rates::IngestRatesUseCase;
+use application::use_cases::sync_currencies::SyncCurrenciesUseCase;
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::utils::currency_info_list_to_currency_pairs;
+use infrastructure::currency::repository::PostgresCurrencyRepository;
 use infrastructure::exchange_rate::repository::PostgresExchangeRateRepository;
 use infrastructure::rate_provider::frankfurter::FrankfurterClient;
 use sqlx::postgres::PgPoolOptions;
@@ -13,6 +14,7 @@ use tracing_subscriber::{EnvFilter, fmt};
 use crate::config::IngestionConfig;
 use crate::runner::run_loop;
 
+#[allow(clippy::too_many_lines)]
 pub(crate) async fn setup_and_launch() -> ExitCode {
     init_tracing();
 
@@ -39,8 +41,8 @@ pub(crate) async fn setup_and_launch() -> ExitCode {
         }
     };
 
-    let repository = PostgresExchangeRateRepository::new(pool);
-    if let Err(e) = repository.migrate().await {
+    let exchange_rate_repository = PostgresExchangeRateRepository::new(pool.clone());
+    if let Err(e) = exchange_rate_repository.migrate().await {
         error!(error = %e, "Database migration failed");
         return ExitCode::FAILURE;
     }
@@ -55,23 +57,40 @@ pub(crate) async fn setup_and_launch() -> ExitCode {
         }
     };
 
-    // ── Build currency pairs ────────────────────────────────────────
-    let currencies = match provider.fetch_currencies().await {
+    // ── Currency sync ───────────────────────────────────────────────
+    let currency_repository = PostgresCurrencyRepository::new(pool);
+    let currency_sync_use_case = SyncCurrenciesUseCase::new(currency_repository, provider.clone());
+    let fetched_count = match currency_sync_use_case.execute().await {
+        Ok(count) => count,
+        Err(e) => {
+            error!(error = %e, "Failed to sync currencies");
+            return ExitCode::FAILURE;
+        }
+    };
+
+    info!(
+        fetched = fetched_count,
+        persisted = fetched_count,
+        "Currency sync completed successfully"
+    );
+
+    // ── Build currency pairs from persisted currencies ──────────────
+    let currencies = match currency_sync_use_case.list_currencies().await {
         Ok(c) => c,
         Err(e) => {
-            error!(error = %e, "Failed to fetch currencies");
+            error!(error = %e, "Failed to load currencies from database");
             return ExitCode::FAILURE;
         }
     };
 
     let pairs: Vec<CurrencyPair> = currency_info_list_to_currency_pairs(&currencies);
 
-    let use_case = IngestRatesUseCase::new(repository, provider);
+    let ingest_use_case = IngestRatesUseCase::new(exchange_rate_repository, provider);
 
     // ── Ingestion loop ──────────────────────────────────────────────
-    info!("Starting ingestion loop");
+    info!(pair_count = pairs.len(), "Starting ingestion loop");
 
-    run_loop(&use_case, &pairs, &config).await;
+    run_loop(&ingest_use_case, &pairs, &config).await;
 
     info!("Ingestion service shut down gracefully");
     ExitCode::SUCCESS

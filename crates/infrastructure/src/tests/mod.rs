@@ -1,2 +1,3 @@
+mod currency_repository_tests;
 mod exchange_rate_repository_tests;
 mod rate_provider_frankfurter_tests;

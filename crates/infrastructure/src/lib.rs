@@ -14,5 +14,11 @@ pub mod exchange_rate;
 /// Interface and implementation for fetching exchange rate data from an upstream provider.
 pub mod rate_provider;
 
+/// Currency repository adapter and related persistence components.
+pub mod currency;
+
+/// Function to convert Database error to application-level `RepositoryError`.
+pub mod repository_error;
+
 #[cfg(test)]
 mod tests;

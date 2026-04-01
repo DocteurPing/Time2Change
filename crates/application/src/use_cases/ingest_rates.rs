@@ -2,8 +2,9 @@ use chrono::NaiveDate;
 use domain::types::currency_pair::CurrencyPair;
 use thiserror::Error;
 
-use crate::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError};
+use crate::ports::exchange_rate_repository::ExchangeRateRepository;
 use crate::ports::rate_provider::{RateProvider, RateProviderError};
+use crate::ports::repository_errors::RepositoryError;
 
 /// Use case that fetches the latest exchange rate for a currency pair and
 /// persists it through the configured repository.

@@ -8,3 +8,6 @@ pub mod analyze_pair;
 
 /// Use case for fetching and persisting the latest exchange rate for a pair.
 pub mod ingest_rates;
+
+/// Use case for fetching and persisting the list of available currencies.
+pub mod sync_currencies;

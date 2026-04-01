@@ -4,7 +4,8 @@ use domain::types::rate_quality_config::RateQualityConfig;
 use rust_decimal::dec;
 use thiserror::Error;
 
-use crate::ports::exchange_rate_repository::{ExchangeRateRepository, RepositoryError};
+use crate::ports::exchange_rate_repository::ExchangeRateRepository;
+use crate::ports::repository_errors::RepositoryError;
 use crate::responses::analyze_pair_responses::{ChangeRecommendation, PairAnalysis};
 
 /// Application use case for analyzing a currency pair over a historical window.
