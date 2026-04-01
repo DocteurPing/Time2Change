@@ -1,4 +1,4 @@
-//! Configuration for the ingestion service.
+//! Configuration for the api serice.
 //!
 //! All values are loaded from environment variables at startup.
 //! Missing or invalid values cause an immediate, descriptive error
@@ -8,7 +8,7 @@ use std::env;
 
 use thiserror::Error;
 
-/// Errors that can occur while loading ingestion configuration.
+/// Errors that can occur while loading API configuration.
 #[derive(Debug, Error, PartialEq, Eq)]
 pub(crate) enum ConfigError {
     #[error("DATABASE_URL environment variable is required")]
@@ -31,7 +31,7 @@ impl ApiConfig {
     ///
     /// # Errors
     ///
-    /// Returns an error string if any required variable is missing or malformed.
+    /// Returns a `ConfigError` if any required variable is missing or malformed.
     pub(crate) fn from_env() -> Result<Self, ConfigError> {
         let _ = dotenvy::dotenv();
         Self::from_env_impl(|key| env::var(key))

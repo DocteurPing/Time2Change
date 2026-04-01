@@ -10,7 +10,7 @@ pub(crate) async fn list_currencies(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<String>>, ApiError> {
     let currencies = state.currency_repo.list_currencies().await.map_err(|e| {
-        error!("Failed to fetch currencies: {e}");
+        error!(error = %e, "Failed to fetch currencies");
         ApiError::Internal("Failed to fetch currencies!".to_owned())
     })?;
 
