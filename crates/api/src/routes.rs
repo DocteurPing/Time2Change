@@ -1,6 +1,7 @@
 use application::ports::currency_repository::CurrencyRepository;
 use axum::Json;
 use axum::extract::State;
+use tracing::error;
 
 use crate::errors::ApiError;
 use crate::state::AppState;
@@ -8,11 +9,10 @@ use crate::state::AppState;
 pub(crate) async fn list_currencies(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<String>>, ApiError> {
-    let currencies = state
-        .currency_repo
-        .list_currencies()
-        .await
-        .map_err(|e| ApiError::Internal(format!("Failed to fetch currencies: {e}")))?;
+    let currencies = state.currency_repo.list_currencies().await.map_err(|e| {
+        error!("Failed to fetch currencies: {e}");
+        ApiError::Internal("Failed to fetch currencies!".to_owned())
+    })?;
 
     Ok(Json(
         currencies
