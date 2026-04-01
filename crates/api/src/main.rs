@@ -37,9 +37,9 @@ async fn main() -> anyhow::Result<()> {
         .route("/currencies", get(list_currencies))
         .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+    let listener = tokio::net::TcpListener::bind(config.bind_addr()).await?;
 
-    info!("Backend running on http://localhost:3000");
+    info!("Backend running on {}", config.bind_addr());
 
     axum::serve(listener, app).await?;
     Ok(())

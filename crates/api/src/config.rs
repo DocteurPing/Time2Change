@@ -20,6 +20,8 @@ pub(crate) enum ConfigError {
 pub(crate) struct ApiConfig {
     /// Postgres connection string.
     database_url: String,
+    /// Address to bind to.
+    bind_addr: String,
 }
 
 impl ApiConfig {
@@ -43,13 +45,24 @@ impl ApiConfig {
     {
         let database_url = var_fn("DATABASE_URL").map_err(|_| ConfigError::MissingDatabaseUrl)?;
 
-        Ok(Self { database_url })
+        let bind_addr = var_fn("BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8080".to_owned());
+
+        Ok(Self {
+            database_url,
+            bind_addr,
+        })
     }
 
     /// Returns the database connection URL.
     #[must_use]
     pub(crate) fn database_url(&self) -> &str {
         &self.database_url
+    }
+
+    /// Returns the bind address.
+    #[must_use]
+    pub(crate) fn bind_addr(&self) -> &str {
+        &self.bind_addr
     }
 }
 
