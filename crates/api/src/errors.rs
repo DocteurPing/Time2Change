@@ -7,6 +7,7 @@ use tracing::error;
 #[derive(Debug)]
 pub(crate) enum ApiError {
     Internal(String),
+    InvalidCurrency(String),
 }
 
 #[derive(Serialize)]
@@ -18,6 +19,7 @@ impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status, msg) = match self {
             Self::Internal(m) => (StatusCode::INTERNAL_SERVER_ERROR, m),
+            Self::InvalidCurrency(m) => (StatusCode::BAD_REQUEST, m),
         };
 
         error!(status = %status, error = %msg, "Request failed");
@@ -31,7 +33,7 @@ mod tests {
 
     #[test]
     fn test_internal_error() {
-        let error = ApiError::Internal("Internal error".to_string());
+        let error = ApiError::Internal("Internal error".to_owned());
         let response = error.into_response();
         assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
     }

@@ -17,6 +17,7 @@ dotenvy.workspace = true
 application = { path = "../application" }
 infrastructure = { path = "../infrastructure" }
 shared = { path = "../shared" }
+domain = { path = "../domain" }
 
 [lints]
 workspace = true
