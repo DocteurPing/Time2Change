@@ -52,7 +52,7 @@ pub(crate) async fn analyze_pair<R: ExchangeRateRepository>(
     let pair =
         CurrencyPair::new(base, quote).map_err(|e| ApiError::InvalidCurrencyPair(e.to_string()))?;
     if query.days == 0 || query.days > MAX_DAYS_ANALYZE {
-        return Err(ApiError::InvalidCurrency(format!(
+        return Err(ApiError::InvalidDaysLookBack(format!(
             "`days` must be between 1 and {MAX_DAYS_ANALYZE}.",
         )));
     }
