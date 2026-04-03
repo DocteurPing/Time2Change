@@ -1,0 +1,16 @@
+[package]
+name = "frontend"
+version.workspace = true
+edition.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+leptos.workspace = true
+web-sys.workspace = true
+wasm-bindgen-futures.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+console_error_panic_hook.workspace = true
+reqwest.workspace = true

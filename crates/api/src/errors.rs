@@ -62,7 +62,7 @@ mod tests {
     fn test_not_enough_data() {
         let error = ApiError::NotEnoughData("Not enough data".to_owned());
         let response = error.into_response();
-        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     }
 
     #[test]

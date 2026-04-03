@@ -12,6 +12,7 @@ use infrastructure::currency::repository::PostgresCurrencyRepository;
 use infrastructure::exchange_rate::repository::PostgresExchangeRateRepository;
 use shared::tracing::init_tracing;
 use sqlx::postgres::PgPoolOptions;
+use tower_http::cors::CorsLayer;
 use tracing::info;
 
 use crate::config::ApiConfig;
@@ -43,6 +44,7 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/currencies", get(list_currencies))
         .route("/analyze", get(analyze_pair))
+        .layer(CorsLayer::permissive())
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(config.bind_addr()).await?;

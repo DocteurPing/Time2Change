@@ -5,3 +5,5 @@ target/
 .vscode/
 
 .env
+
+crates/frontend/dist/
