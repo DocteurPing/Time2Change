@@ -90,7 +90,7 @@ pub(crate) fn AnalysisForm(
                     disabled=is_loading
                 />
                 <p class="field-hint">
-                    {format!("Enter a value from {} to {}.", MIN_DAYS, MAX_DAYS)}
+                    {format!("Enter a value from {MIN_DAYS} to {MAX_DAYS}.")}
                 </p>
             </div>
         </div>
