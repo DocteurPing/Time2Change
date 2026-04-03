@@ -12,6 +12,7 @@ use crate::validation::validate_analysis_input;
 /// Centralized reactive state for the `App`.
 #[derive(Clone)]
 pub(crate) struct AppState {
+    pub client: Client,
     pub currencies: RwSignal<Vec<String>>,
     pub base: RwSignal<String>,
     pub quote: RwSignal<String>,
@@ -24,6 +25,7 @@ impl AppState {
     /// Creates a new app state with sensible defaults.
     pub(crate) fn new() -> Self {
         Self {
+            client: Client::new(),
             currencies: RwSignal::new(Vec::<String>::new()),
             base: RwSignal::new(String::new()),
             quote: RwSignal::new(String::new()),
@@ -39,9 +41,7 @@ impl AppState {
 
         let state = self;
         spawn_local(async move {
-            let client = Client::new();
-
-            match api::fetch_currencies(&client).await {
+            match api::fetch_currencies(&state.client).await {
                 Ok(list) => {
                     let first = list[0].clone();
                     let second = list[1].clone();
@@ -79,9 +79,8 @@ impl AppState {
 
         let state = self;
         spawn_local(async move {
-            let client = Client::new();
-
-            match api::analyze_pair(&client, &current_base, &current_quote, parsed_days).await {
+            match api::analyze_pair(&state.client, &current_base, &current_quote, parsed_days).await
+            {
                 Ok(result) => {
                     state.analysis.set(Some(result));
                     state.status.set(UiStatus::Ready);
