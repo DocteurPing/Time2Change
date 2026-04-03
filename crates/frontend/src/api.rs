@@ -55,7 +55,9 @@ type ApiResult<T> = Result<T, ApiError>;
 
 pub(crate) async fn fetch_currencies(client: &Client) -> ApiResult<Vec<String>> {
     let endpoint = "/currencies";
-    let url = format!("{API_BASE_URL}{endpoint}");
+    let mut url =
+        reqwest::Url::parse(API_BASE_URL).map_err(|e| ApiError::Network(e.to_string()))?;
+    url.set_path(endpoint);
 
     let response = client
         .get(url)
@@ -93,7 +95,13 @@ pub(crate) async fn analyze_pair(
     days: u32,
 ) -> ApiResult<PairAnalysisResponse> {
     let endpoint = "/analyze";
-    let url = format!("{API_BASE_URL}{endpoint}?base={base}&quote={quote}&days={days}");
+    let mut url =
+        reqwest::Url::parse(API_BASE_URL).map_err(|e| ApiError::Network(e.to_string()))?;
+    url.set_path(endpoint);
+    url.query_pairs_mut()
+        .append_pair("base", base)
+        .append_pair("quote", quote)
+        .append_pair("days", &days.to_string());
 
     let response = client
         .get(url)

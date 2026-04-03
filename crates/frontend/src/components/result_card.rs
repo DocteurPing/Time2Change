@@ -55,7 +55,7 @@ pub(crate) fn ResultCard(analysis: ReadSignal<Option<PairAnalysisResponse>>) -> 
                     <h2 class="result-title">"Recommendation"</h2>
                     <span class=badge_class>{badge_text}</span>
                 </div>
-                <p class="decision">{recommendation_text}</p>
+                <p>{recommendation_text}</p>
                 <p class="result-reasoning">{reasoning_text}</p>
             </article>
         </Show>
