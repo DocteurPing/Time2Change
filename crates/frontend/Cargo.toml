@@ -7,10 +7,10 @@ edition.workspace = true
 workspace = true
 
 [dependencies]
-leptos = { version = "0", features = ["csr"] }
-web-sys = { version = "0", features = ["HtmlInputElement", "HtmlSelectElement"] }
-wasm-bindgen-futures = "0"
+leptos.workspace = true
+web-sys.workspace = true
+wasm-bindgen-futures.workspace = true
+serde_json.workspace = true
 serde.workspace = true
-serde_json = "1"
+console_error_panic_hook.workspace = true
 reqwest.workspace = true
-console_error_panic_hook = "0"
