@@ -7,7 +7,8 @@
 use std::env;
 use std::time::Duration;
 
-use chrono::Utc;
+use chrono::{DateTime, Utc};
+use domain::types::currency::Currency;
 
 const DEFAULT_START_DATE: &str = "2026-01-01T00:00:00Z";
 const DEFAULT_INTERVAL: Duration = Duration::from_millis(100);
@@ -18,9 +19,11 @@ pub(crate) struct IngestionConfig {
     /// Postgres connection string.
     database_url: String,
     /// Starting date for the ingestion process.
-    start_date: chrono::DateTime<Utc>,
+    start_date: DateTime<Utc>,
     /// Interval between ingestion runs.
     interval: Duration,
+    /// List of currencies to ingest.
+    list_currencies: Vec<Currency>,
 }
 
 impl IngestionConfig {
@@ -47,15 +50,24 @@ impl IngestionConfig {
 
         let start_date = var_fn("START_DATE")
             .unwrap_or_else(|_| DEFAULT_START_DATE.to_owned())
-            .parse::<chrono::DateTime<Utc>>()
+            .parse::<DateTime<Utc>>()
             .map_err(|e| format!("invalid START_DATE: {e}"))?;
 
         let interval = DEFAULT_INTERVAL;
+
+        let list_currencies = var_fn("CURRENCIES")
+            .unwrap_or_default()
+            .split(',')
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .filter_map(|s| Currency::new(s).ok())
+            .collect::<Vec<_>>();
 
         Ok(Self {
             database_url,
             start_date,
             interval,
+            list_currencies,
         })
     }
 
@@ -67,7 +79,7 @@ impl IngestionConfig {
 
     /// Returns the starting date for the ingestion process.
     #[must_use]
-    pub(crate) const fn start_date(&self) -> &chrono::DateTime<Utc> {
+    pub(crate) const fn start_date(&self) -> &DateTime<Utc> {
         &self.start_date
     }
 
@@ -75,6 +87,12 @@ impl IngestionConfig {
     #[must_use]
     pub(crate) const fn interval(&self) -> Duration {
         self.interval
+    }
+
+    /// Returns the list of currency pairs to ingest.
+    #[must_use]
+    pub(crate) fn list_currencies(&self) -> &[Currency] {
+        &self.list_currencies
     }
 }
 
@@ -93,15 +111,20 @@ mod tests {
 
     #[test]
     fn test_from_env_success() {
-        let vars = vec![("DATABASE_URL", "postgres://localhost")];
+        let vars = vec![
+            ("DATABASE_URL", "postgres://localhost"),
+            ("CURRENCIES", "EUR,GBP"),
+        ];
         let config = IngestionConfig::from_env_impl(mock_var(&vars)).unwrap();
 
         assert_eq!(config.database_url(), "postgres://localhost");
         assert_eq!(
             *config.start_date(),
-            "2026-01-01T00:00:00Z"
-                .parse::<chrono::DateTime<Utc>>()
-                .unwrap()
+            "2026-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap()
+        );
+        assert_eq!(
+            config.list_currencies(),
+            &[Currency::new("EUR").unwrap(), Currency::new("GBP").unwrap()]
         );
         assert_eq!(config.interval(), DEFAULT_INTERVAL);
     }
@@ -116,10 +139,9 @@ mod tests {
 
         assert_eq!(
             *config.start_date(),
-            "2024-06-15T12:30:00Z"
-                .parse::<chrono::DateTime<Utc>>()
-                .unwrap()
+            "2024-06-15T12:30:00Z".parse::<DateTime<Utc>>().unwrap()
         );
+        assert_eq!(config.list_currencies, vec![]);
     }
 
     #[test]
@@ -151,9 +173,7 @@ mod tests {
         let result = IngestionConfig::from_env().unwrap();
         assert_eq!(
             *result.start_date(),
-            "2026-01-01T00:00:00Z"
-                .parse::<chrono::DateTime<Utc>>()
-                .unwrap()
+            "2026-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap()
         );
         assert_eq!(result.interval(), DEFAULT_INTERVAL);
     }
