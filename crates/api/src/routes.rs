@@ -13,8 +13,8 @@ use crate::state::AppState;
 
 const MAX_DAYS_ANALYZE: u32 = 365;
 
-pub(crate) async fn list_currencies<R: ExchangeRateRepository>(
-    State(state): State<AppState<R>>,
+pub(crate) async fn list_currencies<R: ExchangeRateRepository, C: CurrencyRepository>(
+    State(state): State<AppState<R, C>>,
 ) -> Result<Json<Vec<String>>, ApiError> {
     let currencies = state.currency_repo().list_currencies().await.map_err(|e| {
         error!(error = %e, "Failed to fetch currencies");
@@ -42,8 +42,8 @@ pub(crate) struct PairAnalysisResponse {
     reasoning: String,
 }
 
-pub(crate) async fn analyze_pair<R: ExchangeRateRepository>(
-    State(state): State<AppState<R>>,
+pub(crate) async fn analyze_pair<R: ExchangeRateRepository, C: CurrencyRepository>(
+    State(state): State<AppState<R, C>>,
     query: Query<AnalyzePairQuery>,
 ) -> Result<Json<PairAnalysisResponse>, ApiError> {
     let base = Currency::new(&query.base).map_err(|e| ApiError::InvalidCurrency(e.to_string()))?;
