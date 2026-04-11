@@ -127,7 +127,7 @@ impl FrankfurterClient {
         let base = pair.base().to_string();
         let quote = pair.quote().to_string();
         let rates = list_rate
-            .iter()
+            .into_iter()
             .map(|dto| {
                 let date = dto.date();
                 if dto.base() != base || dto.quote() != quote {
@@ -169,7 +169,7 @@ impl RateProvider for FrankfurterClient {
             .json()
             .await
             .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
-        dto.iter()
+        dto.into_iter()
             .map(|currency| {
                 let iso_code = Currency::new(currency.iso_code())
                     .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
