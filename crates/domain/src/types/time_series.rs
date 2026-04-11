@@ -124,7 +124,7 @@ impl TimeSeries {
         let gap_consistency = if gaps_seconds.is_empty() {
             dec!(100)
         } else {
-            let gaps_dec: Vec<Decimal> = gaps_seconds.iter().map(|g| Decimal::from(*g)).collect();
+            let gaps_dec: Vec<Decimal> = gaps_seconds.into_iter().map(Decimal::from).collect();
             let mean_gap = average(&gaps_dec).unwrap_or(Decimal::ZERO);
             let std_gap = standard_deviation(&gaps_dec).unwrap_or(Decimal::ZERO);
             if mean_gap == Decimal::ZERO {
