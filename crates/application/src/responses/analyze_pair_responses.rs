@@ -6,6 +6,17 @@
 use domain::types::currency_pair::CurrencyPair;
 use rust_decimal::Decimal;
 
+/// Give information about the change recommendation.
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum Recommendation {
+    /// The recommendation is to change funds now.
+    ChangeNow,
+    /// The recommendation is neutral, user can wait if they prefer.
+    Neutral,
+    /// The recommendation is to wait for a better opportunity.
+    Wait,
+}
+
 /// Recommendation describing whether a user should exchange funds now.
 ///
 /// The recommendation combines a boolean decision with a confidence score,
@@ -14,7 +25,7 @@ use rust_decimal::Decimal;
 #[derive(Debug)]
 pub struct ChangeRecommendation {
     pair: CurrencyPair,
-    should_change_now: bool,
+    should_change_now: Recommendation,
     confidence: Decimal, // 0.0 to 100.0
     reasoning: String,
     timestamp: chrono::DateTime<chrono::Utc>,
@@ -40,7 +51,7 @@ impl ChangeRecommendation {
     #[must_use]
     pub const fn new(
         pair: CurrencyPair,
-        should_change_now: bool,
+        should_change_now: Recommendation,
         confidence: Decimal,
         reasoning: String,
         timestamp: chrono::DateTime<chrono::Utc>,
@@ -62,7 +73,7 @@ impl ChangeRecommendation {
 
     /// Returns whether the analysis recommends exchanging funds now.
     #[must_use]
-    pub const fn should_change_now(&self) -> bool {
+    pub const fn should_change_now(&self) -> Recommendation {
         self.should_change_now
     }
 
@@ -148,7 +159,13 @@ mod tests {
     fn change_recommendation_stores_pair() {
         let pair = make_pair();
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(pair.clone(), true, dec!(0.9), "good".into(), now);
+        let rec = ChangeRecommendation::new(
+            pair.clone(),
+            Recommendation::ChangeNow,
+            dec!(0.9),
+            "good".into(),
+            now,
+        );
 
         assert_eq!(rec.pair(), &pair);
     }
@@ -156,23 +173,41 @@ mod tests {
     #[test]
     fn change_recommendation_should_change_now_true() {
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(make_pair(), true, dec!(0.8), "reason".into(), now);
+        let rec = ChangeRecommendation::new(
+            make_pair(),
+            Recommendation::ChangeNow,
+            dec!(0.8),
+            "reason".into(),
+            now,
+        );
 
-        assert!(rec.should_change_now());
+        assert!(rec.should_change_now() == Recommendation::ChangeNow);
     }
 
     #[test]
     fn change_recommendation_should_change_now_false() {
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(make_pair(), false, dec!(0.3), "wait".into(), now);
+        let rec = ChangeRecommendation::new(
+            make_pair(),
+            Recommendation::Wait,
+            dec!(0.3),
+            "wait".into(),
+            now,
+        );
 
-        assert!(!rec.should_change_now());
+        assert!(rec.should_change_now() == Recommendation::Wait);
     }
 
     #[test]
     fn change_recommendation_confidence() {
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(make_pair(), true, dec!(0.75), "msg".into(), now);
+        let rec = ChangeRecommendation::new(
+            make_pair(),
+            Recommendation::ChangeNow,
+            dec!(0.75),
+            "msg".into(),
+            now,
+        );
 
         assert_eq!(rec.confidence(), &dec!(0.75));
     }
@@ -180,16 +215,27 @@ mod tests {
     #[test]
     fn change_recommendation_reasoning() {
         let now = Utc::now();
-        let rec =
-            ChangeRecommendation::new(make_pair(), true, dec!(0.5), "favorable moment".into(), now);
+        let rec = ChangeRecommendation::new(
+            make_pair(),
+            Recommendation::Neutral,
+            dec!(0.5),
+            "neutral moment".into(),
+            now,
+        );
 
-        assert_eq!(rec.reasoning(), "favorable moment");
+        assert_eq!(rec.reasoning(), "neutral moment");
     }
 
     #[test]
     fn change_recommendation_timestamp() {
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(make_pair(), false, dec!(0.1), "t".into(), now);
+        let rec = ChangeRecommendation::new(
+            make_pair(),
+            Recommendation::Wait,
+            dec!(0.1),
+            "t".into(),
+            now,
+        );
 
         assert_eq!(rec.timestamp(), &now);
     }
@@ -197,7 +243,13 @@ mod tests {
     #[test]
     fn change_recommendation_zero_confidence() {
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(make_pair(), false, dec!(0), "no signal".into(), now);
+        let rec = ChangeRecommendation::new(
+            make_pair(),
+            Recommendation::Wait,
+            dec!(0),
+            "no signal".into(),
+            now,
+        );
 
         assert_eq!(rec.confidence(), &dec!(0));
     }
@@ -205,7 +257,13 @@ mod tests {
     #[test]
     fn change_recommendation_max_confidence() {
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(make_pair(), true, dec!(1.0), "max signal".into(), now);
+        let rec = ChangeRecommendation::new(
+            make_pair(),
+            Recommendation::ChangeNow,
+            dec!(1.0),
+            "max signal".into(),
+            now,
+        );
 
         assert_eq!(rec.confidence(), &dec!(1.0));
     }
@@ -213,7 +271,13 @@ mod tests {
     #[test]
     fn change_recommendation_empty_reasoning() {
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(make_pair(), true, dec!(0.5), String::new(), now);
+        let rec = ChangeRecommendation::new(
+            make_pair(),
+            Recommendation::Neutral,
+            dec!(0.5),
+            String::new(),
+            now,
+        );
 
         assert_eq!(rec.reasoning(), "");
     }
@@ -224,7 +288,13 @@ mod tests {
     fn pair_analysis_stores_pair() {
         let pair = make_pair();
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(pair.clone(), true, dec!(0.9), "r".into(), now);
+        let rec = ChangeRecommendation::new(
+            pair.clone(),
+            Recommendation::ChangeNow,
+            dec!(0.9),
+            "r".into(),
+            now,
+        );
         let analysis = PairAnalysis::new(pair.clone(), 100, dec!(85), rec);
 
         assert_eq!(analysis.pair(), &pair);
@@ -233,7 +303,13 @@ mod tests {
     #[test]
     fn pair_analysis_rate_count() {
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(make_pair(), true, dec!(0.5), "r".into(), now);
+        let rec = ChangeRecommendation::new(
+            make_pair(),
+            Recommendation::Neutral,
+            dec!(0.5),
+            "r".into(),
+            now,
+        );
         let analysis = PairAnalysis::new(make_pair(), 42, dec!(90), rec);
 
         assert_eq!(analysis.rate_count(), 42);
@@ -242,7 +318,8 @@ mod tests {
     #[test]
     fn pair_analysis_rate_count_zero() {
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(make_pair(), false, dec!(0), "r".into(), now);
+        let rec =
+            ChangeRecommendation::new(make_pair(), Recommendation::Wait, dec!(0), "r".into(), now);
         let analysis = PairAnalysis::new(make_pair(), 0, dec!(0), rec);
 
         assert_eq!(analysis.rate_count(), 0);
@@ -251,7 +328,13 @@ mod tests {
     #[test]
     fn pair_analysis_quality_score() {
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(make_pair(), true, dec!(0.7), "r".into(), now);
+        let rec = ChangeRecommendation::new(
+            make_pair(),
+            Recommendation::ChangeNow,
+            dec!(0.7),
+            "r".into(),
+            now,
+        );
         let analysis = PairAnalysis::new(make_pair(), 50, dec!(95.5), rec);
 
         assert_eq!(analysis.quality_score(), &dec!(95.5));
@@ -260,10 +343,16 @@ mod tests {
     #[test]
     fn pair_analysis_recommendation_delegates() {
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(make_pair(), true, dec!(0.88), "go now".into(), now);
+        let rec = ChangeRecommendation::new(
+            make_pair(),
+            Recommendation::ChangeNow,
+            dec!(0.88),
+            "go now".into(),
+            now,
+        );
         let analysis = PairAnalysis::new(make_pair(), 10, dec!(80), rec);
 
-        assert!(analysis.recommendation().should_change_now());
+        assert!(analysis.recommendation().should_change_now() == Recommendation::ChangeNow);
         assert_eq!(analysis.recommendation().confidence(), &dec!(0.88));
         assert_eq!(analysis.recommendation().reasoning(), "go now");
         assert_eq!(analysis.recommendation().timestamp(), &now);
@@ -272,17 +361,29 @@ mod tests {
     #[test]
     fn pair_analysis_recommendation_wait() {
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(make_pair(), false, dec!(0.2), "wait".into(), now);
+        let rec = ChangeRecommendation::new(
+            make_pair(),
+            Recommendation::Wait,
+            dec!(0.2),
+            "wait".into(),
+            now,
+        );
         let analysis = PairAnalysis::new(make_pair(), 5, dec!(60), rec);
 
-        assert!(!analysis.recommendation().should_change_now());
+        assert!(analysis.recommendation().should_change_now() == Recommendation::Wait);
         assert_eq!(analysis.recommendation().confidence(), &dec!(0.2));
     }
 
     #[test]
     fn pair_analysis_debug_impl() {
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(make_pair(), true, dec!(0.5), "r".into(), now);
+        let rec = ChangeRecommendation::new(
+            make_pair(),
+            Recommendation::Neutral,
+            dec!(0.5),
+            "r".into(),
+            now,
+        );
         let analysis = PairAnalysis::new(make_pair(), 1, dec!(50), rec);
 
         // Verify Debug is implemented and doesn't panic
@@ -293,7 +394,13 @@ mod tests {
     #[test]
     fn change_recommendation_debug_impl() {
         let now = Utc::now();
-        let rec = ChangeRecommendation::new(make_pair(), true, dec!(0.5), "reason".into(), now);
+        let rec = ChangeRecommendation::new(
+            make_pair(),
+            Recommendation::Neutral,
+            dec!(0.5),
+            "reason".into(),
+            now,
+        );
 
         let debug_str = format!("{rec:?}");
         assert!(debug_str.contains("ChangeRecommendation"));

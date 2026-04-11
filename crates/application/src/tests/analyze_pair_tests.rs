@@ -3,6 +3,7 @@ use domain::types::rate_quality_config::RateQualityConfig;
 use rust_decimal::dec;
 
 use crate::ports::repository_errors::RepositoryError;
+use crate::responses::analyze_pair_responses::Recommendation;
 use crate::tests::helpers::{build_rates, make_pair, make_rate};
 use crate::tests::mocks::mock_repository::MockRepository;
 use crate::use_cases::analyze_pair::{AnalyzeError, AnalyzePairUseCase};
@@ -69,7 +70,7 @@ async fn execute_rate_near_top_recommends_change() {
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
 
-    assert!(result.recommendation().should_change_now());
+    assert!(result.recommendation().should_change_now() == Recommendation::ChangeNow);
 }
 
 #[tokio::test]
@@ -95,7 +96,7 @@ async fn execute_rate_near_bottom_recommends_wait() {
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
 
-    assert!(!result.recommendation().should_change_now());
+    assert!(result.recommendation().should_change_now() == Recommendation::Wait);
 }
 
 #[tokio::test]
@@ -121,7 +122,7 @@ async fn execute_rate_in_middle_recommends_wait() {
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
 
-    assert!(!result.recommendation().should_change_now());
+    assert!(result.recommendation().should_change_now() == Recommendation::Neutral);
 }
 
 // ── Tests: reasoning text ───────────────────────────────────────
@@ -411,7 +412,7 @@ async fn execute_position_exactly_at_085_recommends_change() {
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
 
-    assert!(result.recommendation().should_change_now());
+    assert!(result.recommendation().should_change_now() == Recommendation::ChangeNow);
 }
 
 #[tokio::test]
@@ -436,5 +437,5 @@ async fn execute_position_just_below_085_recommends_wait() {
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
 
-    assert!(!result.recommendation().should_change_now());
+    assert!(result.recommendation().should_change_now() == Recommendation::ChangeNow);
 }

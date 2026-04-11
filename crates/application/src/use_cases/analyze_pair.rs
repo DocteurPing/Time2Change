@@ -6,7 +6,9 @@ use thiserror::Error;
 
 use crate::ports::exchange_rate_repository::ExchangeRateRepository;
 use crate::ports::repository_errors::RepositoryError;
-use crate::responses::analyze_pair_responses::{ChangeRecommendation, PairAnalysis};
+use crate::responses::analyze_pair_responses::{
+    ChangeRecommendation, PairAnalysis, Recommendation,
+};
 
 /// Application use case for analyzing a currency pair over a historical window.
 ///
@@ -43,6 +45,7 @@ impl<R: ExchangeRateRepository> AnalyzePairUseCase<R> {
     /// Returns [`AnalyzeError::Repository`] if loading rates fails, or
     /// [`AnalyzeError::InsufficientData`] if the available series cannot support
     /// analysis.
+    #[allow(clippy::too_many_lines)]
     pub async fn execute(
         &self,
         pair: CurrencyPair,
@@ -73,35 +76,46 @@ impl<R: ExchangeRateRepository> AnalyzePairUseCase<R> {
             .ok_or(AnalyzeError::InsufficientData)?;
 
         // Decision logic
-        let should_change_now = position >= dec!(0.85);
+        let recommendation = match position {
+            p if p >= dec!(0.6) => Recommendation::ChangeNow,
+            p if p <= dec!(0.4) => Recommendation::Wait,
+            _ => Recommendation::Neutral,
+        };
 
         // Confidence combines signal strength + data quality
         let signal_strength = (position - dec!(0.5)).abs() * dec!(2);
         let confidence = signal_strength * *quality.overall();
 
         // Human readable explanation
-        let reasoning = if should_change_now {
-            format!(
+        let reasoning = match recommendation {
+            Recommendation::ChangeNow => format!(
                 "Current rate {} is near the top of the {}-day range (position {:.2}). \
                      Data quality {:.2}. Favorable moment to exchange.",
                 current_rate,
                 lookback_days,
                 position,
                 quality.overall()
-            )
-        } else {
-            format!(
-                "Current rate {} sits in the middle/lower part of the {}-day range \
+            ),
+            Recommendation::Wait => format!(
+                "Current rate {} sits in the lower part of the {}-day range \
                      (position {:.2}). Data quality {:.2}. Waiting may yield a better rate.",
                 current_rate,
                 lookback_days,
                 position,
                 quality.overall()
-            )
+            ),
+            Recommendation::Neutral => format!(
+                "Current rate {} sits in the middle part of the {}-day range \
+                     (position {:.2}). Data quality {:.2}. You can exchange with a neutral rate",
+                current_rate,
+                lookback_days,
+                position,
+                quality.overall()
+            ),
         };
 
         let recommendation =
-            ChangeRecommendation::new(pair.clone(), should_change_now, confidence, reasoning, now);
+            ChangeRecommendation::new(pair.clone(), recommendation, confidence, reasoning, now);
 
         Ok(PairAnalysis::new(
             pair,
