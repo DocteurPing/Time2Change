@@ -13,7 +13,7 @@ pub(crate) enum RecommendationDto {
 /// Response payload returned by the backend analyze endpoint.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub(crate) struct PairAnalysisResponse {
-    pub should_change_now: RecommendationDto,
+    pub recommendation: RecommendationDto,
     pub reasoning: String,
 }
 

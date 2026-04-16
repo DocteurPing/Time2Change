@@ -25,7 +25,7 @@ pub enum Recommendation {
 #[derive(Debug)]
 pub struct ChangeRecommendation {
     pair: CurrencyPair,
-    should_change_now: Recommendation,
+    recommendation: Recommendation,
     confidence: Decimal, // 0.0 to 100.0
     reasoning: String,
     timestamp: chrono::DateTime<chrono::Utc>,
@@ -51,14 +51,14 @@ impl ChangeRecommendation {
     #[must_use]
     pub const fn new(
         pair: CurrencyPair,
-        should_change_now: Recommendation,
+        recommendation: Recommendation,
         confidence: Decimal,
         reasoning: String,
         timestamp: chrono::DateTime<chrono::Utc>,
     ) -> Self {
         Self {
             pair,
-            should_change_now,
+            recommendation,
             confidence,
             reasoning,
             timestamp,
@@ -73,8 +73,8 @@ impl ChangeRecommendation {
 
     /// Returns whether the analysis recommends exchanging funds now.
     #[must_use]
-    pub const fn should_change_now(&self) -> Recommendation {
-        self.should_change_now
+    pub const fn recommandation(&self) -> Recommendation {
+        self.recommendation
     }
 
     /// Returns the confidence score associated with the recommendation.
@@ -181,7 +181,7 @@ mod tests {
             now,
         );
 
-        assert!(rec.should_change_now() == Recommendation::ChangeNow);
+        assert!(rec.recommandation() == Recommendation::ChangeNow);
     }
 
     #[test]
@@ -195,7 +195,7 @@ mod tests {
             now,
         );
 
-        assert!(rec.should_change_now() == Recommendation::Wait);
+        assert!(rec.recommandation() == Recommendation::Wait);
     }
 
     #[test]
@@ -352,7 +352,7 @@ mod tests {
         );
         let analysis = PairAnalysis::new(make_pair(), 10, dec!(80), rec);
 
-        assert!(analysis.recommendation().should_change_now() == Recommendation::ChangeNow);
+        assert!(analysis.recommendation().recommandation() == Recommendation::ChangeNow);
         assert_eq!(analysis.recommendation().confidence(), &dec!(0.88));
         assert_eq!(analysis.recommendation().reasoning(), "go now");
         assert_eq!(analysis.recommendation().timestamp(), &now);
@@ -370,7 +370,7 @@ mod tests {
         );
         let analysis = PairAnalysis::new(make_pair(), 5, dec!(60), rec);
 
-        assert!(analysis.recommendation().should_change_now() == Recommendation::Wait);
+        assert!(analysis.recommendation().recommandation() == Recommendation::Wait);
         assert_eq!(analysis.recommendation().confidence(), &dec!(0.2));
     }
 

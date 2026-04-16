@@ -14,9 +14,9 @@ pub(crate) fn ResultCard(analysis: ReadSignal<Option<PairAnalysisResponse>>) -> 
     let recommendation_text = move || {
         analysis
             .get()
-            .map_or("", |result| match result.should_change_now {
+            .map_or("", |result| match result.recommendation {
                 RecommendationDto::ChangeNow => "You should change now.",
-                RecommendationDto::Neutral => "You can change now or wait",
+                RecommendationDto::Neutral => "You can change now or wait.",
                 RecommendationDto::Wait => "You should wait.",
             })
     };
@@ -31,7 +31,7 @@ pub(crate) fn ResultCard(analysis: ReadSignal<Option<PairAnalysisResponse>>) -> 
     let badge_class = move || {
         analysis
             .get()
-            .map_or("badge", |result| match result.should_change_now {
+            .map_or("badge", |result| match result.recommendation {
                 RecommendationDto::ChangeNow => "badge badge-now",
                 RecommendationDto::Neutral => "badge badge-neutral",
                 RecommendationDto::Wait => "badge badge-later",
@@ -41,7 +41,7 @@ pub(crate) fn ResultCard(analysis: ReadSignal<Option<PairAnalysisResponse>>) -> 
     let badge_text = move || {
         analysis
             .get()
-            .map_or("", |result| match result.should_change_now {
+            .map_or("", |result| match result.recommendation {
                 RecommendationDto::ChangeNow => "Act now",
                 RecommendationDto::Neutral => "Neutral",
                 RecommendationDto::Wait => "Wait",

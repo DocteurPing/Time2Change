@@ -60,7 +60,7 @@ pub(crate) async fn analyze_pair<R: ExchangeRateRepository, C: CurrencyRepositor
         })?;
 
     Ok(Json(PairAnalysisResponse::new(
-        result.recommendation().should_change_now(),
+        result.recommendation().recommandation(),
         result.recommendation().reasoning().to_owned(),
     )))
 }
