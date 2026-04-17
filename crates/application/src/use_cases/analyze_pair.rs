@@ -106,7 +106,7 @@ impl<R: ExchangeRateRepository> AnalyzePairUseCase<R> {
             ),
             Recommendation::Neutral => format!(
                 "Current rate {} sits in the middle part of the {}-day range \
-                     (position {:.2}). Data quality {:.2}. You can exchange with a neutral rate",
+                     (position {:.2}). Data quality {:.2}. Exchange at a neutral rate.",
                 current_rate,
                 lookback_days,
                 position,
