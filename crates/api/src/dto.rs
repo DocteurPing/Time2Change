@@ -35,15 +35,15 @@ enum RecommendationDto {
 
 #[derive(Serialize)]
 pub(crate) struct PairAnalysisResponse {
-    should_change_now: RecommendationDto,
+    recommendation: RecommendationDto,
     reasoning: String,
 }
 
 impl PairAnalysisResponse {
     #[must_use]
-    pub(crate) fn new(should_change_now: Recommendation, reasoning: String) -> Self {
+    pub(crate) fn new(recommendation: Recommendation, reasoning: String) -> Self {
         Self {
-            should_change_now: should_change_now.into(),
+            recommendation: recommendation.into(),
             reasoning,
         }
     }
