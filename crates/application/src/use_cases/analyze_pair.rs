@@ -114,14 +114,14 @@ impl<R: ExchangeRateRepository> AnalyzePairUseCase<R> {
             ),
         };
 
-        let recommendation =
+        let decision =
             ChangeRecommendation::new(pair.clone(), recommendation, confidence, reasoning, now);
 
         Ok(PairAnalysis::new(
             pair,
             rates.len(),
             *quality.overall(),
-            recommendation,
+            decision,
         ))
     }
 }

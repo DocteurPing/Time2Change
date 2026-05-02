@@ -70,7 +70,7 @@ async fn execute_rate_near_top_recommends_change() {
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
 
-    assert!(result.recommendation().recommandation() == Recommendation::ChangeNow);
+    assert!(result.recommendation().recommendation() == Recommendation::ChangeNow);
 }
 
 #[tokio::test]
@@ -96,12 +96,12 @@ async fn execute_rate_near_bottom_recommends_wait() {
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
 
-    assert!(result.recommendation().recommandation() == Recommendation::Wait);
+    assert!(result.recommendation().recommendation() == Recommendation::Wait);
 }
 
 #[tokio::test]
-async fn execute_rate_in_middle_recommends_wait() {
-    // Current rate is in the middle → position ≈ 0.5 → should wait (< 0.85)
+async fn execute_rate_in_middle_recommends_neutral() {
+    // Current rate is in the middle → position ≈ 0.5 → neutral (0.4 > x < 0.6)
     let rates = build_rates(
         &[
             dec!(1.00),
@@ -122,7 +122,7 @@ async fn execute_rate_in_middle_recommends_wait() {
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
 
-    assert!(result.recommendation().recommandation() == Recommendation::Neutral);
+    assert!(result.recommendation().recommendation() == Recommendation::Neutral);
 }
 
 // ── Tests: reasoning text ───────────────────────────────────────
@@ -412,12 +412,12 @@ async fn execute_position_exactly_at_085_recommends_change() {
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
 
-    assert!(result.recommendation().recommandation() == Recommendation::ChangeNow);
+    assert!(result.recommendation().recommendation() == Recommendation::ChangeNow);
 }
 
 #[tokio::test]
-async fn execute_position_just_below_085_recommends_wait() {
-    // low=1.00, high=2.00, current=1.84 → position = 0.84 < 0.85
+async fn execute_position_just_below_085_recommends_change_now() {
+    // low=1.00, high=2.00, current=1.84 → position = 0.84 > 0.6
     let now = Utc::now();
     let rates = vec![
         make_rate(now - Duration::days(10), dec!(1.00)),
@@ -437,5 +437,5 @@ async fn execute_position_just_below_085_recommends_wait() {
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
 
-    assert!(result.recommendation().recommandation() == Recommendation::ChangeNow);
+    assert!(result.recommendation().recommendation() == Recommendation::ChangeNow);
 }
