@@ -2,7 +2,7 @@
 
 use leptos::prelude::*;
 
-use crate::models::PairAnalysisResponse;
+use crate::models::{PairAnalysisResponse, RecommendationDto};
 
 /// Renders the recommendation result card when analysis data is available.
 ///
@@ -12,13 +12,13 @@ use crate::models::PairAnalysisResponse;
 #[component]
 pub(crate) fn ResultCard(analysis: ReadSignal<Option<PairAnalysisResponse>>) -> impl IntoView {
     let recommendation_text = move || {
-        analysis.get().map_or("", |result| {
-            if result.should_change_now {
-                "You should change now."
-            } else {
-                "You should wait."
-            }
-        })
+        analysis
+            .get()
+            .map_or("", |result| match result.recommendation {
+                RecommendationDto::ChangeNow => "You should change now.",
+                RecommendationDto::Neutral => "You can change now or wait.",
+                RecommendationDto::Wait => "You should wait.",
+            })
     };
 
     let reasoning_text = move || {
@@ -29,23 +29,23 @@ pub(crate) fn ResultCard(analysis: ReadSignal<Option<PairAnalysisResponse>>) -> 
     };
 
     let badge_class = move || {
-        analysis.get().map_or("badge", |result| {
-            if result.should_change_now {
-                "badge badge-now"
-            } else {
-                "badge badge-later"
-            }
-        })
+        analysis
+            .get()
+            .map_or("badge", |result| match result.recommendation {
+                RecommendationDto::ChangeNow => "badge badge-now",
+                RecommendationDto::Neutral => "badge badge-neutral",
+                RecommendationDto::Wait => "badge badge-later",
+            })
     };
 
     let badge_text = move || {
-        analysis.get().map_or("", |result| {
-            if result.should_change_now {
-                "Act now"
-            } else {
-                "Wait"
-            }
-        })
+        analysis
+            .get()
+            .map_or("", |result| match result.recommendation {
+                RecommendationDto::ChangeNow => "Act now",
+                RecommendationDto::Neutral => "Neutral",
+                RecommendationDto::Wait => "Wait",
+            })
     };
 
     view! {

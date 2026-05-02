@@ -20,6 +20,7 @@ use crate::routes::{analyze_pair, list_currencies};
 use crate::state::AppState;
 
 mod config;
+mod dto;
 mod errors;
 mod routes;
 mod state;

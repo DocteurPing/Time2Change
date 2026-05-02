@@ -2,10 +2,18 @@
 
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub(crate) enum RecommendationDto {
+    ChangeNow,
+    Neutral,
+    Wait,
+}
+
 /// Response payload returned by the backend analyze endpoint.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub(crate) struct PairAnalysisResponse {
-    pub should_change_now: bool,
+    pub recommendation: RecommendationDto,
     pub reasoning: String,
 }
 
