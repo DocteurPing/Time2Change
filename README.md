@@ -50,7 +50,45 @@ The project is a Rust workspace split into focused crates, following a clean/hex
 
 ---
 
-## Getting started
+## Running with Docker
+
+This is the recommended way to run the full stack. Everything — Postgres, the API, the ingestion worker, and the frontend — starts with a single command.
+
+```sh
+cp .env.example .env
+# Edit .env and set POSTGRES_PASSWORD (required)
+docker compose up --build
+```
+
+Open `http://localhost` in your browser.
+
+### How it's wired
+
+| Service | Image | Exposed |
+|---|---|---|
+| `postgres` | `postgres:16-alpine` | Internal only |
+| `api` | Built from `Dockerfile` (target `api`) | Internal only |
+| `ingestion` | Built from `Dockerfile` (target `ingestion`) | Internal only |
+| `frontend` | Built from `Dockerfile.frontend` | `PORT` (default `80`) |
+
+nginx is the only public entry point. It serves the WASM frontend and reverse-proxies `/currencies`, `/analyze`, and `/health` to the API container on the internal Docker network — the backend port is never exposed to the host.
+
+### Build args
+
+`API_BASE_URL` is baked into the WASM binary at **compile time**. The default (`http://localhost`) works out of the box with the nginx proxy setup. For a production deployment update it in `.env` before building:
+
+```sh
+API_BASE_URL=https://time2change.example.com docker compose build
+```
+
+### Dockerfile layout
+
+- **`Dockerfile`** — multi-stage backend build using `cargo-chef`. The `planner` and `builder` stages are shared between `api` and `ingestion`, so dependencies are only compiled once.
+- **`Dockerfile.frontend`** — Trunk/WASM build with BuildKit cache mounts for the Cargo registry, served by `nginx:1.27-alpine`.
+
+---
+
+## Getting started (without Docker)
 
 ### Prerequisites
 
@@ -61,14 +99,15 @@ The project is a Rust workspace split into focused crates, following a clean/hex
 
 ### Environment variables
 
-**API / Ingestion services:**
+| Variable | Service | Required | Default | Description |
+|---|---|---|---|---|
+| `DATABASE_URL` | api, ingestion | ✅ | — | Postgres connection string |
+| `BIND_ADDR` | api | ❌ | `0.0.0.0:8080` | Address the API server listens on |
+| `CURRENCIES` | ingestion | ❌ | _(empty)_ | Comma-separated currency codes to ingest |
+| `START_DATE` | ingestion | ❌ | `2026-01-01T00:00:00Z` | Earliest date to fetch rates from |
+| `API_BASE_URL` | frontend | ❌ | `http://127.0.0.1:3000` | API base URL baked into WASM at build time |
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `DATABASE_URL` | ✅ | — | Postgres connection string |
-| `BIND_ADDR` | ❌ | `0.0.0.0:8080` | Address the API server listens on |
-| `START_DATE` | ❌ | `2026-01-01T00:00:00Z` | Earliest date the ingestion service fetches rates from |
-| `CURRENCIES` | ❌ | _(empty)_ | Comma-separated list of currency codes to ingest (e.g. `EUR,GBP,JPY`) |
+Copy `.env.example` to `.env` and fill in the values (or export them directly).
 
 ### Start the ingestion service
 
