@@ -1,0 +1,86 @@
+# Copy .env.example to .env and fill in the required values before running.
+# Required variables are marked with "(required)" in .env.example.
+#
+#   docker compose up --build
+
+services:
+  # ── Database ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-time2change}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # required — see .env.example
+      POSTGRES_DB: ${POSTGRES_DB:-time2change}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-time2change} -d ${POSTGRES_DB:-time2change}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── API server ────────────────────────────────────────────────────────────
+  # Not exposed on the host.  All traffic reaches it through nginx.
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-time2change}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-time2change}
+      BIND_ADDR: 0.0.0.0:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/currencies || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ── Ingestion worker ──────────────────────────────────────────────────────
+  ingestion:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ingestion
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-time2change}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-time2change}
+      CURRENCIES: ${CURRENCIES:-EUR,USD,GBP,JPY,CHF,CAD,AUD}
+      START_DATE: ${START_DATE:-2024-01-01T00:00:00Z}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ── Frontend (nginx) ──────────────────────────────────────────────────────
+  # Single public entry point on port 80.
+  # nginx serves the WASM app and proxies /currencies /analyze /health to the
+  # api service on the internal Docker network.
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        # API_BASE_URL is baked into the WASM binary at compile time.
+        # With nginx proxying the API routes it should be the public origin
+        # (i.e. the address users open in their browser).
+        API_BASE_URL: ${API_BASE_URL:-http://localhost}
+    restart: unless-stopped
+    ports:
+      - "${PORT:-80}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  pgdata:

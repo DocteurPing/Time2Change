@@ -1,0 +1,3 @@
+.git/
+target/
+crates/frontend/dist/
