@@ -67,7 +67,7 @@ EXPOSE 8080
 
 # Docker-native health check (also works with plain `docker run`).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD curl -sf http://localhost:8080/health || exit 1
+    CMD curl -sf http://localhost:8080/currencies || exit 1
 
 ENTRYPOINT ["/usr/local/bin/api"]
 

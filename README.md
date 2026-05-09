@@ -71,7 +71,7 @@ Open `http://localhost` in your browser.
 | `ingestion` | Built from `Dockerfile` (target `ingestion`) | Internal only |
 | `frontend` | Built from `Dockerfile.frontend` | `PORT` (default `80`) |
 
-nginx is the only public entry point. It serves the WASM frontend and reverse-proxies `/currencies`, `/analyze`, and `/health` to the API container on the internal Docker network — the backend port is never exposed to the host.
+nginx is the only public entry point. It serves the WASM frontend and reverse-proxies `/currencies` and `/analyze` to the API container on the internal Docker network — the backend port is never exposed to the host.
 
 ### Build args
 
