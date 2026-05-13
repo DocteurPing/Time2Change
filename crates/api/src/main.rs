@@ -82,5 +82,5 @@ async fn shutdown_signal() {
         () = ctrl_c => {},
         () = terminate => {},
     }
-    info!("Shuting down gracefully");
+    info!("Shutting down gracefully");
 }
