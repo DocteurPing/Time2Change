@@ -1,4 +1,5 @@
 use chrono::NaiveDate;
+use rust_decimal::Decimal;
 use serde::Deserialize;
 
 /// Represents the response from the Frankfurter API for a date-range exchange rate request.
@@ -7,7 +8,7 @@ pub struct FrankfurterRangeResponse {
     date: NaiveDate,
     base: String,
     quote: String,
-    rate: f64,
+    rate: Decimal,
 }
 
 impl FrankfurterRangeResponse {
@@ -31,7 +32,7 @@ impl FrankfurterRangeResponse {
 
     /// Returns the exchange rate, as provided by the API.
     #[must_use]
-    pub const fn rate(&self) -> f64 {
+    pub const fn rate(&self) -> Decimal {
         self.rate
     }
 }
