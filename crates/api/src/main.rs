@@ -12,8 +12,9 @@ use infrastructure::currency::repository::PostgresCurrencyRepository;
 use infrastructure::exchange_rate::repository::PostgresExchangeRateRepository;
 use shared::tracing::init_tracing;
 use sqlx::postgres::PgPoolOptions;
+use tokio::signal;
 use tower_http::cors::CorsLayer;
-use tracing::info;
+use tracing::{error, info};
 
 use crate::config::ApiConfig;
 use crate::routes::{analyze_pair, list_currencies};
@@ -52,6 +53,34 @@ async fn main() -> anyhow::Result<()> {
 
     info!("Backend running on {}", config.bind_addr());
 
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
     Ok(())
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        if signal::ctrl_c().await.is_err() {
+            error!("failed to install Ctrl+C handler");
+        }
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        if let Ok(mut signal) = signal::unix::signal(signal::unix::SignalKind::terminate()) {
+            signal.recv().await;
+        } else {
+            error!("failed to install terminate signal handler");
+        }
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        () = ctrl_c => {},
+        () = terminate => {},
+    }
+    info!("Shuting down gracefully");
 }
