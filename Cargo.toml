@@ -17,7 +17,7 @@ serde = { version = "1", features = ["derive"] }
 thiserror = "2"
 tracing = "0"
 chrono = { version = "0", features = ["serde"] }
-rust_decimal = { version = "1", default-features = false, features = ["maths", "macros", "db-postgres"] }
+rust_decimal = { version = "1", default-features = false, features = ["maths", "macros", "db-postgres", "serde"] }
 async-trait = "0"
 sqlx = { version = "0", features = ["runtime-tokio-rustls", "postgres", "chrono", "rust_decimal"] }
 wiremock = "0"

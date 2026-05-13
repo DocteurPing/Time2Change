@@ -6,8 +6,6 @@ use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
 use reqwest::{Client, Response};
-use rust_decimal::Decimal;
-use rust_decimal::prelude::FromPrimitive;
 
 use crate::rate_provider::dto::{FrankfurterCurrenciesResponse, FrankfurterRangeResponse};
 
@@ -133,9 +131,8 @@ impl FrankfurterClient {
                 if dto.base() != base || dto.quote() != quote {
                     return Err(RateProviderError::PairNotSupported(pair.to_string()));
                 }
-                let rate = Decimal::from_f64(dto.rate()).unwrap_or_default();
                 let timestamp = Utc.from_utc_datetime(&date.and_time(NaiveTime::MIN));
-                Ok(ExchangeRate::new(timestamp, rate))
+                Ok(ExchangeRate::new(timestamp, dto.rate()))
             })
             .collect::<Result<Vec<_>, RateProviderError>>()?;
 
