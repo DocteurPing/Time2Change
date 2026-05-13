@@ -1,5 +1,5 @@
 use application::ports::exchange_rate_repository::ExchangeRateRepository;
-use chrono::Utc;
+use chrono::{DateTime, TimeZone, Utc};
 use domain::types::currency::Currency;
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
@@ -12,13 +12,21 @@ fn make_pair() -> CurrencyPair {
     CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap()
 }
 
+fn truncate_to_micros(timestamp: DateTime<Utc>) -> DateTime<Utc> {
+    let seconds = timestamp.timestamp();
+    let nanos = timestamp.timestamp_subsec_micros() * 1_000;
+    Utc.timestamp_opt(seconds, nanos)
+        .single()
+        .unwrap_or(timestamp)
+}
+
 // sqlx::test automatically spins up a temporary database,
 // runs migrations, and tears it down after the test.
 #[sqlx::test]
 async fn save_and_load_round_trip(pool: PgPool) {
     let repo = PostgresExchangeRateRepository::new(pool);
 
-    let now = Utc::now();
+    let now = truncate_to_micros(Utc::now());
     let pair = make_pair();
     let rate = ExchangeRate::new(now, dec!(1.0850));
 
@@ -36,19 +44,15 @@ async fn save_and_load_round_trip(pool: PgPool) {
 #[sqlx::test]
 async fn exists_no_data(pool: PgPool) {
     let repo = PostgresExchangeRateRepository::new(pool);
-    assert!(
-        !repo
-            .exists(&make_pair(), &(Utc::now()..=Utc::now()))
-            .await
-            .unwrap()
-    );
+    let now = truncate_to_micros(Utc::now());
+    assert!(!repo.exists(&make_pair(), &(now..=now)).await.unwrap());
 }
 
 #[sqlx::test]
 async fn save_multiple_rates(pool: PgPool) {
     let repo = PostgresExchangeRateRepository::new(pool);
 
-    let now = Utc::now();
+    let now = truncate_to_micros(Utc::now());
     let pair = make_pair();
     let rates = vec![
         ExchangeRate::new(now, dec!(1.0850)),
@@ -77,7 +81,7 @@ async fn save_multiple_rates(pool: PgPool) {
 async fn save_duplicate_rates(pool: PgPool) {
     let repo = PostgresExchangeRateRepository::new(pool);
 
-    let now = Utc::now();
+    let now = truncate_to_micros(Utc::now());
     let pair = make_pair();
     let rate1 = ExchangeRate::new(now, dec!(1.0850));
     let rate2 = ExchangeRate::new(now, dec!(1.0860)); // same timestamp, different rate
@@ -100,7 +104,7 @@ async fn save_duplicate_rates(pool: PgPool) {
 async fn save_duplicate_in_batch(pool: PgPool) {
     let repo = PostgresExchangeRateRepository::new(pool);
 
-    let now = Utc::now();
+    let now = truncate_to_micros(Utc::now());
     let pair = make_pair();
     let rate1 = ExchangeRate::new(now, dec!(1.0850));
     let rate2 = ExchangeRate::new(now, dec!(1.0860)); // same timestamp, different rate

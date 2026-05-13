@@ -4,7 +4,7 @@ use std::ops::RangeInclusive;
 use application::ports::exchange_rate_repository::ExchangeRateRepository;
 use application::ports::repository_errors::RepositoryError;
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, TimeZone, Utc};
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
 use domain::types::time_series::TimeSeries;
@@ -25,6 +25,14 @@ use crate::repository_error::to_repository_error;
 #[derive(Debug, Clone)]
 pub struct PostgresExchangeRateRepository {
     pool: PgPool,
+}
+
+fn normalize_timestamp(timestamp: DateTime<Utc>) -> DateTime<Utc> {
+    let seconds = timestamp.timestamp();
+    let nanos = timestamp.timestamp_subsec_micros() * 1_000;
+    Utc.timestamp_opt(seconds, nanos)
+        .single()
+        .unwrap_or(timestamp)
 }
 
 impl PostgresExchangeRateRepository {
@@ -58,7 +66,10 @@ impl ExchangeRateRepository for PostgresExchangeRateRepository {
             return Ok(());
         }
 
-        let timestamp: Vec<DateTime<Utc>> = rates.iter().map(|r| *r.timestamp()).collect();
+        let timestamp: Vec<DateTime<Utc>> = rates
+            .iter()
+            .map(|r| normalize_timestamp(*r.timestamp()))
+            .collect();
         let rate: Vec<Decimal> = rates.iter().map(|r| *r.rate()).collect();
 
         sqlx::query(queries::INSERT_RATE)
@@ -78,7 +89,8 @@ impl ExchangeRateRepository for PostgresExchangeRateRepository {
         pair: &CurrencyPair,
         range: &RangeInclusive<DateTime<Utc>>,
     ) -> Result<TimeSeries, RepositoryError> {
-        let (start, end) = (range.start(), range.end());
+        let start = normalize_timestamp(*range.start());
+        let end = normalize_timestamp(*range.end());
 
         let rows: Vec<ExchangeRateRow> = sqlx::query_as(queries::LOAD_RATES)
             .bind(pair.base().to_string())
@@ -101,7 +113,8 @@ impl ExchangeRateRepository for PostgresExchangeRateRepository {
         pair: &CurrencyPair,
         range: &RangeInclusive<DateTime<Utc>>,
     ) -> Result<bool, RepositoryError> {
-        let (start, end) = (range.start(), range.end());
+        let start = normalize_timestamp(*range.start());
+        let end = normalize_timestamp(*range.end());
 
         let exists: bool = sqlx::query_scalar(queries::EXISTS)
             .bind(pair.base().to_string())
