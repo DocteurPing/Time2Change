@@ -13,7 +13,6 @@ use sqlx::PgPool;
 use sqlx::migrate::MigrateError;
 
 use super::model::ExchangeRateRow;
-use super::queries;
 use crate::repository_error::to_repository_error;
 
 /// Postgres-backed implementation of [`ExchangeRateRepository`].
@@ -72,14 +71,16 @@ impl ExchangeRateRepository for PostgresExchangeRateRepository {
             .collect();
         let rate: Vec<Decimal> = rates.iter().map(|r| *r.rate()).collect();
 
-        sqlx::query(queries::INSERT_RATE)
-            .bind(pair.base().to_string())
-            .bind(pair.quote().to_string())
-            .bind(&timestamp)
-            .bind(&rate)
-            .execute(&self.pool)
-            .await
-            .map_err(to_repository_error)?;
+        sqlx::query_file!(
+            "queries/rates_insert.sql",
+            pair.base().to_string(),
+            pair.quote().to_string(),
+            &timestamp,
+            &rate,
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(to_repository_error)?;
 
         Ok(())
     }
@@ -92,14 +93,17 @@ impl ExchangeRateRepository for PostgresExchangeRateRepository {
         let start = normalize_timestamp(*range.start());
         let end = normalize_timestamp(*range.end());
 
-        let rows: Vec<ExchangeRateRow> = sqlx::query_as(queries::LOAD_RATES)
-            .bind(pair.base().to_string())
-            .bind(pair.quote().to_string())
-            .bind(start)
-            .bind(end)
-            .fetch_all(&self.pool)
-            .await
-            .map_err(to_repository_error)?;
+        let rows: Vec<ExchangeRateRow> = sqlx::query_file_as!(
+            ExchangeRateRow,
+            "queries/rates_load.sql",
+            pair.base().to_string(),
+            pair.quote().to_string(),
+            start,
+            end
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(to_repository_error)?;
 
         let rates: BTreeMap<DateTime<Utc>, Decimal> = rows
             .into_iter()
@@ -116,15 +120,17 @@ impl ExchangeRateRepository for PostgresExchangeRateRepository {
         let start = normalize_timestamp(*range.start());
         let end = normalize_timestamp(*range.end());
 
-        let exists: bool = sqlx::query_scalar(queries::EXISTS)
-            .bind(pair.base().to_string())
-            .bind(pair.quote().to_string())
-            .bind(start)
-            .bind(end)
-            .fetch_one(&self.pool)
-            .await
-            .map_err(to_repository_error)?;
+        let exists: Option<bool> = sqlx::query_file_scalar!(
+            "queries/rates_exist.sql",
+            pair.base().to_string(),
+            pair.quote().to_string(),
+            start,
+            end,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(to_repository_error)?;
 
-        Ok(exists)
+        Ok(exists.unwrap_or(false))
     }
 }

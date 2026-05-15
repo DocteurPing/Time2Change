@@ -5,7 +5,6 @@ use domain::types::currency_info::CurrencyInfo;
 use sqlx::PgPool;
 
 use super::model::CurrencyInfoRow;
-use super::queries;
 use crate::repository_error::to_repository_error;
 
 /// Postgres-backed implementation of [`CurrencyRepository`].
@@ -35,9 +34,7 @@ impl CurrencyRepository for PostgresCurrencyRepository {
         let codes: Vec<String> = currencies.iter().map(|c| c.code().to_string()).collect();
         let names: Vec<String> = currencies.iter().map(|c| c.name().to_owned()).collect();
 
-        sqlx::query(queries::SAVE_CURRENCIES)
-            .bind(&codes)
-            .bind(&names)
+        sqlx::query_file!("queries/currencies_save.sql", &codes, &names)
             .execute(&self.pool)
             .await
             .map_err(to_repository_error)?;
@@ -46,10 +43,11 @@ impl CurrencyRepository for PostgresCurrencyRepository {
     }
 
     async fn list_currencies(&self) -> Result<Vec<CurrencyInfo>, RepositoryError> {
-        let rows: Vec<CurrencyInfoRow> = sqlx::query_as(queries::LOAD_CURRENCIES)
-            .fetch_all(&self.pool)
-            .await
-            .map_err(to_repository_error)?;
+        let rows: Vec<CurrencyInfoRow> =
+            sqlx::query_file_as!(CurrencyInfoRow, "queries/currencies_load.sql")
+                .fetch_all(&self.pool)
+                .await
+                .map_err(to_repository_error)?;
 
         rows.into_iter().map(CurrencyInfo::try_from).collect()
     }
