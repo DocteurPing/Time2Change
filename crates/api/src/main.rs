@@ -17,7 +17,7 @@ use tower_http::cors::CorsLayer;
 use tracing::{error, info};
 
 use crate::config::ApiConfig;
-use crate::routes::{analyze_pair, list_currencies};
+use crate::routes::{analyze_pair, health, list_currencies};
 use crate::state::AppState;
 
 mod config;
@@ -46,6 +46,7 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/currencies", get(list_currencies))
         .route("/analyze", get(analyze_pair))
+        .route("/health", get(health))
         .layer(CorsLayer::permissive())
         .with_state(state);
 

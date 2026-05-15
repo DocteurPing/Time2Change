@@ -7,7 +7,7 @@ use domain::types::currency::Currency;
 use domain::types::currency_pair::CurrencyPair;
 use tracing::error;
 
-use crate::dto::{AnalyzePairQuery, PairAnalysisResponse};
+use crate::dto::{AnalyzePairQuery, HealthCheckResponse, PairAnalysisResponse};
 use crate::errors::ApiError;
 use crate::state::AppState;
 
@@ -63,4 +63,8 @@ pub(crate) async fn analyze_pair<R: ExchangeRateRepository, C: CurrencyRepositor
         result.recommendation().recommendation(),
         result.recommendation().reasoning().to_owned(),
     )))
+}
+
+pub(crate) async fn health() -> Json<HealthCheckResponse> {
+    Json(HealthCheckResponse { is_healthy: true })
 }
