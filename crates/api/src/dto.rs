@@ -58,3 +58,8 @@ impl From<Recommendation> for RecommendationDto {
         }
     }
 }
+
+#[derive(Serialize)]
+pub(crate) struct HealthCheckResponse {
+    pub is_healthy: bool,
+}
