@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "-- Loads all rows for a pair within an inclusive timestamp range,\n-- ordered chronologically.\n--\n-- Returns only the `timestamp` and `rate` columns — `base` and `quote` are\n-- already known from the caller's [`CurrencyPair`] argument.\n--\n-- Bind order: `$1` = base, `$2` = quote, `$3` = start timestamp,\n-- `$4` = end timestamp.\nSELECT timestamp, rate\nFROM   exchange_rates\nWHERE  base      = $1\n  AND  quote     = $2\n  AND  timestamp >= $3\n  AND  timestamp <= $4\nORDER  BY timestamp ASC\n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "timestamp",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 1,
+        "name": "rate",
+        "type_info": "Numeric"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "d7732805c1c201db915714eb0aa918a3294eb1759bc12918db567d6167516361"
+}

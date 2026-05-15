@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "-- Inserts a batch of exchange rate rows.\n--\n-- Uses `ON CONFLICT DO NOTHING` so that re-ingesting the same\n-- `(base, quote, timestamp)` triple is a silent no-op rather than an error.\n-- Change to `ON CONFLICT ... DO UPDATE` for upsert semantics.\n--\n-- Bind order: `$1` = base, `$2` = quote, `$3` = timestamp, `$4` = rate.\nINSERT INTO exchange_rates (base, quote, timestamp, rate)\nSELECT $1, $2, UNNEST($3::TIMESTAMPTZ[]), UNNEST($4::NUMERIC[])\nON CONFLICT (base, quote, timestamp) DO NOTHING\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "TimestamptzArray",
+        "NumericArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1a454abb8e71815c81e9538a5f1bddc0231551caf9c84d6230d2d9694e7708ce"
+}
