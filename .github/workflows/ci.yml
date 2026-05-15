@@ -84,6 +84,7 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgres://time2change:time2change@localhost:5432/time2change_test
+      SQLX_OFFLINE: true
     steps:
       - uses: actions/checkout@v4
 
