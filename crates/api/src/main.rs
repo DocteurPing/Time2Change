@@ -13,7 +13,6 @@ use infrastructure::exchange_rate::repository::PostgresExchangeRateRepository;
 use shared::tracing::init_tracing;
 use sqlx::postgres::PgPoolOptions;
 use tokio::signal;
-use tower_http::cors::CorsLayer;
 use tracing::{error, info};
 
 use crate::config::ApiConfig;
@@ -47,7 +46,6 @@ async fn main() -> anyhow::Result<()> {
         .route("/currencies", get(list_currencies))
         .route("/analyze", get(analyze_pair))
         .route("/health", get(health))
-        .layer(CorsLayer::permissive())
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(config.bind_addr()).await?;
