@@ -25,7 +25,6 @@ reqwest = { version = "0", default-features = false, features = ["json", "rustls
 dotenvy = "0"
 tracing-subscriber = { version = "0", features = ["env-filter", "json"] }
 axum = { version = "0" }
-tower-http = { version = "0", features = ["cors"] }
 anyhow = "1"
 console_error_panic_hook = "0"
 leptos = { version = "0", features = ["csr"] }
