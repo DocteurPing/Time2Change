@@ -12,28 +12,28 @@ use crate::ports::repository_errors::RepositoryError;
 /// - a [`RateProvider`] that returns the current list of available currencies
 /// - an [`CurrencyRepository`] that persists that list
 #[derive(Debug)]
-pub struct SyncCurrenciesUseCase<'a, R, C>
+pub struct SyncCurrenciesUseCase<R, C>
 where
     R: CurrencyRepository,
     C: RateProvider,
 {
     repository: R,
     provider: C,
-    selected_currencies: &'a [Currency],
+    selected_currencies: Vec<Currency>,
 }
 
-impl<'a, R, C> SyncCurrenciesUseCase<'a, R, C>
+impl<R, C> SyncCurrenciesUseCase<R, C>
 where
     R: CurrencyRepository,
     C: RateProvider,
 {
     /// Creates a new sync-currencies use case from a repository and provider.
     #[must_use]
-    pub const fn new(repository: R, provider: C, selected_currencies: &'a [Currency]) -> Self {
+    pub fn new(repository: R, provider: C, selected_currencies: &[Currency]) -> Self {
         Self {
             repository,
             provider,
-            selected_currencies,
+            selected_currencies: selected_currencies.to_vec(),
         }
     }
 
