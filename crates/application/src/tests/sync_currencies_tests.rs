@@ -36,12 +36,7 @@ async fn execute_persists_all_fetched_items() {
 
     let provider = MockProvider::with_currencies_ok(fetched.clone());
     let repo = MockRepository::empty();
-    let currencies = [
-        Currency::new("EUR").unwrap(),
-        Currency::new("USD").unwrap(),
-        Currency::new("JPY").unwrap(),
-    ];
-    let uc = SyncCurrenciesUseCase::new(repo, provider, &currencies);
+    let uc = SyncCurrenciesUseCase::new(repo, provider, &[]);
 
     let result = uc.execute().await.unwrap();
     assert_eq!(result, fetched.len());
@@ -78,4 +73,30 @@ async fn execute_returns_repository_error() {
         err,
         SyncCurrenciesError::Repository(RepositoryError::Storage(_))
     ));
+}
+
+#[tokio::test]
+async fn execute_with_currency_filter() {
+    let fetched = vec![
+        make_currency("EUR", "Euro"),
+        make_currency("USD", "US Dollar"),
+        make_currency("GBP", "British Pound"),
+    ];
+
+    let provider = MockProvider::with_currencies_ok(fetched.clone());
+    let repo = MockRepository::empty();
+    let selected_currencies = vec![Currency::new("EUR").unwrap(), Currency::new("GBP").unwrap()];
+    let uc = SyncCurrenciesUseCase::new(repo, provider, &selected_currencies);
+
+    let result = uc.execute().await.unwrap();
+    assert_eq!(result, selected_currencies.len());
+
+    let persisted = uc.list_currencies().await.unwrap();
+    assert_eq!(
+        persisted,
+        vec![
+            make_currency("EUR", "Euro"),
+            make_currency("GBP", "British Pound")
+        ]
+    );
 }

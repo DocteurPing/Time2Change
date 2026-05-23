@@ -47,7 +47,7 @@ where
     pub async fn execute(&self) -> Result<usize, SyncCurrenciesError> {
         let mut currencies = self.provider.fetch_currencies().await?;
 
-        if !currencies.is_empty() {
+        if !self.selected_currencies.is_empty() {
             currencies.retain(|currency| self.selected_currencies.contains(currency.code()));
         }
         let fetched = currencies.len();
