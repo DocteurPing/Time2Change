@@ -45,14 +45,11 @@ where
     /// Returns [`SyncCurrenciesError::Provider`] when upstream retrieval fails,
     /// or [`SyncCurrenciesError::Repository`] when persistence fails.
     pub async fn execute(&self) -> Result<usize, SyncCurrenciesError> {
-        let currencies = self
-            .provider
-            .fetch_currencies()
-            .await?
-            .iter()
-            .filter(|currency| self.selected_currencies.contains(currency.code()))
-            .cloned()
-            .collect::<Vec<_>>();
+        let mut currencies = self.provider.fetch_currencies().await?;
+
+        if !currencies.is_empty() {
+            currencies.retain(|currency| self.selected_currencies.contains(currency.code()));
+        }
         let fetched = currencies.len();
 
         self.repository.save_currencies(&currencies).await?;
