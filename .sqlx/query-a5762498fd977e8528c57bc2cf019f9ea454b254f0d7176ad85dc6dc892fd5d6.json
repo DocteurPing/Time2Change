@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "-- Saves a batch of currencies, replacing rows not in this batch.\n-- Bind order: `$1` = currency codes, `$2` = currency names.\nWITH incoming AS (\n    SELECT UNNEST($1::TEXT[]) AS currency, UNNEST($2::TEXT[]) AS name\n),\ndeleted AS (\n    DELETE FROM currencies\n    WHERE currency NOT IN (SELECT currency FROM incoming)\n)\nINSERT INTO currencies (currency, name)\nSELECT currency, name\nFROM incoming\nON CONFLICT (currency) DO UPDATE\nSET name = EXCLUDED.name;\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "TextArray",
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a5762498fd977e8528c57bc2cf019f9ea454b254f0d7176ad85dc6dc892fd5d6"
+}
