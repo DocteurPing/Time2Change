@@ -36,7 +36,12 @@ async fn execute_persists_all_fetched_items() {
 
     let provider = MockProvider::with_currencies_ok(fetched.clone());
     let repo = MockRepository::empty();
-    let uc = SyncCurrenciesUseCase::new(repo, provider);
+    let currencies = [
+        Currency::new("EUR").unwrap(),
+        Currency::new("USD").unwrap(),
+        Currency::new("JPY").unwrap(),
+    ];
+    let uc = SyncCurrenciesUseCase::new(repo, provider, &currencies);
 
     let result = uc.execute().await.unwrap();
     assert_eq!(result, fetched.len());
@@ -51,7 +56,7 @@ async fn execute_returns_provider_error() {
         "503 Service Unavailable".to_owned(),
     ));
     let repo = MockRepository::empty();
-    let uc = SyncCurrenciesUseCase::new(repo, provider);
+    let uc = SyncCurrenciesUseCase::new(repo, provider, &[]);
 
     let err = uc.execute().await.unwrap_err();
     assert!(matches!(
@@ -66,7 +71,7 @@ async fn execute_returns_repository_error() {
 
     let provider = MockProvider::with_currencies_ok(fetched);
     let repo = MockRepository::with_save_error(RepositoryError::Storage("write failed".into()));
-    let uc = SyncCurrenciesUseCase::new(repo, provider);
+    let uc = SyncCurrenciesUseCase::new(repo, provider, &[]);
 
     let err = uc.execute().await.unwrap_err();
     assert!(matches!(

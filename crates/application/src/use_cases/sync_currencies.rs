@@ -1,3 +1,4 @@
+use domain::types::currency::Currency;
 use domain::types::currency_info::CurrencyInfo;
 use thiserror::Error;
 
@@ -11,26 +12,28 @@ use crate::ports::repository_errors::RepositoryError;
 /// - a [`RateProvider`] that returns the current list of available currencies
 /// - an [`CurrencyRepository`] that persists that list
 #[derive(Debug)]
-pub struct SyncCurrenciesUseCase<R, C>
+pub struct SyncCurrenciesUseCase<'a, R, C>
 where
     R: CurrencyRepository,
     C: RateProvider,
 {
     repository: R,
     provider: C,
+    selected_currencies: &'a [Currency],
 }
 
-impl<R, C> SyncCurrenciesUseCase<R, C>
+impl<'a, R, C> SyncCurrenciesUseCase<'a, R, C>
 where
     R: CurrencyRepository,
     C: RateProvider,
 {
     /// Creates a new sync-currencies use case from a repository and provider.
     #[must_use]
-    pub const fn new(repository: R, provider: C) -> Self {
+    pub const fn new(repository: R, provider: C, selected_currencies: &'a [Currency]) -> Self {
         Self {
             repository,
             provider,
+            selected_currencies,
         }
     }
 
@@ -42,14 +45,20 @@ where
     /// Returns [`SyncCurrenciesError::Provider`] when upstream retrieval fails,
     /// or [`SyncCurrenciesError::Repository`] when persistence fails.
     pub async fn execute(&self) -> Result<usize, SyncCurrenciesError> {
-        let currencies = self.provider.fetch_currencies().await?;
+        let currencies = self
+            .provider
+            .fetch_currencies()
+            .await?
+            .iter()
+            .filter(|currency| self.selected_currencies.contains(currency.code()))
+            .cloned()
+            .collect::<Vec<_>>();
         let fetched = currencies.len();
 
         self.repository.save_currencies(&currencies).await?;
 
         Ok(fetched)
     }
-
     /// Returns the list of currencies currently persisted in the repository.
     ///
     /// # Errors
