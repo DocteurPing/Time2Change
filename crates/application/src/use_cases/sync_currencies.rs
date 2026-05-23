@@ -1,3 +1,4 @@
+use domain::types::currency::Currency;
 use domain::types::currency_info::CurrencyInfo;
 use thiserror::Error;
 
@@ -18,6 +19,7 @@ where
 {
     repository: R,
     provider: C,
+    selected_currencies: Vec<Currency>,
 }
 
 impl<R, C> SyncCurrenciesUseCase<R, C>
@@ -27,10 +29,11 @@ where
 {
     /// Creates a new sync-currencies use case from a repository and provider.
     #[must_use]
-    pub const fn new(repository: R, provider: C) -> Self {
+    pub fn new(repository: R, provider: C, selected_currencies: &[Currency]) -> Self {
         Self {
             repository,
             provider,
+            selected_currencies: selected_currencies.to_vec(),
         }
     }
 
@@ -42,14 +45,17 @@ where
     /// Returns [`SyncCurrenciesError::Provider`] when upstream retrieval fails,
     /// or [`SyncCurrenciesError::Repository`] when persistence fails.
     pub async fn execute(&self) -> Result<usize, SyncCurrenciesError> {
-        let currencies = self.provider.fetch_currencies().await?;
+        let mut currencies = self.provider.fetch_currencies().await?;
+
+        if !self.selected_currencies.is_empty() {
+            currencies.retain(|currency| self.selected_currencies.contains(currency.code()));
+        }
         let fetched = currencies.len();
 
         self.repository.save_currencies(&currencies).await?;
 
         Ok(fetched)
     }
-
     /// Returns the list of currencies currently persisted in the repository.
     ///
     /// # Errors

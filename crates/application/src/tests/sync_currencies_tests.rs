@@ -36,7 +36,7 @@ async fn execute_persists_all_fetched_items() {
 
     let provider = MockProvider::with_currencies_ok(fetched.clone());
     let repo = MockRepository::empty();
-    let uc = SyncCurrenciesUseCase::new(repo, provider);
+    let uc = SyncCurrenciesUseCase::new(repo, provider, &[]);
 
     let result = uc.execute().await.unwrap();
     assert_eq!(result, fetched.len());
@@ -51,7 +51,7 @@ async fn execute_returns_provider_error() {
         "503 Service Unavailable".to_owned(),
     ));
     let repo = MockRepository::empty();
-    let uc = SyncCurrenciesUseCase::new(repo, provider);
+    let uc = SyncCurrenciesUseCase::new(repo, provider, &[]);
 
     let err = uc.execute().await.unwrap_err();
     assert!(matches!(
@@ -66,11 +66,37 @@ async fn execute_returns_repository_error() {
 
     let provider = MockProvider::with_currencies_ok(fetched);
     let repo = MockRepository::with_save_error(RepositoryError::Storage("write failed".into()));
-    let uc = SyncCurrenciesUseCase::new(repo, provider);
+    let uc = SyncCurrenciesUseCase::new(repo, provider, &[]);
 
     let err = uc.execute().await.unwrap_err();
     assert!(matches!(
         err,
         SyncCurrenciesError::Repository(RepositoryError::Storage(_))
     ));
+}
+
+#[tokio::test]
+async fn execute_with_currency_filter() {
+    let fetched = vec![
+        make_currency("EUR", "Euro"),
+        make_currency("USD", "US Dollar"),
+        make_currency("GBP", "British Pound"),
+    ];
+
+    let provider = MockProvider::with_currencies_ok(fetched.clone());
+    let repo = MockRepository::empty();
+    let selected_currencies = vec![Currency::new("EUR").unwrap(), Currency::new("GBP").unwrap()];
+    let uc = SyncCurrenciesUseCase::new(repo, provider, &selected_currencies);
+
+    let result = uc.execute().await.unwrap();
+    assert_eq!(result, selected_currencies.len());
+
+    let persisted = uc.list_currencies().await.unwrap();
+    assert_eq!(
+        persisted,
+        vec![
+            make_currency("EUR", "Euro"),
+            make_currency("GBP", "British Pound")
+        ]
+    );
 }

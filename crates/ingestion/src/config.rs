@@ -61,7 +61,7 @@ impl IngestionConfig {
             .map(str::trim)
             .filter(|s| !s.is_empty())
             .filter_map(|s| Currency::new(s).ok())
-            .collect::<Vec<_>>();
+            .collect::<Vec<Currency>>();
 
         Ok(Self {
             database_url,

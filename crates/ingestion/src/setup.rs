@@ -59,7 +59,11 @@ pub(crate) async fn setup_and_launch() -> ExitCode {
 
     // ── Currency sync ───────────────────────────────────────────────
     let currency_repository = PostgresCurrencyRepository::new(pool);
-    let currency_sync_use_case = SyncCurrenciesUseCase::new(currency_repository, provider.clone());
+    let currency_sync_use_case = SyncCurrenciesUseCase::new(
+        currency_repository,
+        provider.clone(),
+        config.list_currencies(),
+    );
     let fetched_count = match currency_sync_use_case.execute().await {
         Ok(count) => count,
         Err(e) => {
