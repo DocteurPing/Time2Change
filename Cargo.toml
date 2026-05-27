@@ -19,7 +19,7 @@ tracing = "0"
 chrono = { version = "0", features = ["serde"] }
 rust_decimal = { version = "1", default-features = false, features = ["maths", "macros", "db-postgres", "serde"] }
 async-trait = "0"
-sqlx = { version = "0", features = ["runtime-tokio-rustls", "postgres", "chrono", "rust_decimal"] }
+sqlx = { version = "0", features = ["postgres", "chrono", "rust_decimal"] }
 wiremock = "0"
 reqwest = { version = "0", default-features = false, features = ["json", "rustls"] }
 dotenvy = "0"
