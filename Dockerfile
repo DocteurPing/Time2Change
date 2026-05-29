@@ -4,7 +4,7 @@
 # A dedicated stage so the cargo-chef binary itself is cached independently
 # from both the dependency cook and the final build.
 # =============================================================================
-FROM rust:1.95-slim-bookworm AS chef
+FROM rust:1.96-slim-bookworm AS chef
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends pkg-config \

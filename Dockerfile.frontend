@@ -10,7 +10,7 @@
 # Install Trunk and the wasm32 target once.  This layer is cached until the
 # Rust version or the RUN command changes.
 # =============================================================================
-FROM rust:1.95-slim-bookworm AS builder
+FROM rust:1.96-slim-bookworm AS builder
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends pkg-config \
