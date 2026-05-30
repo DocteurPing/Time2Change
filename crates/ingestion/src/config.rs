@@ -4,6 +4,7 @@
 //! Missing or invalid values cause an immediate, descriptive error
 //! so that misconfiguration is caught before any work begins.
 
+use std::collections::HashSet;
 use std::env;
 use std::time::Duration;
 
@@ -23,7 +24,7 @@ pub(crate) struct IngestionConfig {
     /// Interval between ingestion runs.
     interval: Duration,
     /// List of currencies to ingest.
-    list_currencies: Vec<Currency>,
+    list_currencies: HashSet<Currency>,
 }
 
 impl IngestionConfig {
@@ -61,7 +62,7 @@ impl IngestionConfig {
             .map(str::trim)
             .filter(|s| !s.is_empty())
             .filter_map(|s| Currency::new(s).ok())
-            .collect::<Vec<Currency>>();
+            .collect::<HashSet<Currency>>();
 
         Ok(Self {
             database_url,
@@ -91,8 +92,8 @@ impl IngestionConfig {
 
     /// Returns the list of currency pairs to ingest.
     #[must_use]
-    pub(crate) fn list_currencies(&self) -> &[Currency] {
-        &self.list_currencies
+    pub(crate) fn list_currencies(&self) -> HashSet<Currency> {
+        self.list_currencies.clone()
     }
 }
 
@@ -124,7 +125,9 @@ mod tests {
         );
         assert_eq!(
             config.list_currencies(),
-            &[Currency::new("EUR").unwrap(), Currency::new("GBP").unwrap()]
+            [Currency::new("EUR").unwrap(), Currency::new("GBP").unwrap()]
+                .into_iter()
+                .collect::<HashSet<_>>()
         );
         assert_eq!(config.interval(), DEFAULT_INTERVAL);
     }
@@ -141,7 +144,7 @@ mod tests {
             *config.start_date(),
             "2024-06-15T12:30:00Z".parse::<DateTime<Utc>>().unwrap()
         );
-        assert_eq!(config.list_currencies, vec![]);
+        assert_eq!(config.list_currencies, HashSet::new());
     }
 
     #[test]
