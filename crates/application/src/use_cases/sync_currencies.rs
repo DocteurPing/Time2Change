@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use domain::types::currency::Currency;
 use domain::types::currency_info::CurrencyInfo;
 use thiserror::Error;
@@ -19,7 +21,7 @@ where
 {
     repository: R,
     provider: C,
-    selected_currencies: Vec<Currency>,
+    selected_currencies: HashSet<Currency>,
 }
 
 impl<R, C> SyncCurrenciesUseCase<R, C>
@@ -29,11 +31,11 @@ where
 {
     /// Creates a new sync-currencies use case from a repository and provider.
     #[must_use]
-    pub fn new(repository: R, provider: C, selected_currencies: &[Currency]) -> Self {
+    pub const fn new(repository: R, provider: C, selected_currencies: HashSet<Currency>) -> Self {
         Self {
             repository,
             provider,
-            selected_currencies: selected_currencies.to_vec(),
+            selected_currencies,
         }
     }
 

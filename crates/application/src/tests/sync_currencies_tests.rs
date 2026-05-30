@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use domain::types::currency::Currency;
 use domain::types::currency_info::CurrencyInfo;
 
@@ -36,7 +38,7 @@ async fn execute_persists_all_fetched_items() {
 
     let provider = MockProvider::with_currencies_ok(fetched.clone());
     let repo = MockRepository::empty();
-    let uc = SyncCurrenciesUseCase::new(repo, provider, &[]);
+    let uc = SyncCurrenciesUseCase::new(repo, provider, HashSet::new());
 
     let result = uc.execute().await.unwrap();
     assert_eq!(result, fetched.len());
@@ -51,7 +53,7 @@ async fn execute_returns_provider_error() {
         "503 Service Unavailable".to_owned(),
     ));
     let repo = MockRepository::empty();
-    let uc = SyncCurrenciesUseCase::new(repo, provider, &[]);
+    let uc = SyncCurrenciesUseCase::new(repo, provider, HashSet::new());
 
     let err = uc.execute().await.unwrap_err();
     assert!(matches!(
@@ -66,7 +68,7 @@ async fn execute_returns_repository_error() {
 
     let provider = MockProvider::with_currencies_ok(fetched);
     let repo = MockRepository::with_save_error(RepositoryError::Storage("write failed".into()));
-    let uc = SyncCurrenciesUseCase::new(repo, provider, &[]);
+    let uc = SyncCurrenciesUseCase::new(repo, provider, HashSet::new());
 
     let err = uc.execute().await.unwrap_err();
     assert!(matches!(
@@ -86,10 +88,11 @@ async fn execute_with_currency_filter() {
     let provider = MockProvider::with_currencies_ok(fetched.clone());
     let repo = MockRepository::empty();
     let selected_currencies = vec![Currency::new("EUR").unwrap(), Currency::new("GBP").unwrap()];
-    let uc = SyncCurrenciesUseCase::new(repo, provider, &selected_currencies);
+    let selected_currencies_size = selected_currencies.len();
+    let uc = SyncCurrenciesUseCase::new(repo, provider, HashSet::from_iter(selected_currencies));
 
     let result = uc.execute().await.unwrap();
-    assert_eq!(result, selected_currencies.len());
+    assert_eq!(result, selected_currencies_size);
 
     let persisted = uc.list_currencies().await.unwrap();
     assert_eq!(
