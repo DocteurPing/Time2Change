@@ -79,11 +79,7 @@ pub(crate) async fn setup_and_launch() -> ExitCode {
 
     // ── Build currency pairs from persisted currencies ──────────────
     let currencies = match currency_sync_use_case.list_currencies().await {
-        Ok(c) if config.list_currencies().is_empty() => c,
-        Ok(c) => c
-            .into_iter()
-            .filter(|c| config.list_currencies().contains(c.code()))
-            .collect::<Vec<_>>(),
+        Ok(c) => c,
         Err(e) => {
             error!(error = %e, "Failed to load currencies from database");
             return ExitCode::FAILURE;
