@@ -94,6 +94,12 @@ impl FrankfurterClient {
             }
         })?;
 
+        if response.status() == reqwest::StatusCode::NOT_FOUND {
+            return Err(RateProviderError::PairNotSupported(
+                "404 Not Found".to_owned(),
+            ));
+        }
+
         if !response.status().is_success() {
             return Err(RateProviderError::ApiError(format!(
                 "HTTP {}",

@@ -64,7 +64,7 @@ pub(crate) async fn run_loop(
                     "Ingesting month"
                 );
 
-                for currency in currencies.iter() {
+                for currency in &currencies {
                     let span = tracing::info_span!(
                         "ingest_month",
                         currency  = %currency,
