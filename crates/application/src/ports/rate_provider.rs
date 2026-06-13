@@ -1,6 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use chrono::NaiveDate;
+use domain::types::currency::Currency;
 use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
@@ -26,9 +27,10 @@ pub trait RateProvider: Send + Sync {
     /// cannot be parsed into a valid list of [`ExchangeRate`] values.
     async fn get_rates_for_range(
         &self,
-        pair: &CurrencyPair,
+        list_currencies: &HashSet<Currency>,
         start: NaiveDate,
         end: NaiveDate,
+        currency: &Currency,
     ) -> Result<HashMap<CurrencyPair, Vec<ExchangeRate>>, RateProviderError>;
 
     /// Returns the list of available currencies.

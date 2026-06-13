@@ -58,7 +58,6 @@ impl PostgresExchangeRateRepository {
 impl ExchangeRateRepository for PostgresExchangeRateRepository {
     async fn save_rates(
         &self,
-        _pair: &CurrencyPair,
         rates: HashMap<CurrencyPair, Vec<ExchangeRate>>,
     ) -> Result<(), RepositoryError> {
         if rates.is_empty() {

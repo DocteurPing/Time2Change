@@ -1,5 +1,7 @@
+use std::collections::HashSet;
+
 use chrono::NaiveDate;
-use domain::types::currency_pair::CurrencyPair;
+use domain::types::currency::Currency;
 use thiserror::Error;
 
 use crate::ports::exchange_rate_repository::ExchangeRateRepository;
@@ -50,14 +52,18 @@ where
     /// fails.
     pub async fn fetch_rates_for_range(
         &self,
-        pair: &CurrencyPair,
+        list_currencies: &HashSet<Currency>,
         start: NaiveDate,
         end: NaiveDate,
+        currency: &Currency,
     ) -> Result<usize, IngestError> {
-        let rates = self.provider.get_rates_for_range(pair, start, end).await?;
+        let rates = self
+            .provider
+            .get_rates_for_range(list_currencies, start, end, currency)
+            .await?;
         let count = rates.values().map(Vec::len).sum();
 
-        self.repository.save_rates(pair, rates).await?;
+        self.repository.save_rates(rates).await?;
 
         Ok(count)
     }

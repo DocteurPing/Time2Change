@@ -2,8 +2,6 @@ use std::process::ExitCode;
 
 use application::use_cases::ingest_rates::IngestRatesUseCase;
 use application::use_cases::sync_currencies::SyncCurrenciesUseCase;
-use domain::types::currency_pair::CurrencyPair;
-use domain::types::utils::currency_info_list_to_currency_pairs;
 use infrastructure::currency::repository::PostgresCurrencyRepository;
 use infrastructure::exchange_rate::repository::PostgresExchangeRateRepository;
 use infrastructure::rate_provider::frankfurter::FrankfurterClient;
@@ -77,23 +75,9 @@ pub(crate) async fn setup_and_launch() -> ExitCode {
         "Currency sync completed successfully"
     );
 
-    // ── Build currency pairs from persisted currencies ──────────────
-    let currencies = match currency_sync_use_case.list_currencies().await {
-        Ok(c) => c,
-        Err(e) => {
-            error!(error = %e, "Failed to load currencies from database");
-            return ExitCode::FAILURE;
-        }
-    };
-
-    let pairs: Vec<CurrencyPair> = currency_info_list_to_currency_pairs(&currencies);
-
     let ingest_use_case = IngestRatesUseCase::new(exchange_rate_repository, provider);
 
-    // ── Ingestion loop ──────────────────────────────────────────────
-    info!(pair_count = pairs.len(), "Starting ingestion loop");
-
-    run_loop(&ingest_use_case, &pairs, &config).await;
+    run_loop(&ingest_use_case, &config).await;
 
     info!("Ingestion service shut down gracefully");
     ExitCode::SUCCESS

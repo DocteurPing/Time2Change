@@ -70,7 +70,6 @@ impl MockRepository {
 impl ExchangeRateRepository for MockRepository {
     async fn save_rates(
         &self,
-        _pair: &CurrencyPair,
         rates: HashMap<CurrencyPair, Vec<ExchangeRate>>,
     ) -> Result<(), RepositoryError> {
         let mut saved_rates = self.saved_rates.lock().unwrap();

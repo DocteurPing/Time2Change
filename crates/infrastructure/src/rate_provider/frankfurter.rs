@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use application::ports::rate_provider::{RateProvider, RateProviderError};
 use async_trait::async_trait;
@@ -85,11 +85,7 @@ impl FrankfurterClient {
         Ok(response)
     }
 
-    async fn fetch_pairs_and_validate(
-        &self,
-        url: &str,
-        pair: &CurrencyPair,
-    ) -> Result<Response, RateProviderError> {
+    async fn fetch_pairs_and_validate(&self, url: &str) -> Result<Response, RateProviderError> {
         let response = self.client.get(url).send().await.map_err(|e| {
             if e.is_timeout() {
                 RateProviderError::Timeout
@@ -97,10 +93,6 @@ impl FrankfurterClient {
                 RateProviderError::ApiError(e.to_string())
             }
         })?;
-
-        if response.status() == reqwest::StatusCode::NOT_FOUND {
-            return Err(RateProviderError::PairNotSupported(pair.to_string()));
-        }
 
         if !response.status().is_success() {
             return Err(RateProviderError::ApiError(format!(
@@ -116,10 +108,9 @@ impl FrankfurterClient {
     async fn fetch_pair_range(
         &self,
         url: &str,
-        pair: &CurrencyPair,
     ) -> Result<HashMap<CurrencyPair, Vec<ExchangeRate>>, RateProviderError> {
         let mut rates: HashMap<CurrencyPair, Vec<ExchangeRate>> = HashMap::new();
-        let response = self.fetch_pairs_and_validate(url, pair).await?;
+        let response = self.fetch_pairs_and_validate(url).await?;
         let list_rate: Vec<FrankfurterRangeResponse> = response
             .json()
             .await
@@ -143,19 +134,21 @@ impl FrankfurterClient {
 impl RateProvider for FrankfurterClient {
     async fn get_rates_for_range(
         &self,
-        pair: &CurrencyPair,
+        list_currencies: &HashSet<Currency>,
         start: NaiveDate,
         end: NaiveDate,
+        currency: &Currency,
     ) -> Result<HashMap<CurrencyPair, Vec<ExchangeRate>>, RateProviderError> {
+        let quote = list_currencies
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<String>>()
+            .join(",");
         let url = format!(
             "{}/rates?from={}&to={}&base={}&quotes={}",
-            self.base_url,
-            start,
-            end,
-            pair.base(),
-            pair.quote()
+            self.base_url, start, end, currency, quote
         );
-        self.fetch_pair_range(&url, pair).await
+        self.fetch_pair_range(&url).await
     }
 
     async fn fetch_currencies(&self) -> Result<Vec<CurrencyInfo>, RateProviderError> {

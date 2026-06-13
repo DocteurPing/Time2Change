@@ -25,7 +25,6 @@ pub trait ExchangeRateRepository: Send + Sync {
     /// Returns [`RepositoryError::Storage`] if the batch insert fails.
     async fn save_rates(
         &self,
-        pair: &CurrencyPair,
         rates: HashMap<CurrencyPair, Vec<ExchangeRate>>,
     ) -> Result<(), RepositoryError>;
 
