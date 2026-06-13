@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::NaiveDate;
 use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
@@ -27,7 +29,7 @@ pub trait RateProvider: Send + Sync {
         pair: &CurrencyPair,
         start: NaiveDate,
         end: NaiveDate,
-    ) -> Result<Vec<ExchangeRate>, RateProviderError>;
+    ) -> Result<HashMap<CurrencyPair, Vec<ExchangeRate>>, RateProviderError>;
 
     /// Returns the list of available currencies.
     ///

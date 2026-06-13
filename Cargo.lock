@@ -723,6 +723,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "rust_decimal",
+ "serde",
  "thiserror 2.0.18",
 ]
 

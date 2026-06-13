@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::ops::RangeInclusive;
 
 use chrono::{DateTime, Utc};
@@ -25,7 +26,7 @@ pub trait ExchangeRateRepository: Send + Sync {
     async fn save_rates(
         &self,
         pair: &CurrencyPair,
-        rates: &[ExchangeRate],
+        rates: HashMap<CurrencyPair, Vec<ExchangeRate>>,
     ) -> Result<(), RepositoryError>;
 
     /// Loads all stored exchange rates for the given pair within the provided

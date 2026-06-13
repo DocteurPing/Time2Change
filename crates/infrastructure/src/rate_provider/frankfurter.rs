@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use application::ports::rate_provider::{RateProvider, RateProviderError};
 use async_trait::async_trait;
 use chrono::{NaiveDate, NaiveTime, TimeZone, Utc};
@@ -115,26 +117,23 @@ impl FrankfurterClient {
         &self,
         url: &str,
         pair: &CurrencyPair,
-    ) -> Result<Vec<ExchangeRate>, RateProviderError> {
+    ) -> Result<HashMap<CurrencyPair, Vec<ExchangeRate>>, RateProviderError> {
+        let mut rates: HashMap<CurrencyPair, Vec<ExchangeRate>> = HashMap::new();
         let response = self.fetch_pairs_and_validate(url, pair).await?;
         let list_rate: Vec<FrankfurterRangeResponse> = response
             .json()
             .await
             .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
 
-        let base = pair.base().to_string();
-        let quote = pair.quote().to_string();
-        let rates = list_rate
-            .into_iter()
-            .map(|dto| {
-                let date = dto.date();
-                if dto.base() != base || dto.quote() != quote {
-                    return Err(RateProviderError::PairNotSupported(pair.to_string()));
-                }
-                let timestamp = Utc.from_utc_datetime(&date.and_time(NaiveTime::MIN));
-                Ok(ExchangeRate::new(timestamp, dto.rate()))
-            })
-            .collect::<Result<Vec<_>, RateProviderError>>()?;
+        for rate in list_rate {
+            let pair = CurrencyPair::new(rate.base().to_owned(), rate.quote().to_owned())
+                .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
+            let timestamp = Utc.from_utc_datetime(&rate.date().and_time(NaiveTime::MIN));
+            rates
+                .entry(pair)
+                .or_default()
+                .push(ExchangeRate::new(timestamp, rate.rate()));
+        }
 
         Ok(rates)
     }
@@ -147,7 +146,7 @@ impl RateProvider for FrankfurterClient {
         pair: &CurrencyPair,
         start: NaiveDate,
         end: NaiveDate,
-    ) -> Result<Vec<ExchangeRate>, RateProviderError> {
+    ) -> Result<HashMap<CurrencyPair, Vec<ExchangeRate>>, RateProviderError> {
         let url = format!(
             "{}/rates?from={}&to={}&base={}&quotes={}",
             self.base_url,

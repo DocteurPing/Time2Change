@@ -57,7 +57,7 @@ where
         let rates = self.provider.get_rates_for_range(pair, start, end).await?;
         let count = rates.len();
 
-        self.repository.save_rates(pair, &rates).await?;
+        self.repository.save_rates(pair, rates).await?;
 
         Ok(count)
     }

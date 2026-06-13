@@ -17,7 +17,7 @@ pub enum CurrencyPairError {
 /// The `base` currency is the currency being priced, and the `quote` currency
 /// is the currency used to express that price. For example, `EUR-USD` means
 /// one euro priced in U.S. dollars.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct CurrencyPair {
     base: Currency,
     quote: Currency,

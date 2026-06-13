@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use thiserror::Error;
 
 /// Errors that can occur while creating a [`Currency`].
@@ -20,7 +21,7 @@ pub enum CurrencyError {
 /// This value object stores the currency code in a compact fixed-size byte
 /// array and guarantees that every instance contains exactly three uppercase
 /// ASCII letters such as `EUR`, `USD`, or `JPY`.
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, Deserialize)]
 pub struct Currency {
     currency: [u8; 3],
 }

@@ -1,4 +1,5 @@
 use chrono::NaiveDate;
+use domain::types::currency::Currency;
 use rust_decimal::Decimal;
 use serde::Deserialize;
 
@@ -6,8 +7,8 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 pub struct FrankfurterRangeResponse {
     date: NaiveDate,
-    base: String,
-    quote: String,
+    base: Currency,
+    quote: Currency,
     rate: Decimal,
 }
 
@@ -20,13 +21,13 @@ impl FrankfurterRangeResponse {
 
     /// Returns the base currency code, as provided by the API.
     #[must_use]
-    pub fn base(&self) -> &str {
+    pub const fn base(&self) -> &Currency {
         &self.base
     }
 
     /// Returns the quote currency code, as provided by the API.
     #[must_use]
-    pub fn quote(&self) -> &str {
+    pub const fn quote(&self) -> &Currency {
         &self.quote
     }
 
