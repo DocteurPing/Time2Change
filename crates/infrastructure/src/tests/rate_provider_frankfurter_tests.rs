@@ -35,9 +35,10 @@ async fn returns_api_error_on_500() {
         CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
     let error = client
         .get_rates_for_range(
-            &pair,
+            &std::collections::HashSet::from([pair.quote().clone()]),
             NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
             NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
+            pair.base(),
         )
         .await;
     assert!(matches!(error, Err(RateProviderError::ApiError(_))));
@@ -56,9 +57,10 @@ async fn returns_timeout_on_request_timeout() {
         CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
     let error = client
         .get_rates_for_range(
-            &pair,
+            &std::collections::HashSet::from([pair.quote().clone()]),
             NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
             NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
+            pair.base(),
         )
         .await;
     assert!(matches!(error, Err(RateProviderError::Timeout)));
@@ -79,9 +81,10 @@ async fn returns_pair_not_supported_on_404() {
         CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
     let error = client
         .get_rates_for_range(
-            &pair,
+            &std::collections::HashSet::from([pair.quote().clone()]),
             NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
             NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
+            pair.base(),
         )
         .await;
     assert!(matches!(error, Err(RateProviderError::PairNotSupported(_))));
@@ -96,9 +99,10 @@ async fn returns_api_error_on_connection_refused() {
 
     let error = client
         .get_rates_for_range(
-            &pair,
+            &std::collections::HashSet::from([pair.quote().clone()]),
             NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
             NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
+            pair.base(),
         )
         .await;
     assert!(matches!(error, Err(RateProviderError::ApiError(_))));
@@ -286,27 +290,29 @@ async fn get_rates_for_range_returns_ok_on_valid_response() {
         CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
     let result = client
         .get_rates_for_range(
-            &pair,
+            &std::collections::HashSet::from([pair.quote().clone()]),
             NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
             NaiveDate::from_ymd_opt(2024, 1, 5).unwrap(),
+            pair.base(),
         )
         .await;
-    assert!(result.is_ok());
-    let result = result.unwrap();
-    assert!(result.len() == 4);
-    assert!(result.contains(&ExchangeRate::new(
+    assert!(result.is_ok(), "{:?}", result.err());
+    let result_map = result.unwrap();
+    let rates = result_map.get(&pair).unwrap();
+    assert_eq!(rates.len(), 4);
+    assert!(rates.contains(&ExchangeRate::new(
         chrono::Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap(),
         dec!(1.1077)
     )));
-    assert!(result.contains(&ExchangeRate::new(
+    assert!(rates.contains(&ExchangeRate::new(
         chrono::Utc.with_ymd_and_hms(2024, 1, 2, 0, 0, 0).unwrap(),
         dec!(1.1024)
     )));
-    assert!(result.contains(&ExchangeRate::new(
+    assert!(rates.contains(&ExchangeRate::new(
         chrono::Utc.with_ymd_and_hms(2024, 1, 3, 0, 0, 0).unwrap(),
         dec!(1.0936)
     )));
-    assert!(result.contains(&ExchangeRate::new(
+    assert!(rates.contains(&ExchangeRate::new(
         chrono::Utc.with_ymd_and_hms(2024, 1, 4, 0, 0, 0).unwrap(),
         dec!(1.092)
     )));
@@ -329,9 +335,10 @@ async fn get_rates_for_range_returns_err_on_invalid_response() {
         CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
     let result = client
         .get_rates_for_range(
-            &pair,
+            &std::collections::HashSet::from([pair.quote().clone()]),
             NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
             NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
+            pair.base(),
         )
         .await;
     assert!(result.is_err_and(|e| matches!(e, RateProviderError::ParseError(_))));
@@ -361,9 +368,10 @@ async fn get_rates_for_range_returns_err_on_wrong_date() {
         CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
     let result = client
         .get_rates_for_range(
-            &pair,
+            &std::collections::HashSet::from([pair.quote().clone()]),
             NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
             NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
+            pair.base(),
         )
         .await;
     assert!(result.is_err_and(|e| matches!(e, RateProviderError::ParseError(_))));
@@ -391,10 +399,11 @@ async fn get_rates_for_range_returns_err_on_wrong_pair() {
         CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
     let result = client
         .get_rates_for_range(
-            &pair,
+            &std::collections::HashSet::from([pair.quote().clone()]),
             NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
             NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
+            pair.base(),
         )
         .await;
-    assert!(result.is_err_and(|e| matches!(e, RateProviderError::PairNotSupported(_))));
+    assert!(result.is_err_and(|e| matches!(e, RateProviderError::ParseError(_))));
 }

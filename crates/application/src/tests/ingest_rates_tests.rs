@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use chrono::Utc;
 use rust_decimal::dec;
 
@@ -33,8 +35,10 @@ async fn fetch_pair_range() {
     let repo = MockRepository::empty();
     let uc = IngestRatesUseCase::new(repo, provider);
 
+    let mut set = HashSet::new();
+    set.insert(pair.quote().clone());
     let result = uc
-        .fetch_rates_for_range(&pair, now.date_naive(), now.date_naive())
+        .fetch_rates_for_range(&set, now.date_naive(), now.date_naive(), pair.base())
         .await
         .unwrap();
     assert_eq!(result, 1);

@@ -3,7 +3,6 @@ use application::ports::rate_provider::RateProvider;
 use application::use_cases::ingest_rates::IngestRatesUseCase;
 use chrono::naive::Days;
 use chrono::{Datelike, Months, NaiveDate};
-use domain::types::currency_pair::CurrencyPair;
 use tracing::{error, info, warn};
 
 use crate::config::IngestionConfig;
@@ -11,7 +10,6 @@ use crate::config::IngestionConfig;
 #[allow(clippy::too_many_lines)]
 pub(crate) async fn run_loop(
     use_case: &IngestRatesUseCase<impl ExchangeRateRepository, impl RateProvider>,
-    pairs: &[CurrencyPair],
     config: &IngestionConfig,
 ) {
     let mut interval = tokio::time::interval(config.interval());
@@ -23,6 +21,13 @@ pub(crate) async fn run_loop(
         error!("Failed to compute start of month for configured start date");
         return;
     };
+
+    let currencies = config.list_currencies();
+
+    if currencies.is_empty() {
+        error!("No currencies configured (CURRENCIES env var is empty) — nothing to ingest");
+        return;
+    }
 
     let ctrl_c = tokio::signal::ctrl_c();
     tokio::pin!(ctrl_c);
@@ -64,23 +69,23 @@ pub(crate) async fn run_loop(
                     "Ingesting month"
                 );
 
-                for pair in pairs {
+                for currency in &currencies {
                     let span = tracing::info_span!(
                         "ingest_month",
-                        pair  = %pair,
+                        currency  = %currency,
                         month = %month_start.format("%Y-%m"),
                     );
                     let _guard = span.enter();
 
-                    match use_case.fetch_rates_for_range(pair, month_start, month_end).await {
+                    match use_case.fetch_rates_for_range(&currencies, month_start, month_end, currency).await {
                         Ok(count) => info!(
-                            pair  = %pair,
+                            currency  = %currency,
                             month = %month_start.format("%Y-%m"),
                             count,
                             "Month rates ingested successfully"
                         ),
                         Err(e) => warn!(
-                            pair  = %pair,
+                            currency  = %currency,
                             month = %month_start.format("%Y-%m"),
                             error = %e,
                             "Failed to ingest month rates"

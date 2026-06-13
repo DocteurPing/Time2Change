@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use application::ports::rate_provider::{RateProvider, RateProviderError};
 use async_trait::async_trait;
 use chrono::{NaiveDate, NaiveTime, TimeZone, Utc};
@@ -14,7 +16,7 @@ const TIMEOUT_MILLIS: u64 = 5000;
 
 /// HTTP adapter for the Frankfurter public exchange-rate API.
 ///
-/// Wraps a [`reqwest::Client`] and translates HTTP responses into domain
+/// Wraps a [`Client`] and translates HTTP responses into domain
 /// [`ExchangeRate`] values, mapping all failure modes to [`RateProviderError`].
 #[derive(Debug, Clone)]
 pub struct FrankfurterClient {
@@ -74,30 +76,10 @@ impl FrankfurterClient {
             }
         })?;
 
-        if !response.status().is_success() {
-            return Err(RateProviderError::ApiError(format!(
-                "HTTP {}",
-                response.status()
-            )));
-        }
-        Ok(response)
-    }
-
-    async fn fetch_pairs_and_validate(
-        &self,
-        url: &str,
-        pair: &CurrencyPair,
-    ) -> Result<Response, RateProviderError> {
-        let response = self.client.get(url).send().await.map_err(|e| {
-            if e.is_timeout() {
-                RateProviderError::Timeout
-            } else {
-                RateProviderError::ApiError(e.to_string())
-            }
-        })?;
-
         if response.status() == reqwest::StatusCode::NOT_FOUND {
-            return Err(RateProviderError::PairNotSupported(pair.to_string()));
+            return Err(RateProviderError::PairNotSupported(
+                "404 Not Found".to_owned(),
+            ));
         }
 
         if !response.status().is_success() {
@@ -114,27 +96,23 @@ impl FrankfurterClient {
     async fn fetch_pair_range(
         &self,
         url: &str,
-        pair: &CurrencyPair,
-    ) -> Result<Vec<ExchangeRate>, RateProviderError> {
-        let response = self.fetch_pairs_and_validate(url, pair).await?;
+    ) -> Result<HashMap<CurrencyPair, Vec<ExchangeRate>>, RateProviderError> {
+        let mut rates: HashMap<CurrencyPair, Vec<ExchangeRate>> = HashMap::new();
+        let response = self.fetch(url).await?;
         let list_rate: Vec<FrankfurterRangeResponse> = response
             .json()
             .await
             .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
 
-        let base = pair.base().to_string();
-        let quote = pair.quote().to_string();
-        let rates = list_rate
-            .into_iter()
-            .map(|dto| {
-                let date = dto.date();
-                if dto.base() != base || dto.quote() != quote {
-                    return Err(RateProviderError::PairNotSupported(pair.to_string()));
-                }
-                let timestamp = Utc.from_utc_datetime(&date.and_time(NaiveTime::MIN));
-                Ok(ExchangeRate::new(timestamp, dto.rate()))
-            })
-            .collect::<Result<Vec<_>, RateProviderError>>()?;
+        for rate in list_rate {
+            let pair = CurrencyPair::new(rate.base().to_owned(), rate.quote().to_owned())
+                .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
+            let timestamp = Utc.from_utc_datetime(&rate.date().and_time(NaiveTime::MIN));
+            rates
+                .entry(pair)
+                .or_default()
+                .push(ExchangeRate::new(timestamp, rate.rate()));
+        }
 
         Ok(rates)
     }
@@ -144,19 +122,21 @@ impl FrankfurterClient {
 impl RateProvider for FrankfurterClient {
     async fn get_rates_for_range(
         &self,
-        pair: &CurrencyPair,
+        list_currencies: &HashSet<Currency>,
         start: NaiveDate,
         end: NaiveDate,
-    ) -> Result<Vec<ExchangeRate>, RateProviderError> {
+        currency: &Currency,
+    ) -> Result<HashMap<CurrencyPair, Vec<ExchangeRate>>, RateProviderError> {
+        let quote = list_currencies
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<String>>()
+            .join(",");
         let url = format!(
             "{}/rates?from={}&to={}&base={}&quotes={}",
-            self.base_url,
-            start,
-            end,
-            pair.base(),
-            pair.quote()
+            self.base_url, start, end, currency, quote
         );
-        self.fetch_pair_range(&url, pair).await
+        self.fetch_pair_range(&url).await
     }
 
     async fn fetch_currencies(&self) -> Result<Vec<CurrencyInfo>, RateProviderError> {

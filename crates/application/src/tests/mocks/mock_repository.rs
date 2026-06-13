@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::ops::RangeInclusive;
 use std::sync::{Arc, Mutex};
 
@@ -70,33 +70,35 @@ impl MockRepository {
 impl ExchangeRateRepository for MockRepository {
     async fn save_rates(
         &self,
-        pair: &CurrencyPair,
-        rates: &[ExchangeRate],
+        rates: HashMap<CurrencyPair, Vec<ExchangeRate>>,
     ) -> Result<(), RepositoryError> {
         let mut saved_rates = self.saved_rates.lock().unwrap();
-        saved_rates
-            .iter_mut()
-            .find(|ts| ts.pair() == pair)
-            .map(|ts| {
-                // Mimic Postgres `ON CONFLICT DO NOTHING`: preserve existing values on duplicate timestamps.
-                for rate in rates {
-                    let ts_key = rate.timestamp();
-                    if !ts.rates().contains_key(ts_key) {
-                        ts.add_rate(*ts_key, *rate.rate());
+
+        for (p, p_rates) in rates {
+            let mut handled = false;
+            for ts in saved_rates.iter_mut() {
+                if ts.pair() == &p {
+                    for rate in &p_rates {
+                        let ts_key = rate.timestamp();
+                        if !ts.rates().contains_key(ts_key) {
+                            ts.add_rate(*ts_key, *rate.rate());
+                        }
                     }
+                    handled = true;
+                    break;
                 }
-            })
-            .unwrap_or_else(|| {
-                // When creating a new TimeSeries, also avoid overwriting duplicates within `rates`.
+            }
+            if !handled {
                 let mut map = BTreeMap::new();
-                for r in rates {
+                for r in &p_rates {
                     let key = r.timestamp();
                     if !map.contains_key(key) {
                         map.insert(*key, *r.rate());
                     }
                 }
-                saved_rates.push(TimeSeries::new(pair.clone(), map));
-            });
+                saved_rates.push(TimeSeries::new(p, map));
+            }
+        }
         drop(saved_rates);
 
         match &self.save_result {

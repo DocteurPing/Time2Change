@@ -1,4 +1,7 @@
+use std::collections::{HashMap, HashSet};
+
 use chrono::NaiveDate;
+use domain::types::currency::Currency;
 use domain::types::currency_info::CurrencyInfo;
 use domain::types::currency_pair::CurrencyPair;
 use domain::types::exchange_rate::ExchangeRate;
@@ -11,11 +14,13 @@ use thiserror::Error;
 /// business logic.
 #[async_trait::async_trait]
 pub trait RateProvider: Send + Sync {
-    /// Retrieves all exchange rates for `pair` between `start` and `end`
-    /// (inclusive).
+    /// Retrieves all exchange rates for `currency` between `start` and `end`
+    /// (inclusive) for all the `list_currencies` provided
     ///
-    /// Implementations should return one [`ExchangeRate`] per trading day
-    /// within the requested range, sorted in ascending order by timestamp.
+    /// Implementations should return one [`HashMap<CurrencyPair, Vec<ExchangeRate>>`]
+    /// for each currency pair that can be formed between `currency` and each of the
+    /// `list_currencies`. Each vector of [`ExchangeRate`] values should be sorted
+    /// in ascending order by timestamp.
     ///
     /// # Errors
     ///
@@ -24,10 +29,11 @@ pub trait RateProvider: Send + Sync {
     /// cannot be parsed into a valid list of [`ExchangeRate`] values.
     async fn get_rates_for_range(
         &self,
-        pair: &CurrencyPair,
+        list_currencies: &HashSet<Currency>,
         start: NaiveDate,
         end: NaiveDate,
-    ) -> Result<Vec<ExchangeRate>, RateProviderError>;
+        currency: &Currency,
+    ) -> Result<HashMap<CurrencyPair, Vec<ExchangeRate>>, RateProviderError>;
 
     /// Returns the list of available currencies.
     ///

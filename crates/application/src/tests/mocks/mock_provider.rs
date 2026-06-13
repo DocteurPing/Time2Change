@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use chrono::NaiveDate;
 use domain::types::currency::Currency;
 use domain::types::currency_info::CurrencyInfo;
@@ -45,12 +47,21 @@ impl MockProvider {
 impl RateProvider for MockProvider {
     async fn get_rates_for_range(
         &self,
-        _pair: &CurrencyPair,
+        _list_currencies: &HashSet<Currency>,
         _start: NaiveDate,
         _end: NaiveDate,
-    ) -> Result<Vec<ExchangeRate>, RateProviderError> {
+        currency: &Currency,
+    ) -> Result<HashMap<CurrencyPair, Vec<ExchangeRate>>, RateProviderError> {
         match &self.rates_result {
-            Ok(r) => Ok(vec![r.clone()]),
+            Ok(r) => {
+                let mut m = HashMap::new();
+                m.insert(
+                    CurrencyPair::new(currency.clone(), Currency::try_from("USD").unwrap())
+                        .unwrap(),
+                    vec![r.clone()],
+                );
+                Ok(m)
+            }
             Err(e) => Err(e.clone()),
         }
     }

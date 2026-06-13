@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::ops::RangeInclusive;
 
 use application::ports::exchange_rate_repository::ExchangeRateRepository;
@@ -58,29 +58,28 @@ impl PostgresExchangeRateRepository {
 impl ExchangeRateRepository for PostgresExchangeRateRepository {
     async fn save_rates(
         &self,
-        pair: &CurrencyPair,
-        rates: &[ExchangeRate],
+        rates: HashMap<CurrencyPair, Vec<ExchangeRate>>,
     ) -> Result<(), RepositoryError> {
         if rates.is_empty() {
             return Ok(());
         }
-
-        let timestamp: Vec<DateTime<Utc>> = rates
-            .iter()
-            .map(|r| normalize_timestamp(*r.timestamp()))
-            .collect();
-        let rate: Vec<Decimal> = rates.iter().map(|r| *r.rate()).collect();
-
-        sqlx::query_file!(
-            "queries/rates_insert.sql",
-            pair.base().to_string(),
-            pair.quote().to_string(),
-            &timestamp,
-            &rate,
-        )
-        .execute(&self.pool)
-        .await
-        .map_err(to_repository_error)?;
+        for (pair, rate) in rates {
+            let timestamps: Vec<DateTime<Utc>> = rate
+                .iter()
+                .map(|r| normalize_timestamp(*r.timestamp()))
+                .collect();
+            let rates: Vec<Decimal> = rate.iter().map(|r| *r.rate()).collect();
+            sqlx::query_file!(
+                "queries/rates_insert.sql",
+                pair.base().to_string(),
+                pair.quote().to_string(),
+                &timestamps,
+                &rates,
+            )
+            .execute(&self.pool)
+            .await
+            .map_err(to_repository_error)?;
+        }
 
         Ok(())
     }

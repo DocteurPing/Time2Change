@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use thiserror::Error;
 
 /// Errors that can occur while creating a [`Currency`].
@@ -20,7 +21,8 @@ pub enum CurrencyError {
 /// This value object stores the currency code in a compact fixed-size byte
 /// array and guarantees that every instance contains exactly three uppercase
 /// ASCII letters such as `EUR`, `USD`, or `JPY`.
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, Deserialize)]
+#[serde(try_from = "String")]
 pub struct Currency {
     currency: [u8; 3],
 }
@@ -64,6 +66,14 @@ impl TryFrom<&str> for Currency {
     /// Propagates the same validation errors as [`Currency::new`].
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Self::new(value)
+    }
+}
+
+impl TryFrom<String> for Currency {
+    type Error = CurrencyError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::new(&value)
     }
 }
 

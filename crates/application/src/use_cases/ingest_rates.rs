@@ -1,12 +1,14 @@
+use std::collections::HashSet;
+
 use chrono::NaiveDate;
-use domain::types::currency_pair::CurrencyPair;
+use domain::types::currency::Currency;
 use thiserror::Error;
 
 use crate::ports::exchange_rate_repository::ExchangeRateRepository;
 use crate::ports::rate_provider::{RateProvider, RateProviderError};
 use crate::ports::repository_errors::RepositoryError;
 
-/// Use case that fetches the latest exchange rate for a currency pair and
+/// Use case that fetches the exchange rates for a currency and a list of pair, then
 /// persists it through the configured repository.
 ///
 /// This workflow coordinates two application ports:
@@ -39,9 +41,9 @@ where
         }
     }
 
-    /// Fetches all exchange rates for `pair` between `start` and `end`
-    /// (inclusive), persists the entire batch, and returns the number of
-    /// rates ingested.
+    /// Fetches all exchange rates for `currency` between `start` and `end`
+    /// (inclusive), for all the given `list_currencies` persists the entire batch,
+    /// and returns the number of rates ingested.
     ///
     /// # Errors
     ///
@@ -50,14 +52,18 @@ where
     /// fails.
     pub async fn fetch_rates_for_range(
         &self,
-        pair: &CurrencyPair,
+        list_currencies: &HashSet<Currency>,
         start: NaiveDate,
         end: NaiveDate,
+        currency: &Currency,
     ) -> Result<usize, IngestError> {
-        let rates = self.provider.get_rates_for_range(pair, start, end).await?;
-        let count = rates.len();
+        let rates = self
+            .provider
+            .get_rates_for_range(list_currencies, start, end, currency)
+            .await?;
+        let count = rates.values().map(Vec::len).sum();
 
-        self.repository.save_rates(pair, &rates).await?;
+        self.repository.save_rates(rates).await?;
 
         Ok(count)
     }

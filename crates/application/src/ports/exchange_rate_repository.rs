@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::ops::RangeInclusive;
 
 use chrono::{DateTime, Utc};
@@ -14,7 +15,7 @@ use crate::ports::repository_errors::RepositoryError;
 /// can be backed by databases, files, caches, or external services.
 #[async_trait::async_trait]
 pub trait ExchangeRateRepository: Send + Sync {
-    /// Persists a batch of exchange rates for the given currency pair.
+    /// Persists a batch of exchange rates for multiple currency pairs.
     ///
     /// Implementations may reject duplicate or conflicting records depending on
     /// the storage model.
@@ -24,8 +25,7 @@ pub trait ExchangeRateRepository: Send + Sync {
     /// Returns [`RepositoryError::Storage`] if the batch insert fails.
     async fn save_rates(
         &self,
-        pair: &CurrencyPair,
-        rates: &[ExchangeRate],
+        rates: HashMap<CurrencyPair, Vec<ExchangeRate>>,
     ) -> Result<(), RepositoryError>;
 
     /// Loads all stored exchange rates for the given pair within the provided
