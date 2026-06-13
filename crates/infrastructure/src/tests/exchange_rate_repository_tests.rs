@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use application::ports::exchange_rate_repository::ExchangeRateRepository;
 use chrono::{DateTime, TimeZone, Utc};
 use domain::types::currency::Currency;
@@ -30,7 +32,9 @@ async fn save_and_load_round_trip(pool: PgPool) {
     let pair = make_pair();
     let rate = ExchangeRate::new(now, dec!(1.0850));
 
-    repo.save_rates(&pair, &[rate]).await.unwrap();
+    let mut map = HashMap::new();
+    map.insert(pair.clone(), vec![rate]);
+    repo.save_rates(&pair, map).await.unwrap();
 
     let range = (now - chrono::Duration::seconds(1))..=(now + chrono::Duration::seconds(1));
     let series = repo.load_rates(&pair, &range).await.unwrap();
@@ -60,7 +64,9 @@ async fn save_multiple_rates(pool: PgPool) {
         ExchangeRate::new(now + chrono::Duration::seconds(120), dec!(1.0870)),
     ];
 
-    repo.save_rates(&pair, &rates).await.unwrap();
+    let mut map = HashMap::new();
+    map.insert(pair.clone(), rates);
+    repo.save_rates(&pair, map).await.unwrap();
 
     let range = (now - chrono::Duration::seconds(1))..=(now + chrono::Duration::seconds(120));
     let series = repo.load_rates(&pair, &range).await.unwrap();
@@ -86,12 +92,13 @@ async fn save_duplicate_rates(pool: PgPool) {
     let rate1 = ExchangeRate::new(now, dec!(1.0850));
     let rate2 = ExchangeRate::new(now, dec!(1.0860)); // same timestamp, different rate
 
-    repo.save_rates(&pair, std::slice::from_ref(&rate1))
-        .await
-        .unwrap();
-    repo.save_rates(&pair, std::slice::from_ref(&rate2))
-        .await
-        .unwrap(); // should be ignored
+    let mut map1 = HashMap::new();
+    map1.insert(pair.clone(), vec![rate1]);
+    repo.save_rates(&pair, map1).await.unwrap();
+
+    let mut map2 = HashMap::new();
+    map2.insert(pair.clone(), vec![rate2]);
+    repo.save_rates(&pair, map2).await.unwrap(); // should be ignored
 
     let range = (now - chrono::Duration::seconds(1))..=(now + chrono::Duration::seconds(1));
     let series = repo.load_rates(&pair, &range).await.unwrap();
@@ -109,9 +116,9 @@ async fn save_duplicate_in_batch(pool: PgPool) {
     let rate1 = ExchangeRate::new(now, dec!(1.0850));
     let rate2 = ExchangeRate::new(now, dec!(1.0860)); // same timestamp, different rate
 
-    repo.save_rates(&pair, &[rate1.clone(), rate2.clone()])
-        .await
-        .unwrap(); // one of them should be ignored
+    let mut map = HashMap::new();
+    map.insert(pair.clone(), vec![rate1, rate2]);
+    repo.save_rates(&pair, map).await.unwrap(); // one of them should be ignored
 
     let range = (now - chrono::Duration::seconds(1))..=(now + chrono::Duration::seconds(1));
     let series = repo.load_rates(&pair, &range).await.unwrap();

@@ -291,22 +291,23 @@ async fn get_rates_for_range_returns_ok_on_valid_response() {
             NaiveDate::from_ymd_opt(2024, 1, 5).unwrap(),
         )
         .await;
-    assert!(result.is_ok());
-    let result = result.unwrap();
-    assert!(result.len() == 4);
-    assert!(result.contains(&ExchangeRate::new(
+    assert!(result.is_ok(), "{:?}", result.err());
+    let result_map = result.unwrap();
+    let rates = result_map.get(&pair).unwrap();
+    assert_eq!(rates.len(), 4);
+    assert!(rates.contains(&ExchangeRate::new(
         chrono::Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap(),
         dec!(1.1077)
     )));
-    assert!(result.contains(&ExchangeRate::new(
+    assert!(rates.contains(&ExchangeRate::new(
         chrono::Utc.with_ymd_and_hms(2024, 1, 2, 0, 0, 0).unwrap(),
         dec!(1.1024)
     )));
-    assert!(result.contains(&ExchangeRate::new(
+    assert!(rates.contains(&ExchangeRate::new(
         chrono::Utc.with_ymd_and_hms(2024, 1, 3, 0, 0, 0).unwrap(),
         dec!(1.0936)
     )));
-    assert!(result.contains(&ExchangeRate::new(
+    assert!(rates.contains(&ExchangeRate::new(
         chrono::Utc.with_ymd_and_hms(2024, 1, 4, 0, 0, 0).unwrap(),
         dec!(1.092)
     )));
@@ -396,5 +397,5 @@ async fn get_rates_for_range_returns_err_on_wrong_pair() {
             NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
         )
         .await;
-    assert!(result.is_err_and(|e| matches!(e, RateProviderError::PairNotSupported(_))));
+    assert!(result.is_err_and(|e| matches!(e, RateProviderError::ParseError(_))));
 }

@@ -55,7 +55,7 @@ where
         end: NaiveDate,
     ) -> Result<usize, IngestError> {
         let rates = self.provider.get_rates_for_range(pair, start, end).await?;
-        let count = rates.len();
+        let count = rates.values().map(Vec::len).sum();
 
         self.repository.save_rates(pair, rates).await?;
 
