@@ -14,11 +14,13 @@ use thiserror::Error;
 /// business logic.
 #[async_trait::async_trait]
 pub trait RateProvider: Send + Sync {
-    /// Retrieves all exchange rates for `pair` between `start` and `end`
-    /// (inclusive).
+    /// Retrieves all exchange rates for `currency` between `start` and `end`
+    /// (inclusive) for all the `list_currencies` provided
     ///
-    /// Implementations should return one [`ExchangeRate`] per trading day
-    /// within the requested range, sorted in ascending order by timestamp.
+    /// Implementations should return one [`HashMap<CurrencyPair, Vec<ExchangeRate>>`]
+    /// for each currency pair that can be formed between `currency` and each of the
+    /// `list_currencies`. Each vector of [`ExchangeRate`] values should be sorted
+    /// in ascending order by timestamp.
     ///
     /// # Errors
     ///

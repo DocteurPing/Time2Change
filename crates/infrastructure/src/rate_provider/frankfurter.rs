@@ -16,7 +16,7 @@ const TIMEOUT_MILLIS: u64 = 5000;
 
 /// HTTP adapter for the Frankfurter public exchange-rate API.
 ///
-/// Wraps a [`reqwest::Client`] and translates HTTP responses into domain
+/// Wraps a [`Client`] and translates HTTP responses into domain
 /// [`ExchangeRate`] values, mapping all failure modes to [`RateProviderError`].
 #[derive(Debug, Clone)]
 pub struct FrankfurterClient {
@@ -76,24 +76,6 @@ impl FrankfurterClient {
             }
         })?;
 
-        if !response.status().is_success() {
-            return Err(RateProviderError::ApiError(format!(
-                "HTTP {}",
-                response.status()
-            )));
-        }
-        Ok(response)
-    }
-
-    async fn fetch_pairs_and_validate(&self, url: &str) -> Result<Response, RateProviderError> {
-        let response = self.client.get(url).send().await.map_err(|e| {
-            if e.is_timeout() {
-                RateProviderError::Timeout
-            } else {
-                RateProviderError::ApiError(e.to_string())
-            }
-        })?;
-
         if response.status() == reqwest::StatusCode::NOT_FOUND {
             return Err(RateProviderError::PairNotSupported(
                 "404 Not Found".to_owned(),
@@ -116,7 +98,7 @@ impl FrankfurterClient {
         url: &str,
     ) -> Result<HashMap<CurrencyPair, Vec<ExchangeRate>>, RateProviderError> {
         let mut rates: HashMap<CurrencyPair, Vec<ExchangeRate>> = HashMap::new();
-        let response = self.fetch_pairs_and_validate(url).await?;
+        let response = self.fetch(url).await?;
         let list_rate: Vec<FrankfurterRangeResponse> = response
             .json()
             .await

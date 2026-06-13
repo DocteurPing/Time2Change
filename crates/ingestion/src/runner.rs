@@ -24,6 +24,11 @@ pub(crate) async fn run_loop(
 
     let currencies = config.list_currencies();
 
+    if currencies.is_empty() {
+        error!("No currencies configured (CURRENCIES env var is empty) — nothing to ingest");
+        return;
+    }
+
     let ctrl_c = tokio::signal::ctrl_c();
     tokio::pin!(ctrl_c);
 

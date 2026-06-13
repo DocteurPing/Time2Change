@@ -15,7 +15,7 @@ use crate::ports::repository_errors::RepositoryError;
 /// can be backed by databases, files, caches, or external services.
 #[async_trait::async_trait]
 pub trait ExchangeRateRepository: Send + Sync {
-    /// Persists a batch of exchange rates for the given currency pair.
+    /// Persists a batch of exchange rates for multiple currency pairs.
     ///
     /// Implementations may reject duplicate or conflicting records depending on
     /// the storage model.
