@@ -24,7 +24,7 @@ pub(crate) async fn list_currencies<R: ExchangeRateRepository, C: CurrencyReposi
     Ok(Json(
         currencies
             .into_iter()
-            .map(|currency| currency.code().to_string())
+            .map(|currency| format!("{} - {}", currency.code(), currency.name()))
             .collect(),
     ))
 }
