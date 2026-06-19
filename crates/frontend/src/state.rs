@@ -62,8 +62,8 @@ impl AppState {
     pub(crate) fn analyze(self) {
         self.analysis.set(None);
 
-        let current_base = self.base.get_untracked();
-        let current_quote = self.quote.get_untracked();
+        let current_base = self.base.get_untracked()[0..3].to_owned();
+        let current_quote = self.quote.get_untracked()[0..3].to_owned();
         let current_days_raw = self.days.get_untracked();
 
         let parsed_days =
