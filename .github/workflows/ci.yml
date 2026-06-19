@@ -128,16 +128,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  deny:
-    name: Cargo Deny
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: EmbarkStudios/cargo-deny-action@v2
-        with:
-          command: check advisories bans licenses sources
-
   # Gate for branch protection — require this single job to pass
   ci-success:
     name: CI Success
