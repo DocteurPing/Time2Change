@@ -46,7 +46,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 # nginx serves static files and proxies /currencies, /analyze to the
 # API container via the configuration in docker/nginx.conf.
 # =============================================================================
-FROM nginx:1.31-alpine AS frontend
+FROM nginx:1.31.2-alpine AS frontend
 
 COPY --from=builder /app/crates/frontend/dist /usr/share/nginx/html
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
