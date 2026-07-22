@@ -181,7 +181,7 @@ mod tests {
             now,
         );
 
-        assert!(rec.recommendation() == Recommendation::ChangeNow);
+        assert_eq!(rec.recommendation(), Recommendation::ChangeNow);
     }
 
     #[test]
@@ -195,7 +195,7 @@ mod tests {
             now,
         );
 
-        assert!(rec.recommendation() == Recommendation::Wait);
+        assert_eq!(rec.recommendation(), Recommendation::Wait);
     }
 
     #[test]
@@ -352,7 +352,10 @@ mod tests {
         );
         let analysis = PairAnalysis::new(make_pair(), 10, dec!(80), rec);
 
-        assert!(analysis.recommendation().recommendation() == Recommendation::ChangeNow);
+        assert_eq!(
+            analysis.recommendation().recommendation(),
+            Recommendation::ChangeNow
+        );
         assert_eq!(analysis.recommendation().confidence(), &dec!(0.88));
         assert_eq!(analysis.recommendation().reasoning(), "go now");
         assert_eq!(analysis.recommendation().timestamp(), &now);
@@ -370,7 +373,10 @@ mod tests {
         );
         let analysis = PairAnalysis::new(make_pair(), 5, dec!(60), rec);
 
-        assert!(analysis.recommendation().recommendation() == Recommendation::Wait);
+        assert_eq!(
+            analysis.recommendation().recommendation(),
+            Recommendation::Wait
+        );
         assert_eq!(analysis.recommendation().confidence(), &dec!(0.2));
     }
 

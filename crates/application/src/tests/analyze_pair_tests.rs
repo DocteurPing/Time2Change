@@ -70,7 +70,10 @@ async fn execute_rate_near_top_recommends_change() {
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
 
-    assert!(result.recommendation().recommendation() == Recommendation::ChangeNow);
+    assert_eq!(
+        result.recommendation().recommendation(),
+        Recommendation::ChangeNow
+    );
 }
 
 #[tokio::test]
@@ -96,7 +99,10 @@ async fn execute_rate_near_bottom_recommends_wait() {
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
 
-    assert!(result.recommendation().recommendation() == Recommendation::Wait);
+    assert_eq!(
+        result.recommendation().recommendation(),
+        Recommendation::Wait
+    );
 }
 
 #[tokio::test]
@@ -122,7 +128,10 @@ async fn execute_rate_in_middle_recommends_neutral() {
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
 
-    assert!(result.recommendation().recommendation() == Recommendation::Neutral);
+    assert_eq!(
+        result.recommendation().recommendation(),
+        Recommendation::Neutral
+    );
 }
 
 // ── Tests: reasoning text ───────────────────────────────────────
@@ -412,7 +421,10 @@ async fn execute_position_exactly_at_085_recommends_change() {
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
 
-    assert!(result.recommendation().recommendation() == Recommendation::ChangeNow);
+    assert_eq!(
+        result.recommendation().recommendation(),
+        Recommendation::ChangeNow
+    );
 }
 
 #[tokio::test]
@@ -437,5 +449,8 @@ async fn execute_position_just_below_085_recommends_change_now() {
 
     let result = uc.execute(make_pair(), 30).await.unwrap();
 
-    assert!(result.recommendation().recommendation() == Recommendation::ChangeNow);
+    assert_eq!(
+        result.recommendation().recommendation(),
+        Recommendation::ChangeNow
+    );
 }
