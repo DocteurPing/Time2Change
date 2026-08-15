@@ -16,5 +16,11 @@ infrastructure = { path = "../infrastructure" }
 domain = { path = "../domain" }
 shared = { path = "../shared" }
 
+[dev-dependencies]
+# `test-util` enables the paused clock the runner tests drive time with.
+tokio = { workspace = true, features = ["test-util"] }
+async-trait.workspace = true
+rust_decimal.workspace = true
+
 [lints]
 workspace = true

@@ -7,6 +7,9 @@ mod models;
 mod state;
 mod validation;
 
+#[cfg(test)]
+mod tests;
+
 use components::app::App;
 use leptos::prelude::*;
 

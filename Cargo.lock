@@ -60,15 +60,21 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "application",
+ "async-trait",
  "axum",
+ "chrono",
  "domain",
  "dotenvy",
+ "http-body-util",
  "infrastructure",
+ "rust_decimal",
  "serde",
+ "serde_json",
  "shared",
  "sqlx",
  "thiserror 2.0.20",
  "tokio",
+ "tower",
  "tracing",
 ]
 
@@ -861,8 +867,10 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "tokio",
  "wasm-bindgen-futures",
  "web-sys",
+ "wiremock",
 ]
 
 [[package]]
@@ -1435,10 +1443,12 @@ name = "ingestion"
 version = "0.1.0"
 dependencies = [
  "application",
+ "async-trait",
  "chrono",
  "domain",
  "dotenvy",
  "infrastructure",
+ "rust_decimal",
  "shared",
  "sqlx",
  "tokio",
@@ -2831,6 +2841,7 @@ dependencies = [
 name = "shared"
 version = "0.1.0"
 dependencies = [
+ "tracing",
  "tracing-subscriber",
 ]
 

@@ -14,3 +14,9 @@ serde_json.workspace = true
 serde.workspace = true
 console_error_panic_hook.workspace = true
 reqwest.workspace = true
+
+[dev-dependencies]
+# The API client is exercised natively against a stub HTTP server; the Leptos
+# components still need a wasm runner and are not covered here.
+tokio = { workspace = true }
+wiremock.workspace = true

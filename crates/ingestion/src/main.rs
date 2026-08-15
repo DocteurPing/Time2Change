@@ -8,6 +8,9 @@ mod config;
 mod runner;
 mod setup;
 
+#[cfg(test)]
+mod tests;
+
 use std::process::ExitCode;
 
 use crate::setup::setup_and_launch;

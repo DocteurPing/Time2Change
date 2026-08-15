@@ -18,13 +18,13 @@ const DEFAULT_START_DATE: &str = "2026-01-01T00:00:00Z";
 /// Backfill walks a bounded number of months once per process start, so a
 /// short delay is enough to stay polite towards the upstream provider without
 /// making the initial catch-up take hours.
-const DEFAULT_BACKFILL_INTERVAL_SECS: u64 = 1;
+pub(crate) const DEFAULT_BACKFILL_INTERVAL_SECS: u64 = 1;
 
 /// Delay between two steady-state polls once the backfill has caught up.
 ///
 /// Reference rates are published at most once per business day, so polling
 /// every six hours is ample and keeps upstream traffic negligible.
-const DEFAULT_POLL_INTERVAL_SECS: u64 = 6 * 60 * 60;
+pub(crate) const DEFAULT_POLL_INTERVAL_SECS: u64 = 6 * 60 * 60;
 
 /// Ingestion service configuration loaded from the environment.
 #[derive(Debug, Clone)]
@@ -79,7 +79,7 @@ impl IngestionConfig {
         Self::from_env_impl(|key| env::var(key))
     }
 
-    fn from_env_impl<F>(var_fn: F) -> Result<Self, String>
+    pub(crate) fn from_env_impl<F>(var_fn: F) -> Result<Self, String>
     where
         F: Fn(&str) -> Result<String, env::VarError>,
     {

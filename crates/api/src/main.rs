@@ -25,6 +25,9 @@ mod errors;
 mod routes;
 mod state;
 
+#[cfg(test)]
+mod tests;
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     init_tracing();
