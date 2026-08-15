@@ -54,9 +54,20 @@ impl std::error::Error for ApiError {}
 type ApiResult<T> = Result<T, ApiError>;
 
 pub(crate) async fn fetch_currencies(client: &Client) -> ApiResult<Vec<String>> {
+    fetch_currencies_from(client, API_BASE_URL).await
+}
+
+/// [`fetch_currencies`], against an explicit base URL.
+///
+/// The public wrapper always targets the compile-time [`API_BASE_URL`]; this
+/// form exists so the request and response handling can be exercised against a
+/// local stub server.
+pub(crate) async fn fetch_currencies_from(
+    client: &Client,
+    base_url: &str,
+) -> ApiResult<Vec<String>> {
     let endpoint = "/currencies";
-    let mut url =
-        reqwest::Url::parse(API_BASE_URL).map_err(|e| ApiError::Network(e.to_string()))?;
+    let mut url = reqwest::Url::parse(base_url).map_err(|e| ApiError::Network(e.to_string()))?;
     url.set_path(endpoint);
 
     let response = client
@@ -94,9 +105,19 @@ pub(crate) async fn analyze_pair(
     quote: &str,
     days: u32,
 ) -> ApiResult<PairAnalysisResponse> {
+    analyze_pair_from(client, API_BASE_URL, base, quote, days).await
+}
+
+/// [`analyze_pair`], against an explicit base URL.
+pub(crate) async fn analyze_pair_from(
+    client: &Client,
+    base_url: &str,
+    base: &str,
+    quote: &str,
+    days: u32,
+) -> ApiResult<PairAnalysisResponse> {
     let endpoint = "/analyze";
-    let mut url =
-        reqwest::Url::parse(API_BASE_URL).map_err(|e| ApiError::Network(e.to_string()))?;
+    let mut url = reqwest::Url::parse(base_url).map_err(|e| ApiError::Network(e.to_string()))?;
     url.set_path(endpoint);
     url.query_pairs_mut()
         .append_pair("base", base)

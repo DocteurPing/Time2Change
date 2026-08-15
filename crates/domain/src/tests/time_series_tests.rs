@@ -226,3 +226,29 @@ fn add_rate_overwrites_existing_timestamp() {
     assert_eq!(series.rates().len(), 1);
     assert_eq!(series.rates().get(&timestamp), Some(&second_rate));
 }
+
+#[test]
+fn sub_second_samples_are_treated_as_perfectly_spaced() {
+    // Gaps are measured in whole seconds, so observations closer together than
+    // one second collapse to a zero-length gap. Completeness and gap
+    // consistency then have no spacing to judge and fall back to a full score
+    // rather than dividing by zero.
+    let pair = CurrencyPair::new(
+        Currency::try_from("USD").unwrap(),
+        Currency::try_from("EUR").unwrap(),
+    )
+    .unwrap();
+
+    let base = Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap();
+    let mut rates = BTreeMap::new();
+    for (i, value) in [dec!(1.10), dec!(1.11), dec!(1.12)].into_iter().enumerate() {
+        let offset = chrono::Duration::milliseconds(200 * i64::try_from(i).unwrap());
+        rates.insert(base + offset, value);
+    }
+
+    let quality =
+        TimeSeries::new(pair, rates).calculate_rate_quality(&RateQualityConfig::default());
+
+    assert_eq!(*quality.breakdown().completeness(), dec!(100));
+    assert_eq!(*quality.breakdown().gap_consistency(), dec!(100));
+}

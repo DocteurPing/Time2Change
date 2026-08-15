@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::future::Future;
 
 use application::ports::exchange_rate_repository::ExchangeRateRepository;
 use application::ports::rate_provider::RateProvider;
@@ -15,7 +16,7 @@ use crate::config::IngestionConfig;
 /// Wide enough to always span a month boundary, so newly published days and
 /// late upstream corrections are picked up without special-casing the moment
 /// the calendar rolls over.
-const STEADY_LOOKBACK_DAYS: u64 = 35;
+pub(crate) const STEADY_LOOKBACK_DAYS: u64 = 35;
 
 /// An inclusive range of calendar days to ingest.
 #[derive(Debug, Clone, Copy)]
@@ -43,6 +44,28 @@ pub(crate) async fn run_loop<R: ExchangeRateRepository, C: RateProvider>(
     use_case: &IngestRatesUseCase<R, C>,
     config: &IngestionConfig,
 ) -> Result<(), String> {
+    run_until(use_case, config, shutdown_signal()).await
+}
+
+/// [`run_loop`], with the termination condition supplied by the caller.
+///
+/// Splitting this out keeps the loop itself free of any dependency on process
+/// signals, so it can be driven to completion under test.
+///
+/// # Errors
+///
+/// Returns an error string when the service is misconfigured and cannot make
+/// progress. Resolving `shutdown` returns `Ok(())`.
+pub(crate) async fn run_until<R, C, S>(
+    use_case: &IngestRatesUseCase<R, C>,
+    config: &IngestionConfig,
+    shutdown: S,
+) -> Result<(), String>
+where
+    R: ExchangeRateRepository,
+    C: RateProvider,
+    S: Future<Output = ()>,
+{
     let currencies = config.list_currencies();
     if currencies.is_empty() {
         return Err("no currencies configured (CURRENCIES env var is empty)".to_owned());
@@ -54,7 +77,6 @@ pub(crate) async fn run_loop<R: ExchangeRateRepository, C: RateProvider>(
         return Err("failed to compute start of month for the configured start date".to_owned());
     };
 
-    let shutdown = shutdown_signal();
     tokio::pin!(shutdown);
 
     // ── Phase 1: backfill complete past months ──────────────────────
@@ -139,7 +161,7 @@ async fn refresh_recent<R: ExchangeRateRepository, C: RateProvider>(
 }
 
 /// Returns the first day of the calendar month containing `date`.
-fn first_of_month(date: NaiveDate) -> Option<NaiveDate> {
+pub(crate) fn first_of_month(date: NaiveDate) -> Option<NaiveDate> {
     NaiveDate::from_ymd_opt(date.year(), date.month(), 1)
 }
 
@@ -257,53 +279,5 @@ async fn ingest_one<R: ExchangeRateRepository, C: RateProvider>(
     {
         Ok(count) => info!(count, "Rates ingested successfully"),
         Err(e) => error!(error = %e, "Failed to ingest rates"),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn date(year: i32, month: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(year, month, day).unwrap()
-    }
-
-    #[test]
-    fn first_of_month_normalises_to_day_one() {
-        assert_eq!(first_of_month(date(2026, 8, 15)), Some(date(2026, 8, 1)));
-    }
-
-    #[test]
-    fn first_of_month_is_idempotent() {
-        let first = date(2026, 8, 1);
-        assert_eq!(first_of_month(first), Some(first));
-    }
-
-    #[test]
-    fn first_of_month_handles_year_boundaries() {
-        assert_eq!(first_of_month(date(2026, 12, 31)), Some(date(2026, 12, 1)));
-        assert_eq!(first_of_month(date(2026, 1, 1)), Some(date(2026, 1, 1)));
-    }
-
-    #[test]
-    fn month_bounds_cover_the_whole_month() {
-        // The same arithmetic `backfill_month` uses to derive its range.
-        let month_start = date(2024, 2, 1);
-        let next_month = month_start.checked_add_months(Months::new(1)).unwrap();
-
-        // 2024 is a leap year: February must end on the 29th.
-        assert_eq!(next_month - Days::new(1), date(2024, 2, 29));
-    }
-
-    #[test]
-    fn steady_window_spans_a_month_boundary() {
-        // The lookback must be wide enough that the window always reaches back
-        // into the previous month, whatever the day of the month.
-        let first_of_march = date(2026, 3, 1);
-        let window_start = first_of_march
-            .checked_sub_days(Days::new(STEADY_LOOKBACK_DAYS))
-            .unwrap();
-
-        assert!(window_start < date(2026, 2, 1));
     }
 }

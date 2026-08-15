@@ -19,5 +19,14 @@ infrastructure = { path = "../infrastructure" }
 shared = { path = "../shared" }
 domain = { path = "../domain" }
 
+[dev-dependencies]
+# `tower::ServiceExt::oneshot` drives the router without binding a socket.
+tower.workspace = true
+http-body-util.workspace = true
+serde_json.workspace = true
+async-trait.workspace = true
+rust_decimal.workspace = true
+chrono.workspace = true
+
 [lints]
 workspace = true
