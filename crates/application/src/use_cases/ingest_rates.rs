@@ -1,12 +1,24 @@
 use std::collections::HashSet;
+use std::ops::RangeInclusive;
 
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
 use domain::types::currency::Currency;
+use domain::types::currency_pair::CurrencyPair;
 use thiserror::Error;
 
 use crate::ports::exchange_rate_repository::ExchangeRateRepository;
 use crate::ports::rate_provider::{RateProvider, RateProviderError};
 use crate::ports::repository_errors::RepositoryError;
+
+fn day_range(start: NaiveDate, end: NaiveDate) -> RangeInclusive<DateTime<Utc>> {
+    let start_ts = start.and_time(NaiveTime::MIN).and_utc();
+    let end_ts = end
+        .and_hms_opt(23, 59, 59)
+        .unwrap_or_else(|| end.and_time(NaiveTime::MIN))
+        .and_utc();
+
+    start_ts..=end_ts
+}
 
 /// Use case that fetches the exchange rates for a currency and a list of pair, then
 /// persists it through the configured repository.
@@ -66,6 +78,44 @@ where
         self.repository.save_rates(rates).await?;
 
         Ok(count)
+    }
+
+    /// Reports whether every pair that would be produced for `currency` already
+    /// has stored rates covering `start..=end`.
+    ///
+    /// Callers use this to skip ranges that have already been ingested instead
+    /// of re-querying the upstream provider for data they already hold. The
+    /// check is deliberately conservative: it returns `true` only when *every*
+    /// pair is already present, so a partially ingested range is re-fetched.
+    ///
+    /// Returns `false` when `list_currencies` yields no pair for `currency`,
+    /// since there is then nothing to skip.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`IngestError::Repository`] when the existence check fails.
+    pub async fn range_already_ingested(
+        &self,
+        list_currencies: &HashSet<Currency>,
+        start: NaiveDate,
+        end: NaiveDate,
+        currency: &Currency,
+    ) -> Result<bool, IngestError> {
+        let range = day_range(start, end);
+        let mut checked_any = false;
+
+        for quote in list_currencies {
+            let Ok(pair) = CurrencyPair::new(currency.clone(), quote.clone()) else {
+                continue;
+            };
+
+            checked_any = true;
+            if !self.repository.exists(&pair, &range).await? {
+                return Ok(false);
+            }
+        }
+
+        Ok(checked_any)
     }
 }
 

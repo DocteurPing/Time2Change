@@ -105,8 +105,10 @@ impl FrankfurterClient {
             .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
 
         for rate in list_rate {
-            let pair = CurrencyPair::new(rate.base().to_owned(), rate.quote().to_owned())
-                .map_err(|e| RateProviderError::ParseError(e.to_string()))?;
+            let Ok(pair) = CurrencyPair::new(rate.base().to_owned(), rate.quote().to_owned())
+            else {
+                continue;
+            };
             let timestamp = Utc.from_utc_datetime(&rate.date().and_time(NaiveTime::MIN));
             rates
                 .entry(pair)
@@ -129,9 +131,17 @@ impl RateProvider for FrankfurterClient {
     ) -> Result<HashMap<CurrencyPair, Vec<ExchangeRate>>, RateProviderError> {
         let quote = list_currencies
             .iter()
+            .filter(|c| *c != currency)
             .map(ToString::to_string)
             .collect::<Vec<String>>()
             .join(",");
+
+        if quote.is_empty() {
+            return Err(RateProviderError::PairNotSupported(
+                "no quotes requested".to_owned(),
+            ));
+        }
+
         let url = format!(
             "{}/rates?from={}&to={}&base={}&quotes={}",
             self.base_url, start, end, currency, quote

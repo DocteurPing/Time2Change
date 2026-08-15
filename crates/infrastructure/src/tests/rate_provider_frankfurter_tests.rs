@@ -378,7 +378,7 @@ async fn get_rates_for_range_returns_err_on_wrong_date() {
 }
 
 #[tokio::test]
-async fn get_rates_for_range_returns_err_on_wrong_pair() {
+async fn get_rates_for_range_skips_self_pair_rows() {
     let (server, client) = mock_server().await;
     Mock::given(method("GET"))
         .and(path("/rates"))
@@ -388,6 +388,12 @@ async fn get_rates_for_range_returns_err_on_wrong_pair() {
                 "date": "2024-01-01",
                 "base": "EUR",
                 "quote": "EUR",
+                "rate": 1.0
+              },
+              {
+                "date": "2024-01-01",
+                "base": "EUR",
+                "quote": "USD",
                 "rate": 1.1077
               }
             ]"#,
@@ -404,6 +410,67 @@ async fn get_rates_for_range_returns_err_on_wrong_pair() {
             NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
             pair.base(),
         )
+        .await
+        .unwrap();
+
+    // The EUR-EUR row is dropped; the usable EUR-USD row survives it.
+    assert_eq!(result.len(), 1);
+    assert_eq!(result.get(&pair).map(Vec::len), Some(1));
+}
+
+#[tokio::test]
+async fn get_rates_for_range_excludes_the_base_from_requested_quotes() {
+    let (server, client) = mock_server().await;
+    Mock::given(method("GET"))
+        .and(path("/rates"))
+        // The base must not appear in `quotes`: asking EUR against itself is
+        // what makes the upstream echo an unusable self-pair row.
+        .and(query_param("base", "EUR"))
+        .and(query_param("quotes", "USD"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(
+            r#"[
+              {
+                "date": "2024-01-01",
+                "base": "EUR",
+                "quote": "USD",
+                "rate": 1.1077
+              }
+            ]"#,
+            "application/json",
+        ))
+        .mount(&server)
         .await;
-    assert!(result.is_err_and(|e| matches!(e, RateProviderError::ParseError(_))));
+    let pair =
+        CurrencyPair::new(Currency::new("EUR").unwrap(), Currency::new("USD").unwrap()).unwrap();
+
+    let result = client
+        .get_rates_for_range(
+            // Deliberately includes the base alongside the quote.
+            &std::collections::HashSet::from([pair.base().clone(), pair.quote().clone()]),
+            NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
+            NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
+            pair.base(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(result.get(&pair).map(Vec::len), Some(1));
+}
+
+#[tokio::test]
+async fn get_rates_for_range_makes_no_request_without_a_quote() {
+    // No mock is mounted: any outbound request would fail the test.
+    let (_server, client) = mock_server().await;
+    let base = Currency::new("EUR").unwrap();
+
+    let result = client
+        .get_rates_for_range(
+            &std::collections::HashSet::from([base.clone()]),
+            NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
+            NaiveDate::from_ymd_opt(2026, 3, 24).unwrap(),
+            &base,
+        )
+        .await;
+
+    assert!(result.is_err_and(|e| matches!(e, RateProviderError::PairNotSupported(_))));
 }
