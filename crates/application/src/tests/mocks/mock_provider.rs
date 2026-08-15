@@ -24,6 +24,14 @@ impl MockProvider {
         }
     }
 
+    /// A provider for tests that must never reach the upstream port.
+    ///
+    /// Both results are populated so that an unexpected call succeeds loudly
+    /// with obviously synthetic data rather than failing for the wrong reason.
+    pub(crate) fn unused() -> Self {
+        Self::with_currencies_ok(Vec::new())
+    }
+
     pub(crate) fn with_currencies_ok(currencies: Vec<CurrencyInfo>) -> Self {
         let default_rate = ExchangeRate::new(chrono::Utc::now(), rust_decimal::Decimal::new(1, 0));
 

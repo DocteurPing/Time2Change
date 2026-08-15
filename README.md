@@ -24,7 +24,7 @@ The project is a Rust workspace split into focused crates, following a clean/hex
 | `application` | Use cases (`AnalyzePair`, `IngestRates`, `SyncCurrencies`) and port traits |
 | `infrastructure` | PostgreSQL repositories and DB migrations |
 | `api` | Axum HTTP server — exposes the REST endpoints |
-| `ingestion` | Background service — polls external rate providers and writes to Postgres |
+| `ingestion` | Background service — backfills history, then polls for new rates |
 | `frontend` | Leptos/WebAssembly UI — the browser dashboard |
 | `shared` | Cross-cutting utilities (tracing setup, etc.) |
 
@@ -105,6 +105,8 @@ API_BASE_URL=https://time2change.example.com docker compose build
 | `BIND_ADDR` | api | ❌ | `0.0.0.0:8080` | Address the API server listens on |
 | `CURRENCIES` | ingestion | ❌ | _(empty)_ | Comma-separated currency codes to ingest |
 | `START_DATE` | ingestion | ❌ | `2026-01-01T00:00:00Z` | Earliest date to fetch rates from |
+| `BACKFILL_INTERVAL_SECS` | ingestion | ❌ | `1` | Delay between two historical months while backfilling |
+| `POLL_INTERVAL_SECS` | ingestion | ❌ | `21600` (6 h) | Delay between two steady-state polls |
 | `API_BASE_URL` | frontend | ❌ | `http://127.0.0.1:3000` | API base URL baked into WASM at build time |
 
 Copy `.env.example` to `.env` and fill in the values (or export them directly).
@@ -114,6 +116,16 @@ Copy `.env.example` to `.env` and fill in the values (or export them directly).
 ```sh
 cargo run -p ingestion
 ```
+
+The service runs in two phases:
+
+1. **Backfill** — walks complete calendar months from `START_DATE` up to the
+   current month, pausing `BACKFILL_INTERVAL_SECS` between them. Months already
+   present in the database are skipped, so restarting does not re-download
+   history that is already stored.
+2. **Steady state** — once caught up, it re-fetches a trailing 35-day window
+   every `POLL_INTERVAL_SECS` to pick up newly published rates and late upstream
+   corrections. This phase runs until the process is asked to shut down.
 
 ### Start the API server
 

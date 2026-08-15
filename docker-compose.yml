@@ -47,6 +47,9 @@ services:
       start_period: 15s
 
   # ── Ingestion worker ──────────────────────────────────────────────────────
+  # Long-running: backfills history once, then polls for new rates. It only
+  # exits on shutdown or misconfiguration, so a restart here means a real
+  # failure rather than a completed run.
   ingestion:
     build:
       context: .
@@ -57,6 +60,8 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-time2change}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-time2change}
       CURRENCIES: ${CURRENCIES:-EUR,USD,GBP,JPY,CHF,CAD,AUD}
       START_DATE: ${START_DATE:-2024-01-01T00:00:00Z}
+      BACKFILL_INTERVAL_SECS: ${BACKFILL_INTERVAL_SECS:-1}
+      POLL_INTERVAL_SECS: ${POLL_INTERVAL_SECS:-21600}
     depends_on:
       postgres:
         condition: service_healthy

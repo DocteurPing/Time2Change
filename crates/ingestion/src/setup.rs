@@ -77,7 +77,10 @@ pub(crate) async fn setup_and_launch() -> ExitCode {
 
     let ingest_use_case = IngestRatesUseCase::new(exchange_rate_repository, provider);
 
-    run_loop(&ingest_use_case, &config).await;
+    if let Err(e) = run_loop(&ingest_use_case, &config).await {
+        error!(error = %e, "Ingestion service stopped");
+        return ExitCode::FAILURE;
+    }
 
     info!("Ingestion service shut down gracefully");
     ExitCode::SUCCESS

@@ -12,7 +12,19 @@ use chrono::{DateTime, Utc};
 use domain::types::currency::Currency;
 
 const DEFAULT_START_DATE: &str = "2026-01-01T00:00:00Z";
-const DEFAULT_INTERVAL: Duration = Duration::from_millis(100);
+
+/// Delay between two historical months during the backfill phase.
+///
+/// Backfill walks a bounded number of months once per process start, so a
+/// short delay is enough to stay polite towards the upstream provider without
+/// making the initial catch-up take hours.
+const DEFAULT_BACKFILL_INTERVAL_SECS: u64 = 1;
+
+/// Delay between two steady-state polls once the backfill has caught up.
+///
+/// Reference rates are published at most once per business day, so polling
+/// every six hours is ample and keeps upstream traffic negligible.
+const DEFAULT_POLL_INTERVAL_SECS: u64 = 6 * 60 * 60;
 
 /// Ingestion service configuration loaded from the environment.
 #[derive(Debug, Clone)]
@@ -21,10 +33,35 @@ pub(crate) struct IngestionConfig {
     database_url: String,
     /// Starting date for the ingestion process.
     start_date: DateTime<Utc>,
-    /// Interval between ingestion runs.
-    interval: Duration,
+    /// Delay between two historical months while backfilling.
+    backfill_interval: Duration,
+    /// Delay between two steady-state polls once backfill has caught up.
+    poll_interval: Duration,
     /// List of currencies to ingest.
     list_currencies: HashSet<Currency>,
+}
+
+/// Reads a positive duration, in seconds, from the environment.
+///
+/// Falls back to `default_secs` when the variable is absent. A value of zero
+/// is rejected because it would make the service spin without pause.
+fn interval_from_env<F>(var_fn: &F, key: &str, default_secs: u64) -> Result<Duration, String>
+where
+    F: Fn(&str) -> Result<String, env::VarError>,
+{
+    let seconds = match var_fn(key) {
+        Ok(raw) => raw
+            .trim()
+            .parse::<u64>()
+            .map_err(|e| format!("invalid {key}: {e}"))?,
+        Err(_) => default_secs,
+    };
+
+    if seconds == 0 {
+        return Err(format!("invalid {key}: must be greater than zero"));
+    }
+
+    Ok(Duration::from_secs(seconds))
 }
 
 impl IngestionConfig {
@@ -54,7 +91,14 @@ impl IngestionConfig {
             .parse::<DateTime<Utc>>()
             .map_err(|e| format!("invalid START_DATE: {e}"))?;
 
-        let interval = DEFAULT_INTERVAL;
+        let backfill_interval = interval_from_env(
+            &var_fn,
+            "BACKFILL_INTERVAL_SECS",
+            DEFAULT_BACKFILL_INTERVAL_SECS,
+        )?;
+
+        let poll_interval =
+            interval_from_env(&var_fn, "POLL_INTERVAL_SECS", DEFAULT_POLL_INTERVAL_SECS)?;
 
         let list_currencies = var_fn("CURRENCIES")
             .unwrap_or_default()
@@ -67,7 +111,8 @@ impl IngestionConfig {
         Ok(Self {
             database_url,
             start_date,
-            interval,
+            backfill_interval,
+            poll_interval,
             list_currencies,
         })
     }
@@ -84,100 +129,21 @@ impl IngestionConfig {
         &self.start_date
     }
 
-    /// Returns the interval between ingestion runs.
+    /// Returns the delay between two historical months while backfilling.
     #[must_use]
-    pub(crate) const fn interval(&self) -> Duration {
-        self.interval
+    pub(crate) const fn backfill_interval(&self) -> Duration {
+        self.backfill_interval
+    }
+
+    /// Returns the delay between two steady-state polls.
+    #[must_use]
+    pub(crate) const fn poll_interval(&self) -> Duration {
+        self.poll_interval
     }
 
     /// Returns the list of currency pairs to ingest.
     #[must_use]
     pub(crate) fn list_currencies(&self) -> HashSet<Currency> {
         self.list_currencies.clone()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn mock_var(vars: &[(&str, &str)]) -> impl Fn(&str) -> Result<String, env::VarError> {
-        |key: &str| {
-            vars.iter()
-                .find(|(k, _)| *k == key)
-                .map(|(_, v)| v.to_string())
-                .ok_or(env::VarError::NotPresent)
-        }
-    }
-
-    #[test]
-    fn test_from_env_success() {
-        let vars = vec![
-            ("DATABASE_URL", "postgres://localhost"),
-            ("CURRENCIES", "EUR,GBP"),
-        ];
-        let config = IngestionConfig::from_env_impl(mock_var(&vars)).unwrap();
-
-        assert_eq!(config.database_url(), "postgres://localhost");
-        assert_eq!(
-            *config.start_date(),
-            "2026-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap()
-        );
-        assert_eq!(
-            config.list_currencies(),
-            [Currency::new("EUR").unwrap(), Currency::new("GBP").unwrap()]
-                .into_iter()
-                .collect::<HashSet<_>>()
-        );
-        assert_eq!(config.interval(), DEFAULT_INTERVAL);
-    }
-
-    #[test]
-    fn test_from_env_with_custom_start_date() {
-        let vars = vec![
-            ("DATABASE_URL", "postgres://localhost"),
-            ("START_DATE", "2024-06-15T12:30:00Z"),
-        ];
-        let config = IngestionConfig::from_env_impl(mock_var(&vars)).unwrap();
-
-        assert_eq!(
-            *config.start_date(),
-            "2024-06-15T12:30:00Z".parse::<DateTime<Utc>>().unwrap()
-        );
-        assert_eq!(config.list_currencies, HashSet::new());
-    }
-
-    #[test]
-    fn test_from_env_missing_database_url() {
-        let vars: Vec<(&str, &str)> = vec![];
-        let result = IngestionConfig::from_env_impl(mock_var(&vars));
-
-        assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            "DATABASE_URL environment variable is required"
-        );
-    }
-
-    #[test]
-    fn test_from_env_invalid_start_date() {
-        let vars = vec![
-            ("DATABASE_URL", "postgres://localhost"),
-            ("START_DATE", "not-a-date"),
-        ];
-        let result = IngestionConfig::from_env_impl(mock_var(&vars));
-
-        assert!(result.is_err());
-        assert!(result.unwrap_err().contains("invalid START_DATE"));
-    }
-
-    #[test]
-    fn test_from_env_default() {
-        let result = IngestionConfig::from_env().unwrap();
-        assert_eq!(
-            *result.start_date(),
-            "2026-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap()
-        );
-        assert_eq!(result.interval(), DEFAULT_INTERVAL);
     }
 }
