@@ -1,5 +1,7 @@
 //! Form section component for currency pair analysis.
 
+#![allow(clippy::empty_enums)]
+
 use leptos::ev;
 use leptos::prelude::*;
 
