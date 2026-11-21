@@ -103,7 +103,7 @@ async fn analyze_recommends_changing_when_the_rate_is_near_its_high() {
 
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["recommendation"], "change_now");
-    assert!(!body["reasoning"].as_str().unwrap().is_empty());
+    assert_ne!(body["reasoning"].as_str().unwrap(), "");
 }
 
 #[tokio::test]
