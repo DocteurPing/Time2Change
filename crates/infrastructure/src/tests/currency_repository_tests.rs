@@ -43,7 +43,7 @@ async fn save_currencies_empty_input_is_noop(pool: PgPool) {
     repo.save_currencies(&[]).await.unwrap();
 
     let saved = repo.list_currencies().await.unwrap();
-    assert!(saved.is_empty());
+    assert_eq!(saved, [] as [CurrencyInfo; 0]);
 }
 
 #[sqlx::test]

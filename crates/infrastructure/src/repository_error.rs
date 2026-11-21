@@ -174,7 +174,7 @@ mod tests {
 
         // Verify we can call standard Error trait methods
         assert!(error_trait.source().is_none()); // MockDatabaseError has no source
-        assert!(!error_trait.to_string().is_empty());
+        assert_ne!(error_trait.to_string(), "");
     }
 
     #[test]

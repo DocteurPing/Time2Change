@@ -394,7 +394,7 @@ mod tests {
 
         // Verify Debug is implemented and doesn't panic
         let debug_str = format!("{analysis:?}");
-        assert!(!debug_str.is_empty());
+        assert_ne!(debug_str, "");
     }
 
     #[test]

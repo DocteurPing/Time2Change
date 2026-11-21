@@ -19,9 +19,9 @@ fn a_new_state_starts_idle_with_no_selection() {
         let state = AppState::new();
 
         assert_eq!(state.status.get_untracked(), UiStatus::Idle);
-        assert!(state.currencies.get_untracked().is_empty());
-        assert!(state.base.get_untracked().is_empty());
-        assert!(state.quote.get_untracked().is_empty());
+        assert_eq!(state.currencies.get_untracked(), [] as [String; 0]);
+        assert_eq!(state.base.get_untracked(), "");
+        assert_eq!(state.quote.get_untracked(), "");
         assert!(state.analysis.get_untracked().is_none());
     });
 }
