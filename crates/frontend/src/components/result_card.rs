@@ -1,5 +1,7 @@
 //! Recommendation result card component.
 
+#![allow(clippy::empty_enums)]
+
 use leptos::prelude::*;
 
 use crate::models::{PairAnalysisResponse, RecommendationDto};
@@ -21,12 +23,7 @@ pub(crate) fn ResultCard(analysis: ReadSignal<Option<PairAnalysisResponse>>) -> 
             })
     };
 
-    let reasoning_text = move || {
-        analysis
-            .get()
-            .map(|result| result.reasoning)
-            .unwrap_or_default()
-    };
+    let reasoning_text = move || analysis.get().map_or_default(|result| result.reasoning);
 
     let badge_class = move || {
         analysis

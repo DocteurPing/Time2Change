@@ -1,5 +1,7 @@
 //! Error status banner component.
 
+#![allow(clippy::empty_enums)]
+
 use leptos::prelude::*;
 
 use crate::models::UiStatus;
