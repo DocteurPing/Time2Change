@@ -45,7 +45,7 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
 name = "api"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "application",
@@ -69,7 +69,7 @@ dependencies = [
 
 [[package]]
 name = "application"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -677,7 +677,7 @@ dependencies = [
 
 [[package]]
 name = "domain"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "chrono",
  "rust_decimal",
@@ -820,7 +820,7 @@ dependencies = [
 
 [[package]]
 name = "frontend"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "console_error_panic_hook",
  "leptos",
@@ -1382,7 +1382,7 @@ dependencies = [
 
 [[package]]
 name = "infrastructure"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "application",
  "async-trait",
@@ -1398,7 +1398,7 @@ dependencies = [
 
 [[package]]
 name = "ingestion"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "application",
  "async-trait",
@@ -2763,7 +2763,7 @@ dependencies = [
 
 [[package]]
 name = "shared"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "tracing",
  "tracing-subscriber",
